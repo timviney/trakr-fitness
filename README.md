@@ -37,28 +37,7 @@ graph TD
 The database schema follows a relational structure to ensure data integrity and easy reporting on lifting progress over time.
 
 ```mermaid
-erDiagram
-    USER ||--o{ WORKOUT : logs
-    WORKOUT ||--|{ EXERCISE_SESSION : contains
-    EXERCISE_DEFINITION ||--o{ EXERCISE_SESSION : defines
-    EXERCISE_SESSION ||--|{ SET : includes
-
-    USER {
-        uuid id PK
-        string email
-        string password_hash
-    }
-    WORKOUT {
-        uuid id PK
-        uuid user_id FK
-        datetime date_completed
-    }
-    SET {
-        uuid id PK
-        int reps
-        float weight
-        int rpe
-    }
+TODO
 ```
 
 ---
