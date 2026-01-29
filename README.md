@@ -37,7 +37,79 @@ graph TD
 The database schema follows a relational structure to ensure data integrity and easy reporting on lifting progress over time.
 
 ```mermaid
-TODO
+erDiagram
+    USERS {
+        uuid id PK
+        text username
+        timestamp created_at
+    }
+
+    PASSWORDS {
+        uuid user_id PK
+        text password_hashed
+        text salt
+    }
+
+    MUSCLE_CATEGORIES {
+        uuid id PK
+        uuid user_id
+        text name
+    }
+
+    MUSCLE_GROUPS {
+        uuid id PK
+        uuid user_id
+        uuid category
+        text name
+    }
+
+    EXERCISES {
+        uuid id PK
+        uuid user_id
+        uuid muscle_group_id
+        text name
+    }
+
+    WORKOUTS {
+        uuid id PK
+        uuid user_id
+        text name
+    }
+
+    SESSIONS {
+        uuid id PK
+        uuid workout_id
+        timestamp created_at
+    }
+
+    SESSION_EXERCISES {
+        uuid id PK
+        uuid session_id
+        uuid exercise_id
+        int exercise_number
+    }
+
+    SETS {
+        uuid id PK
+        uuid session_exercise_id
+        int set_number
+        double weight
+        int reps
+    }
+
+    USERS ||--o{ WORKOUTS : owns_and_creates
+    USERS ||--o{ EXERCISES : owns_and_creates
+    USERS ||--o{ MUSCLE_CATEGORIES : owns_and_creates
+    USERS ||--o{ MUSCLE_GROUPS : owns_and_creates
+    USERS ||--|| PASSWORDS : authenticates
+
+    MUSCLE_CATEGORIES ||--o{ MUSCLE_GROUPS : categorises
+    MUSCLE_GROUPS ||--o{ EXERCISES : categorises
+
+    WORKOUTS ||--o{ SESSIONS : has
+    SESSIONS ||--o{ SESSION_EXERCISES : has
+    EXERCISES ||--o{ SESSION_EXERCISES : performed_as
+    SESSION_EXERCISES ||--o{ SETS : has
 ```
 
 ---

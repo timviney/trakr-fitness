@@ -1,0 +1,71 @@
+Table users {
+  id uuid [primary key]
+  username text
+  created_at timestamp
+}
+
+Table passwords {
+  user_id uuid [primary key]
+  password_hashed text
+  salt text
+}
+
+Table muscle_groups {
+  id uuid [primary key]
+  user_id uuid [null] // Null = System default, ID = User created
+  category uuid
+  name text
+}
+
+Table muscle_categories{
+  id uuid [primary key]
+  user_id uuid [null] // Null = System default, ID = User created
+  name text
+}
+
+Table exercises {
+  id uuid [primary key]
+  user_id uuid [null] // Null = System default, ID = User created
+  muscle_group_id uuid
+  name text
+}
+
+Table workouts {
+  id uuid [primary key]
+  user_id uuid
+  name text
+}
+
+Table sessions {
+  id uuid [primary key]
+  workout_id uuid
+  created_at timestamp
+}
+
+Table session_exercises {
+  id uuid [primary key]
+  session_id uuid
+  exercise_id uuid
+  exercise_number integer
+}
+
+Table sets {
+  id uuid [primary key]
+  session_exercise_id uuid
+  set_number integer
+  weight double
+  reps integer
+}
+
+
+Ref: "users"."id" < "workouts"."user_id"
+Ref: "users"."id" < "exercises"."user_id"
+Ref: "users"."id" < "muscle_groups"."user_id"
+Ref: "muscle_groups"."id" < "exercises"."muscle_group_id"
+Ref: "workouts"."id" < "sessions"."workout_id"
+Ref: "session_exercises"."id" < "sets"."session_exercise_id"
+Ref: "users"."id" - "passwords"."user_id"
+Ref: "sessions"."id" < "session_exercises"."session_id"
+Ref: "exercises"."id" < "session_exercises"."exercise_id"
+Ref: "muscle_categories"."id" < "muscle_groups"."category"
+Ref: "users"."id" < "muscle_categories"."user_id"
