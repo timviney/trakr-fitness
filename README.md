@@ -136,6 +136,6 @@ sequenceDiagram
 ## 🛠️ Tech Stack
 
 * **Frontend:** Vue 3 (Composition API), TypeScript, Pinia (State), Vite.
-* **Backend:** .NET 9 Minimal APIs, Entity Framework Core.
+* **Backend:** .NET 10 Minimal APIs, Entity Framework Core.
 * **Infrastructure:** AWS Lambda (Serverless), S3, CloudFront, GitHub Actions (CI/CD).
 * **Database:** PostgreSQL via Neon or Supabase.
