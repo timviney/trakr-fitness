@@ -41,13 +41,8 @@ erDiagram
     USERS {
         uuid id PK
         text username
-        timestamp created_at
-    }
-
-    PASSWORDS {
-        uuid user_id PK
         text password_hashed
-        text salt
+        timestamp created_at
     }
 
     MUSCLE_CATEGORIES {
@@ -101,7 +96,6 @@ erDiagram
     USERS ||--o{ EXERCISES : owns_and_creates
     USERS ||--o{ MUSCLE_CATEGORIES : owns_and_creates
     USERS ||--o{ MUSCLE_GROUPS : owns_and_creates
-    USERS ||--|| PASSWORDS : authenticates
 
     MUSCLE_CATEGORIES ||--o{ MUSCLE_GROUPS : categorises
     MUSCLE_GROUPS ||--o{ EXERCISES : categorises

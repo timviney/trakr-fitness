@@ -2,12 +2,7 @@ Table users {
   id uuid [primary key]
   username text
   created_at timestamp
-}
-
-Table passwords {
-  user_id uuid [primary key]
   password_hashed text
-  salt text
 }
 
 Table muscle_groups {
@@ -64,7 +59,6 @@ Ref: "users"."id" < "muscle_groups"."user_id"
 Ref: "muscle_groups"."id" < "exercises"."muscle_group_id"
 Ref: "workouts"."id" < "sessions"."workout_id"
 Ref: "session_exercises"."id" < "sets"."session_exercise_id"
-Ref: "users"."id" - "passwords"."user_id"
 Ref: "sessions"."id" < "session_exercises"."session_id"
 Ref: "exercises"."id" < "session_exercises"."exercise_id"
 Ref: "muscle_categories"."id" < "muscle_groups"."category"

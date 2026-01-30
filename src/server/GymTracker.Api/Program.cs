@@ -1,16 +1,32 @@
 using GymTracker.Api.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using GymTracker.Infrastructure.Data;
+using GymTracker.Infrastructure.Repositories;
+using GymTracker.Core.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
-// TODO: connect DB 
+// Database configuration: use in-memory by default in Development, otherwise look for DB_CONNECTION_STRING
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("Default");
 
-// var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-// builder.Services.AddDbContext<GymDbContext>(options =>
-//     options.UseNpgsql(connectionString));
+if (builder.Environment.IsDevelopment() || string.IsNullOrWhiteSpace(connectionString))
+{
+    // Use in-memory for local development or if no connection string provided
+    builder.Services.AddDbContext<GymTrackerDbContext>(options =>
+        options.UseInMemoryDatabase("GymTracker_Local"));
+}
+else
+{
+    // Use Postgres when a connection string is available
+    builder.Services.AddDbContext<GymTrackerDbContext>(options =>
+        options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.MigrationsAssembly("GymTracker.Infrastructure")));
+}
+
+// Register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // TODO: add auth service
 // builder.Services.AddScoped<IAuthService, AuthService>();
