@@ -25,7 +25,7 @@ import frame6 from '@/assets/animation/ohp_6.svg'
 import frame7 from '@/assets/animation/ohp_7.svg'
 
 const frames = [frame1, frame2, frame3, frame4, frame5, frame6, frame7]
-const fps = ref(10)
+const fps = ref(5)
 const isPlaying = ref(true)
 const current = ref(0)
 let timer: number | undefined
