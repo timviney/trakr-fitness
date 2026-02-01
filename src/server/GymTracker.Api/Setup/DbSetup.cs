@@ -29,5 +29,7 @@ public static class DbSetup
 
         // Register repositories
         webApplicationBuilder.Services.AddScoped<IUserRepository, UserRepository>();
+        webApplicationBuilder.Services.AddScoped<IExerciseLibraryRepository, ExerciseLibraryRepository>();
+        webApplicationBuilder.Services.AddScoped<ISessionRepository, SessionRepository>();
     }
 }
