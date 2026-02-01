@@ -38,11 +38,13 @@ public class UserRepositoryIntegrationTests
             var sqliteRepo = new UserRepository(sqliteContext);
 
             var user1 = _fixture.Build<User>()
+                .OmitAutoProperties()
                 .With(u => u.PasswordHashed, "h1")
                 .With(u => u.Username, "dup")
                 .Create();
 
             var user2 = _fixture.Build<User>()
+                .OmitAutoProperties()
                 .With(u => u.PasswordHashed, "h2")
                 .With(u => u.Username, "dup")
                 .Create();

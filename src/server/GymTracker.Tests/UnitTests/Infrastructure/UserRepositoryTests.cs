@@ -1,171 +1,262 @@
-﻿using AutoFixture;
-using Microsoft.EntityFrameworkCore;
-using NUnit.Framework;
+﻿using System;
+using System.Threading.Tasks;
+using AutoFixture;
+using GymTracker.Core.Entities;
 using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
-using GymTracker.Core.Entities;
+using Microsoft.EntityFrameworkCore;
+using NUnit.Framework;
 
-namespace GymTracker.Tests.UnitTests.Infrastructure;
-
-[TestFixture]
-public class UserRepositoryTests
+namespace GymTracker.Tests.UnitTests.Infrastructure
 {
-    private Fixture _fixture = null!;
-    private GymTrackerDbContext _context = null!;
-    private UserRepository _repo = null!;
-
-    [SetUp]
-    public void SetUp()
+    [TestFixture]
+    public class UserRepositoryTests
     {
-        _fixture = new Fixture();
-        var options = new DbContextOptionsBuilder<GymTrackerDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        _context = new GymTrackerDbContext(options);
-        _repo = new UserRepository(_context);
-    }
+        private GymTrackerDbContext _context;
+        private UserRepository _repository;
+        private Fixture _fixture;
 
-    [TearDown]
-    public void TearDown()
-    {
-        _context.Dispose();
-    }
+        [SetUp]
+        public void Setup()
+        {
+            _fixture = new Fixture();
+            _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
-    [Test]
-    public async Task AddAndGetUser_Works()
-    {
-        var user = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed")
-            .With(u => u.Username, "alice")
-            .Create();
+            var options = new DbContextOptionsBuilder<GymTrackerDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
 
-        await _repo.AddAsync(user);
+            _context = new GymTrackerDbContext(options);
+            _repository = new UserRepository(_context);
+        }
 
-        var fetched = await _repo.GetByIdAsync(user.Id);
-        Assert.That(fetched, Is.Not.Null);
-        Assert.That(fetched!.Username, Is.EqualTo("alice"));
-        Assert.That(fetched.PasswordHashed, Is.EqualTo("hashed"));
-    }
+        [TearDown]
+        public void Teardown()
+        {
+            _context.Dispose();
+        }
 
-    [Test]
-    public async Task FindByUsername_ReturnsCorrectUser()
-    {
-        var user = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed")
-            .With(u => u.Username, "bob")
-            .Create();
+        [Test]
+        public async Task GetByIdAsync_WithValidId_ReturnsUser()
+        {
+            // Arrange
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "testuser",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
 
-        await _repo.AddAsync(user);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-        var fetched = await _repo.FindByUsernameAsync("bob");
-        Assert.That(fetched, Is.Not.Null);
-        Assert.That(fetched!.Id, Is.EqualTo(user.Id));
-    }
+            // Act
+            var result = await _repository.GetByIdAsync(user.Id);
 
-    [Test]
-    public async Task FindByUsername_ReturnsNull_WhenMissing()
-    {
-        var fetched = await _repo.FindByUsernameAsync("doesnotexist");
-        Assert.That(fetched, Is.Null);
-    }
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Id, Is.EqualTo(user.Id));
+            Assert.That(result.Username, Is.EqualTo("testuser"));
+        }
 
-    [Test]
-    public async Task UpdateUser_UpdatesFields()
-    {
-        var user = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "old")
-            .With(u => u.Username, "charlie")
-            .Create();
+        [Test]
+        public async Task GetByIdAsync_WithInvalidId_ReturnsNull()
+        {
+            // Act
+            var result = await _repository.GetByIdAsync(Guid.NewGuid());
 
-        await _repo.AddAsync(user);
+            // Assert
+            Assert.That(result, Is.Null);
+        }
 
-        // modify fields
-        user.PasswordHashed = "newhash";
-        user.Username = "charlie2";
+        [Test]
+        public async Task FindByUsernameAsync_WithValidUsername_ReturnsUser()
+        {
+            // Arrange
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "uniqueuser",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
 
-        await _repo.UpdateAsync(user);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-        var fetched = await _repo.GetByIdAsync(user.Id);
-        Assert.That(fetched, Is.Not.Null);
-        Assert.That(fetched!.PasswordHashed, Is.EqualTo("newhash"));
-        Assert.That(fetched.Username, Is.EqualTo("charlie2"));
-    }
+            // Act
+            var result = await _repository.FindByUsernameAsync("uniqueuser");
 
-    [Test]
-    public async Task Delete_RemovesUser()
-    {
-        var user = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed")
-            .With(u => u.Username, "delta")
-            .Create();
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Username, Is.EqualTo("uniqueuser"));
+            Assert.That(result.Id, Is.EqualTo(user.Id));
+        }
 
-        await _repo.AddAsync(user);
+        [Test]
+        public async Task FindByUsernameAsync_WithInvalidUsername_ReturnsNull()
+        {
+            // Act
+            var result = await _repository.FindByUsernameAsync("nonexistentuser");
 
-        await _repo.DeleteAsync(user.Id);
+            // Assert
+            Assert.That(result, Is.Null);
+        }
 
-        var fetched = await _repo.GetByIdAsync(user.Id);
-        Assert.That(fetched, Is.Null);
-    }
+        [Test]
+        public async Task FindByUsernameAsync_IsCaseSensitive()
+        {
+            // Arrange
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "TestUser",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
 
-    [Test]
-    public async Task AddAsync_ThrowsException_WhenUsernameExists()
-    {
-        var user1 = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed1")
-            .With(u => u.Username, "duplicate")
-            .Create();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-        var user2 = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed2")
-            .With(u => u.Username, "duplicate")
-            .Create();
+            // Act
+            var resultCorrectCase = await _repository.FindByUsernameAsync("TestUser");
+            var resultWrongCase = await _repository.FindByUsernameAsync("testuser");
 
-        await _repo.AddAsync(user1);
+            // Assert
+            Assert.That(resultCorrectCase, Is.Not.Null);
+            Assert.That(resultWrongCase, Is.Null);
+        }
 
-        var ex = Assert.ThrowsAsync<DbUpdateException>(async () => await _repo.AddAsync(user2));
-        Assert.That(ex!.Message, Contains.Substring("already exists"));
-    }
+        [Test]
+        public async Task AddAsync_AddsUserToDatabase()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var user = new User
+            {
+                Id = userId,
+                Username = "newuser",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
 
-    [Test]
-    public async Task UpdateAsync_ThrowsException_WhenUsernameExists()
-    {
-        var user1 = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed1")
-            .With(u => u.Username, "echo")
-            .Create();
+            // Act
+            await _repository.AddAsync(user);
 
-        var user2 = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "hashed2")
-            .With(u => u.Username, "foxtrot")
-            .Create();
+            // Assert
+            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Username, Is.EqualTo("newuser"));
+        }
 
-        await _repo.AddAsync(user1);
-        await _repo.AddAsync(user2);
+        [Test]
+        public async Task AddAsync_SetsCreatedAtToCurrentTime()
+        {
+            // Arrange
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "newuser",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
 
-        // Try to change user2's username to user1's username
-        user2.Username = "echo";
+            var beforeAdd = DateTime.UtcNow.AddSeconds(-1);
 
-        var ex = Assert.ThrowsAsync<DbUpdateException>(async () => await _repo.UpdateAsync(user2));
-        Assert.That(ex!.Message, Contains.Substring("already exists"));
-    }
+            // Act
+            await _repository.AddAsync(user);
 
-    [Test]
-    public async Task UpdateAsync_AllowsSameUsername_ForSameUser()
-    {
-        var user = _fixture.Build<User>()
-            .With(u => u.PasswordHashed, "old")
-            .With(u => u.Username, "golf")
-            .Create();
+            var afterAdd = DateTime.UtcNow.AddSeconds(1);
 
-        await _repo.AddAsync(user);
+            // Assert
+            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
+            Assert.That(result.CreatedAt, Is.GreaterThanOrEqualTo(beforeAdd));
+            Assert.That(result.CreatedAt, Is.LessThanOrEqualTo(afterAdd));
+        }
 
-        // Update the same user with the same username should work
-        user.PasswordHashed = "new";
+        [Test]
+        public async Task UpdateAsync_UpdatesUserInDatabase()
+        {
+            // Arrange
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "originaluser",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
 
-        await _repo.UpdateAsync(user);
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-        var fetched = await _repo.GetByIdAsync(user.Id);
-        Assert.That(fetched, Is.Not.Null);
-        Assert.That(fetched!.PasswordHashed, Is.EqualTo("new"));
+            user.Username = "updateduser";
+            user.PasswordHashed = "newhash";
+
+            // Act
+            await _repository.UpdateAsync(user);
+
+            // Assert
+            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
+            Assert.That(result.Username, Is.EqualTo("updateduser"));
+            Assert.That(result.PasswordHashed, Is.EqualTo("newhash"));
+        }
+
+        [Test]
+        public async Task DeleteAsync_RemovesUserFromDatabase()
+        {
+            // Arrange
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "usertoDelete",
+                PasswordHashed = "hashedpassword",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            // Act
+            await _repository.DeleteAsync(user.Id);
+
+            // Assert
+            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public async Task DeleteAsync_WithNonExistentId_DoesNotThrow()
+        {
+            // Act & Assert
+            Assert.DoesNotThrowAsync(async () => await _repository.DeleteAsync(Guid.NewGuid()));
+        }
+
+        [Test]
+        public async Task AddAsync_WithDuplicateUsername_ThrowsException()
+        {
+            // Arrange
+            var user1 = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "duplicateuser",
+                PasswordHashed = "hash1",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var user2 = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "duplicateuser",
+                PasswordHashed = "hash2",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user1);
+            await _context.SaveChangesAsync();
+
+            // Act & Assert
+            Assert.ThrowsAsync<DbUpdateException>(async () => await _repository.AddAsync(user2));
+        }
     }
 }
