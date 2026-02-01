@@ -1,4 +1,5 @@
 using GymTracker.Api.Endpoints;
+using GymTracker.Api.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using GymTracker.Infrastructure.Data;
@@ -28,8 +29,9 @@ else
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-// TODO: add auth service
-// builder.Services.AddScoped<IAuthService, AuthService>();
+// Bind JwtSettings and register AuthService
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 if (builder.Environment.IsDevelopment())
 {

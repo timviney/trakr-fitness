@@ -1,4 +1,6 @@
-﻿namespace GymTracker.Api.Endpoints;
+﻿using GymTracker.Api.Auth;
+
+namespace GymTracker.Api.Endpoints;
 
 public static class AuthEndpoints
 {
@@ -6,6 +8,11 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/auth").WithTags("Authentication");
         
-        group.MapGet("/login", () => "u r logged in");
+        group.MapPost("/login", async (LoginRequest req, IAuthService authService) =>
+        {
+            // TODO: credentials validation
+            var resp = await authService.GenerateTokenAsync(req.Username);
+            return Results.Ok(resp);
+        });
     }
 }
