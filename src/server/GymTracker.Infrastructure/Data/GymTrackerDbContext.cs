@@ -56,7 +56,7 @@ namespace GymTracker.Infrastructure.Data
                 b.HasKey(mg => mg.Id);
                 b.Property(mg => mg.Name).IsRequired();
                 b.HasOne(mg => mg.Category)
-                    .WithMany()
+                    .WithMany(mc => mc.MuscleGroups)
                     .HasForeignKey(mg => mg.CategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
