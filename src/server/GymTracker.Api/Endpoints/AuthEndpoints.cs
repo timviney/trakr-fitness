@@ -1,4 +1,7 @@
-﻿using GymTracker.Api.Auth;
+﻿using System.Diagnostics;
+using GymTracker.Api.Auth;
+using GymTracker.Api.Auth.Requests;
+using GymTracker.Api.Auth.Responses;
 
 namespace GymTracker.Api.Endpoints;
 
@@ -13,6 +16,17 @@ public static class AuthEndpoints
             // TODO: credentials validation
             var resp = await authService.GenerateTokenAsync(req.Username);
             return Results.Ok(resp);
+        });
+
+        group.MapPost("/register", async (RegisterRequest req, IAuthService authService) =>
+        {
+            var resp = await authService.Register(req.Username, req.Password);
+            return (resp) switch
+            {
+                { Success: true } => Results.Ok(resp),
+                { Error: RegisterError.UsernameTaken } => Results.Conflict(resp),
+                _ => Results.BadRequest(resp)
+            };
         });
     }
 }

@@ -1,6 +1,11 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using GymTracker.Api.Auth.Responses;
+using GymTracker.Core.Entities;
+using GymTracker.Core.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -10,9 +15,11 @@ public class AuthService : IAuthService
 {
     private readonly JwtSettings _settings;
     private readonly RsaSecurityKey _rsaKey;
+    private readonly IUserRepository _userRepository;
 
-    public AuthService(IOptions<JwtSettings> options)
+    public AuthService(IOptions<JwtSettings> options, IUserRepository userRepository)
     {
+        _userRepository = userRepository;
         _settings = options.Value ?? throw new ArgumentNullException(nameof(options));
 
         if (string.IsNullOrWhiteSpace(_settings.PrivateKeyPem))
@@ -23,7 +30,7 @@ public class AuthService : IAuthService
         _rsaKey = new RsaSecurityKey(rsa);
     }
 
-    public Task<AuthResponse> GenerateTokenAsync(string username)
+    public async Task<LoginResponse> GenerateTokenAsync(string username)
     {
         // For now, no validation; create token with sub, name, role
         var now = DateTime.UtcNow;
@@ -49,9 +56,41 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwt = tokenHandler.WriteToken(token);
 
-        var resp = new AuthResponse(jwt, expires, claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value,
+        var resp = new LoginResponse(jwt, expires, claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value,
             "User");
-        return Task.FromResult(resp);
+        return resp;
+    }
+
+    public async Task<RegisterResponse> Register(string username, string password)
+    {
+        User newUser;
+        try
+        {
+            var ph = new PasswordHasher<User>();
+            newUser = new User
+            {
+                Username = username,
+                PasswordHashed = ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
+            };
+            await _userRepository.AddAsync(newUser);
+        }
+        catch (DbUpdateException e)
+        {
+            // Username unique constraint violation
+            return new RegisterResponse(false, Error: RegisterError.UsernameTaken, ErrorMessage: "Username is already taken.");
+        }
+        catch (ArgumentException e)
+        {
+            // Invalid input validation
+            return new RegisterResponse(false, Error: RegisterError.InvalidUsername, ErrorMessage: e.Message);
+        }
+        catch (Exception e)
+        {
+            // Unknown error
+            return new RegisterResponse(false, Error: RegisterError.UnknownError, ErrorMessage: e.Message);
+        }
+        
+        return new RegisterResponse(true, newUser.Id);
     }
 
     private static void ImportPemPrivateKey(RSA rsa, string pem)

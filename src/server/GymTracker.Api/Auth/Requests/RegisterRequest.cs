@@ -1,0 +1,3 @@
+﻿namespace GymTracker.Api.Auth.Requests;
+
+public record RegisterRequest(string Username, string Password, string? Role = null);
