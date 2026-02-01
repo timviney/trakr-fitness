@@ -11,6 +11,13 @@ namespace GymTracker.Infrastructure.Repositories
     {
         public async Task AddAsync(User user)
         {
+            // Enforce uniqueness constraint for in-memory database
+            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == user.Username);
+            if (existingUser != null)
+            {
+                throw new DbUpdateException($"A user with username '{user.Username}' already exists.");
+            }
+
             await db.Users.AddAsync(user);
             await db.SaveChangesAsync();
         }
@@ -35,6 +42,13 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task UpdateAsync(User user)
         {
+            // Enforce uniqueness constraint for in-memory database
+            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == user.Username && u.Id != user.Id);
+            if (existingUser != null)
+            {
+                throw new DbUpdateException($"A user with username '{user.Username}' already exists.");
+            }
+
             db.Users.Update(user);
             await db.SaveChangesAsync();
         }

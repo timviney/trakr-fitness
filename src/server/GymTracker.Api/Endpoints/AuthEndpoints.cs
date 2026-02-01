@@ -13,8 +13,7 @@ public static class AuthEndpoints
         
         group.MapPost("/login", async (LoginRequest req, IAuthService authService) =>
         {
-            // TODO: credentials validation
-            var resp = await authService.GenerateTokenAsync(req.Username);
+            var resp = await authService.Login(req.Username, req.Password);
             return Results.Ok(resp);
         });
 

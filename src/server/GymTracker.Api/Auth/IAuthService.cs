@@ -7,7 +7,7 @@ public interface IAuthService
     /// <summary>
     /// Generates a JWT for the given username. Returns an AuthResponse containing the token and expiry.
     /// </summary>
-    Task<LoginResponse> GenerateTokenAsync(string username);
+    Task<LoginResponse> Login(string username, string password);
     
     /// <summary>
     /// Registers a user with the given username and password. Returns a RegisterResponse indicating success or failure.

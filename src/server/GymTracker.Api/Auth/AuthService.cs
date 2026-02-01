@@ -30,35 +30,27 @@ public class AuthService : IAuthService
         _rsaKey = new RsaSecurityKey(rsa);
     }
 
-    public async Task<LoginResponse> GenerateTokenAsync(string username)
+    public async Task<LoginResponse> Login(string username, string password)
     {
-        // For now, no validation; create token with sub, name, role
-        var now = DateTime.UtcNow;
-        var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 60);
-
-        var claims = new List<Claim>
+        try
         {
-            new(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, username),
-            new("role", "User")
-        };
-
-        var creds = new SigningCredentials(_rsaKey, SecurityAlgorithms.RsaSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: _settings.Issuer,
-            audience: _settings.Audience,
-            claims: claims,
-            notBefore: now,
-            expires: expires,
-            signingCredentials: creds);
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var jwt = tokenHandler.WriteToken(token);
-
-        var resp = new LoginResponse(jwt, expires, claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value,
-            "User");
-        return resp;
+            var user = await _userRepository.FindByUsernameAsync(username);
+            
+            if (user == null) return new LoginResponse("", DateTime.MinValue, "", LoginError.UserNotFound);
+            
+            var ph = new PasswordHasher<User>();
+            var result = ph.VerifyHashedPassword(user, user.PasswordHashed, password);
+            if (result == PasswordVerificationResult.Failed)
+            {
+                return new LoginResponse("", DateTime.MinValue, "", LoginError.InvalidCredentials);
+            }
+            
+            return GenerateTokenAsync(username);
+        }
+        catch (Exception e)
+        {
+            return new LoginResponse("", DateTime.MinValue, "", LoginError.UnknownError);
+        }
     }
 
     public async Task<RegisterResponse> Register(string username, string password)
@@ -91,6 +83,35 @@ public class AuthService : IAuthService
         }
         
         return new RegisterResponse(true, newUser.Id);
+    }
+    
+    private LoginResponse GenerateTokenAsync(string username)
+    {
+        var now = DateTime.UtcNow;
+        var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 60);
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.UniqueName, username),
+            new("role", "User")
+        };
+
+        var creds = new SigningCredentials(_rsaKey, SecurityAlgorithms.RsaSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
+            claims: claims,
+            notBefore: now,
+            expires: expires,
+            signingCredentials: creds);
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var jwt = tokenHandler.WriteToken(token);
+
+        var resp = new LoginResponse(jwt, expires, claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value);
+        return resp;
     }
 
     private static void ImportPemPrivateKey(RSA rsa, string pem)

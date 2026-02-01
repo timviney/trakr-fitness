@@ -106,4 +106,66 @@ public class UserRepositoryTests
         var fetched = await _repo.GetByIdAsync(user.Id);
         Assert.That(fetched, Is.Null);
     }
+
+    [Test]
+    public async Task AddAsync_ThrowsException_WhenUsernameExists()
+    {
+        var user1 = _fixture.Build<User>()
+            .With(u => u.PasswordHashed, "hashed1")
+            .With(u => u.Username, "duplicate")
+            .Create();
+
+        var user2 = _fixture.Build<User>()
+            .With(u => u.PasswordHashed, "hashed2")
+            .With(u => u.Username, "duplicate")
+            .Create();
+
+        await _repo.AddAsync(user1);
+
+        var ex = Assert.ThrowsAsync<DbUpdateException>(async () => await _repo.AddAsync(user2));
+        Assert.That(ex!.Message, Contains.Substring("already exists"));
+    }
+
+    [Test]
+    public async Task UpdateAsync_ThrowsException_WhenUsernameExists()
+    {
+        var user1 = _fixture.Build<User>()
+            .With(u => u.PasswordHashed, "hashed1")
+            .With(u => u.Username, "echo")
+            .Create();
+
+        var user2 = _fixture.Build<User>()
+            .With(u => u.PasswordHashed, "hashed2")
+            .With(u => u.Username, "foxtrot")
+            .Create();
+
+        await _repo.AddAsync(user1);
+        await _repo.AddAsync(user2);
+
+        // Try to change user2's username to user1's username
+        user2.Username = "echo";
+
+        var ex = Assert.ThrowsAsync<DbUpdateException>(async () => await _repo.UpdateAsync(user2));
+        Assert.That(ex!.Message, Contains.Substring("already exists"));
+    }
+
+    [Test]
+    public async Task UpdateAsync_AllowsSameUsername_ForSameUser()
+    {
+        var user = _fixture.Build<User>()
+            .With(u => u.PasswordHashed, "old")
+            .With(u => u.Username, "golf")
+            .Create();
+
+        await _repo.AddAsync(user);
+
+        // Update the same user with the same username should work
+        user.PasswordHashed = "new";
+
+        await _repo.UpdateAsync(user);
+
+        var fetched = await _repo.GetByIdAsync(user.Id);
+        Assert.That(fetched, Is.Not.Null);
+        Assert.That(fetched!.PasswordHashed, Is.EqualTo("new"));
+    }
 }
