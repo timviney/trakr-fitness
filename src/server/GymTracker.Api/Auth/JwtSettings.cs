@@ -4,10 +4,16 @@ public class JwtSettings
 {
     public string? Issuer { get; set; }
     public string? Audience { get; set; }
+    
     /// <summary>
     /// RSA private key in PEM format.
     /// </summary>
     public string? PrivateKeyPem { get; set; }
+    
+    /// <summary>
+    /// RSA public key in PEM format.
+    /// </summary>
+    public string? PublicKeyPem { get; set; }
 
     /// <summary>
     /// Token lifetime in minutes.

@@ -19,6 +19,12 @@ if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 
 if (runSwagger) SwaggerSetup.UseSwagger(app);
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapAuthEndpoints();
+app.MapExerciseEndpoints();
+app.MapWorkoutEndpoints();
+app.MapMuscleEndpoints();
 
 app.Run();

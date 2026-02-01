@@ -45,7 +45,7 @@ public class AuthService : IAuthService
                 return new LoginResponse("", DateTime.MinValue, "", LoginError.InvalidCredentials);
             }
             
-            return GenerateTokenAsync(username);
+            return GenerateTokenAsync(user.Id, username);
         }
         catch (Exception e)
         {
@@ -85,14 +85,14 @@ public class AuthService : IAuthService
         return new RegisterResponse(true, newUser.Id);
     }
     
-    private LoginResponse GenerateTokenAsync(string username)
+    private LoginResponse GenerateTokenAsync(Guid userId, string username)
     {
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 60);
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, username),
             new("role", "User")
         };
@@ -110,7 +110,7 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwt = tokenHandler.WriteToken(token);
 
-        var resp = new LoginResponse(jwt, expires, claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value);
+        var resp = new LoginResponse(jwt, expires, userId.ToString());
         return resp;
     }
 
