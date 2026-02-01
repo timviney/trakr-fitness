@@ -23,7 +23,7 @@ namespace GymTracker.Infrastructure.Repositories
         {
             return await db.MuscleCategories
                 .Include(mc => mc.User)
-                .Where(mc => mc.UserId == userId)
+                .Where(mc => mc.UserId == userId || mc.UserId == null)
                 .ToListAsync();
         }
 
@@ -70,7 +70,7 @@ namespace GymTracker.Infrastructure.Repositories
                 .Include(mg => mg.User)
                 .Include(mg => mg.Category)
                 .Include(mg => mg.Exercises)
-                .Where(mg => mg.UserId == userId)
+                .Where(mg => mg.UserId == userId || mg.UserId == null)
                 .ToListAsync();
         }
 
@@ -129,7 +129,7 @@ namespace GymTracker.Infrastructure.Repositories
                 .Include(e => e.User)
                 .Include(e => e.MuscleGroup)
                 .Include(e => e.SessionExercises)
-                .Where(e => e.UserId == userId)
+                .Where(e => e.UserId == userId || e.UserId == null)
                 .ToListAsync();
         }
 
