@@ -1,35 +1,35 @@
 <template>
-  <div class="login">
-    <div class="card">
-      <div class="brand">
-        <div class="logo">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo">
           <img :src="logoUrl" alt="Trakr Fitness logo" />
         </div>
         <div>
-          <h1 class="title">Trakr Fitness</h1>
-          <p class="subtitle">Please log in to continue</p>
+          <h1 class="auth-title">Trakr Fitness</h1>
+          <p class="auth-subtitle">Please log in to continue</p>
         </div>
       </div>
 
       <form @submit.prevent="onSubmit">
-        <label class="field">
+        <label class="form-field">
           <span>Email</span>
           <input v-model.trim="email" type="email" placeholder="you@example.com" required/>
         </label>
 
-        <label class="field">
+        <label class="form-field">
           <span>Password</span>
           <input v-model="password" type="password" placeholder="Your password" required/>
         </label>
 
-        <button type="submit" class="primary" :disabled="isSubmitting">
+        <button type="submit" class="btn btn-primary btn-login" :disabled="isSubmitting">
           {{ isSubmitting ? 'Logging in...' : 'Log In' }}
         </button>
       </form>
 
-      <p class="hint">
+      <p class="form-hint">
         Don’t have an account?
-        <a href="/register">Sign up here</a>.
+        <a href="/register">Sign up here</a>
       </p>
     </div>
   </div>
@@ -55,128 +55,75 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-.login {
+.auth-shell {
   min-height: 100dvh;
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  padding: 2rem;
-  background:
-    radial-gradient(600px 300px at 20% 10%, rgba(250, 204, 21, 0.08), transparent 60%),
-    #0b0f14;
-  color: #e5e7eb;
+  padding: var(--trk-space-8);
+  background: var(--trk-bg);
 }
 
-.card {
-  width: 80%;
-  max-width: 420px;
-  background: #0f141b;
-  border: 1px solid #2b323b;
-  border-radius: 14px;
-  padding: 2rem;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+.auth-card {
+  width: min(90%, 420px);
+  background: var(--trk-surface);
+  border: 1px solid var(--trk-surface-border);
+  border-radius: var(--trk-radius-lg);
+  padding: var(--trk-space-8);
+  box-shadow: var(--trk-shadow);
   position: relative;
 }
 
-.card::before {
+.auth-card::before {
   content: '';
   position: absolute;
-  inset: 3px;
-  border: 1px solid #a08206;
-  border-radius: 10px;
+  inset: 6px;
+  border: 1px solid var(--trk-accent-muted);
+  border-radius: calc(var(--trk-radius-lg) - 4px);
   pointer-events: none;
+  opacity: 0.6;
 }
 
-.brand {
+.auth-brand {
   display: grid;
-  grid-template-columns: 52px 1fr 52px;
-  gap: 1rem;
+  grid-template-columns: 72px 1fr 72px;
+  gap: var(--trk-space-4);
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--trk-space-6);
 }
 
-.logo {
-  width: 50px;
-  height: 50px;
+.auth-brand::after {
+  content: '';
+}
+
+.auth-logo {
+  width: 72px;
+  height: 72px;
   display: grid;
   place-items: center;
 }
 
-.logo img {
+.auth-logo img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
 }
 
-.title {
+.auth-title {
   text-align: center;
+  margin: 0;
 }
 
-.subtitle {
+.auth-subtitle {
   text-align: center;
   margin-top: 0.25rem;
   margin-bottom: 0;
-  color: #9ca3af;
+  color: var(--trk-text-muted);
 }
 
-.field {
-  display: grid;
-  gap: 0.35rem;
-  margin-bottom: 1rem;
-  text-align: left;
-}
-
-.field span {
-  color: #cbd5e1;
-  font-size: 0.9rem;
-}
-
-.field input {
-  padding: 0.7rem 0.8rem;
-  border-radius: 10px;
-  border: 1px solid #2b323b;
-  background: #0b1016;
-  color: #e5e7eb;
-  outline: none;
-}
-
-.field input:focus {
-  border-color: #facc15;
-  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.15);
-}
-
-.primary {
+.btn-login {
   width: 100%;
-  padding: 0.75rem 0.85rem;
-  border-radius: 10px;
-  border: none;
-  background: #facc15;
-  color: #0b0f14;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  cursor: pointer;
   text-transform: uppercase;
-}
-
-.primary:disabled {
-  opacity: 0.75;
-  cursor: not-allowed;
-}
-
-.primary:hover {
-  transform: translateY(-1px);
-  background: #fde047;
-  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
-}
-
-.hint {
-  margin-top: 1rem;
-  color: #9ca3af;
-  font-size: 0.9rem;
-}
-
-.hint a {
-  color: #facc15;
 }
 </style>

@@ -1,3 +1,28 @@
+:root {
+  color-scheme: dark;
+  --trk-bg: #0b0f14;
+  --trk-surface: #0f141b;
+  --trk-surface-border: #2b323b;
+  --trk-surface-inner: #1c222b;
+  --trk-text: #e5e7eb;
+  --trk-text-muted: #9ca3af;
+  --trk-accent: #facc15;
+  --trk-accent-strong: #fde047;
+  --trk-accent-muted: #a08206;
+  --trk-text-soft: #cbd5e1;
+  --trk-text-dark: #0b1016;
+  --trk-input-bg: #0b1016;
+  --trk-accent-ring: rgba(250, 204, 21, 0.15);
+  --trk-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --trk-radius-lg: 14px;
+  --trk-radius-md: 10px;
+  --trk-space-2: 0.5rem;
+  --trk-space-3: 0.75rem;
+  --trk-space-4: 1rem;
+  --trk-space-6: 1.5rem;
+  --trk-space-8: 2rem;
+}
+
 html, body, #app {
   height: 100%;
   margin: 0;
@@ -6,11 +31,72 @@ html, body, #app {
 
 body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  background: #f7fafc;
-  color: #0f172a;
+  background: var(--trk-bg);
+  color: var(--trk-text);
 }
 
 a {
-  color: #3b82f6;
+  color: var(--trk-accent);
   text-decoration: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--trk-space-2);
+  border-radius: var(--trk-radius-md);
+  border: none;
+  padding: 0.75rem 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.btn:hover {
+  background: var(--trk-accent-strong);
+}
+
+.btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--trk-accent);
+  color: var(--trk-text-dark);
+}
+
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: var(--trk-space-4);
+  text-align: left;
+}
+
+.form-field span {
+  color: var(--trk-text-soft);
+  font-size: 0.9rem;
+}
+
+.form-field input {
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--trk-radius-md);
+  border: 1px solid var(--trk-surface-border);
+  background: var(--trk-input-bg);
+  color: var(--trk-text);
+  outline: none;
+}
+
+.form-field input:focus {
+  border-color: var(--trk-accent);
+  box-shadow: 0 0 0 3px var(--trk-accent-ring);
+}
+
+.form-hint {
+  margin-top: var(--trk-space-4);
+  color: var(--trk-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
 }
