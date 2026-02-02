@@ -697,7 +697,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task GetWorkoutByIdAsync_WithValidId_ReturnsWorkout()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout = new Workout
             {
                 Id = Guid.NewGuid(),
@@ -734,8 +734,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task GetWorkoutsByUserIdAsync_ReturnsWorkoutsByUser()
         {
             // Arrange
-            var user1 = new User { Id = Guid.NewGuid(), Username = "user1", PasswordHashed = "hash" };
-            var user2 = new User { Id = Guid.NewGuid(), Username = "user2", PasswordHashed = "hash" };
+            var user1 = new User { Id = Guid.NewGuid(), Email = "user1", PasswordHashed = "hash" };
+            var user2 = new User { Id = Guid.NewGuid(), Email = "user2", PasswordHashed = "hash" };
             var workout1 = new Workout { Id = Guid.NewGuid(), Name = "Workout1", UserId = user1.Id };
             var workout2 = new Workout { Id = Guid.NewGuid(), Name = "Workout2", UserId = user1.Id };
             var workout3 = new Workout { Id = Guid.NewGuid(), Name = "Workout3", UserId = user2.Id };
@@ -761,7 +761,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task AddWorkoutAsync_AddsWorkout()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout = new Workout
             {
                 Id = Guid.NewGuid(),
@@ -786,7 +786,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task UpdateWorkoutAsync_UpdatesWorkout()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout = new Workout
             {
                 Id = Guid.NewGuid(),
@@ -814,7 +814,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task DeleteWorkoutAsync_DeletesWorkout()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout = new Workout
             {
                 Id = Guid.NewGuid(),
@@ -1159,7 +1159,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task AddWorkoutAsync_WithDuplicateName_ReturnsDuplicateName()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var existingWorkout = new Workout
             {
                 Id = Guid.NewGuid(),
@@ -1189,7 +1189,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task UpdateWorkoutAsync_WithDuplicateName_ReturnsDuplicateName()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout1 = new Workout
             {
                 Id = Guid.NewGuid(),

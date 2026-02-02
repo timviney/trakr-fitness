@@ -18,7 +18,7 @@ public static class DataSeeder
         var testUser = new User
         {
             Id = Guid.NewGuid(),
-            Username = "timmyv",
+            Email = "timmyv",
             PasswordHashed = ph.HashPassword(null!, "password"),
             CreatedAt = DateTime.UtcNow
         };

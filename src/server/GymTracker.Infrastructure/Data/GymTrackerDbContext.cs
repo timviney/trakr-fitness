@@ -22,9 +22,9 @@ namespace GymTracker.Infrastructure.Data
             modelBuilder.Entity<User>(b =>
             {
                 b.HasKey(u => u.Id);
-                b.Property(u => u.Username).IsRequired();
-                b.HasIndex(u => u.Username).IsUnique();
-                b.Property(u => u.Username).HasMaxLength(50);
+                b.Property(u => u.Email).IsRequired();
+                b.HasIndex(u => u.Email).IsUnique();
+                b.Property(u => u.Email).HasMaxLength(50);
                 b.HasMany(u => u.Workouts)
                     .WithOne(w => w.User)
                     .HasForeignKey(w => w.UserId)

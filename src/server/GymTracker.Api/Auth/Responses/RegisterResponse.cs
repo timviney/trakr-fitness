@@ -4,8 +4,8 @@ public record RegisterResponse(bool Success, Guid? UserId = null, RegisterError?
 
 public enum RegisterError
 {
-    UsernameTaken,
+    EmailTaken,
     WeakPassword,
-    InvalidUsername,
+    InvalidEmail,
     UnknownError
 }

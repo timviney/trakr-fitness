@@ -38,7 +38,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
 
         private async Task<(User, Workout, Session)> SetupWorkoutWithSessionAsync()
         {
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Test Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
 
@@ -125,7 +125,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task GetSessionsByWorkoutIdAsync_ReturnsSessionsByWorkout()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash" };
             var workout1 = new Workout { Id = Guid.NewGuid(), Name = "Workout1", UserId = user.Id };
             var workout2 = new Workout { Id = Guid.NewGuid(), Name = "Workout2", UserId = user.Id };
 

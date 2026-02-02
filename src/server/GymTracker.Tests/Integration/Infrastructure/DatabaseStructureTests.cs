@@ -42,7 +42,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "test-user",
+                Email = "test-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -54,7 +54,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             // Assert
             var result = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
             result.ShouldNotBeNull();
-            result.Username.ShouldBe("test-user");
+            result.Email.ShouldBe("test-user");
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             // Arrange
             var user = new User
             {
-                Username = "test-user",
+                Email = "test-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -112,7 +112,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var user = new User
             {
                 Id = userId,
-                Username = "test-user",
+                Email = "test-user",
                 PasswordHashed = "hash",
                 CreatedAt = DateTime.UtcNow
             };
@@ -185,7 +185,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var user = new User
             {
                 Id = userId,
-                Username = "test-user",
+                Email = "test-user",
                 PasswordHashed = "hash",
                 CreatedAt = DateTime.UtcNow
             };
@@ -264,7 +264,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var user = new User { Id = userId, Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = userId, Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
             var group = new MuscleGroup { Id = Guid.NewGuid(), Name = "Group", CategoryId = category.Id, UserId = null };
 
@@ -310,7 +310,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertWorkoutWithUserReference()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Push Day", UserId = user.Id };
 
             _context.Users.Add(user);
@@ -325,7 +325,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
                 .FirstOrDefaultAsync(w => w.Id == workout.Id);
             result.ShouldNotBeNull();
             result.UserId.ShouldBe(user.Id);
-            result.User.Username.ShouldBe("test-user");
+            result.User.Email.ShouldBe("test-user");
         }
 
         #endregion
@@ -336,7 +336,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertSessionWithWorkoutReference()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
 
@@ -363,7 +363,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertSessionExerciseWithReferences()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -407,7 +407,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertSetWithSessionExerciseReference()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -459,7 +459,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingUserCascadesDeleteToWorkouts()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
 
             _context.Users.Add(user);
@@ -479,7 +479,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingWorkoutCascadesDeleteToSessions()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id };
 
@@ -501,7 +501,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingSessionCascadesDeleteToSessionExercises()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -531,7 +531,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingSessionExerciseCascadesDeleteToSets()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -569,7 +569,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             // Create a complete workout session with exercises and sets
             
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "complete-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Email = "complete-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Full Body", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
 
@@ -610,7 +610,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
                 .FirstOrDefaultAsync(s => s.Id == session.Id);
 
             retrievedSession.ShouldNotBeNull();
-            retrievedSession.Workout.User.Username.ShouldBe("complete-user");
+            retrievedSession.Workout.User.Email.ShouldBe("complete-user");
             retrievedSession.SessionExercises.Count.ShouldBe(2);
 
             var firstExercise = retrievedSession.SessionExercises.First(se => se.ExerciseNumber == 1);

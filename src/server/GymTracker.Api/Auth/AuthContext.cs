@@ -21,13 +21,13 @@ public class AuthContext(IHttpContextAccessor httpContextAccessor) : IAuthContex
         }
     }
 
-    public string Username
+    public string Email
     {
         get
         {
-            var claim = _httpContext.User.FindFirst(JwtRegisteredClaimNames.UniqueName);
+            var claim = _httpContext.User.FindFirst(JwtRegisteredClaimNames.Email);
             
-            return claim?.Value ?? throw new InvalidOperationException("Username claim not found in JWT");
+            return claim?.Value ?? throw new InvalidOperationException("Email claim not found in JWT");
         }
     }
 }

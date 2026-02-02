@@ -12,17 +12,17 @@ public static class AuthEndpoints
         
         group.MapPost("/login", async (LoginRequest req, IAuthService authService) =>
         {
-            var resp = await authService.Login(req.Username, req.Password);
+            var resp = await authService.Login(req.Email, req.Password);
             return Results.Ok(resp);
         });
 
         group.MapPost("/register", async (RegisterRequest req, IAuthService authService) =>
         {
-            var resp = await authService.Register(req.Username, req.Password);
+            var resp = await authService.Register(req.Email, req.Password);
             return (resp) switch
             {
                 { Success: true } => Results.Ok(resp),
-                { Error: RegisterError.UsernameTaken } => Results.Conflict(resp),
+                { Error: RegisterError.EmailTaken } => Results.Conflict(resp),
                 _ => Results.BadRequest(resp)
             };
         });

@@ -30,11 +30,11 @@ public class AuthService : IAuthService
         _rsaKey = new RsaSecurityKey(rsa);
     }
 
-    public async Task<LoginResponse> Login(string username, string password)
+    public async Task<LoginResponse> Login(string email, string password)
     {
         try
         {
-            var result = await _userRepository.FindByUsernameAsync(username);
+            var result = await _userRepository.FindByEmailAsync(email);
             
             if (!result.IsSuccess) return new LoginResponse("", DateTime.MinValue, "", LoginError.UserNotFound);
             
@@ -45,7 +45,7 @@ public class AuthService : IAuthService
                 return new LoginResponse("", DateTime.MinValue, "", LoginError.InvalidCredentials);
             }
             
-            return GenerateTokenAsync(user.Id, username);
+            return GenerateTokenAsync(user.Id, email);
         }
         catch (Exception)
         {
@@ -53,7 +53,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<RegisterResponse> Register(string username, string password)
+    public async Task<RegisterResponse> Register(string email, string password)
     {
         User newUser;
         try
@@ -61,21 +61,21 @@ public class AuthService : IAuthService
             var ph = new PasswordHasher<User>();
             newUser = new User
             {
-                Username = username,
+                Email = email,
                 PasswordHashed = ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
             };
             var result = await _userRepository.AddAsync(newUser);
             if (!result.IsSuccess)
             {
                 return result.Status == DbResultStatus.DuplicateName 
-                    ? new RegisterResponse(false, Error: RegisterError.UsernameTaken, ErrorMessage: "Username is already taken.") 
+                    ? new RegisterResponse(false, Error: RegisterError.EmailTaken, ErrorMessage: "Email is already taken.") 
                     : new RegisterResponse(false, Error: RegisterError.UnknownError, ErrorMessage: result.Message);
             }
         }
         catch (ArgumentException e)
         {
             // Invalid input validation
-            return new RegisterResponse(false, Error: RegisterError.InvalidUsername, ErrorMessage: e.Message);
+            return new RegisterResponse(false, Error: RegisterError.InvalidEmail, ErrorMessage: e.Message);
         }
         catch (Exception e)
         {
@@ -86,7 +86,7 @@ public class AuthService : IAuthService
         return new RegisterResponse(true, newUser.Id);
     }
     
-    private LoginResponse GenerateTokenAsync(Guid userId, string username)
+    private LoginResponse GenerateTokenAsync(Guid userId, string email)
     {
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 60);
@@ -94,7 +94,7 @@ public class AuthService : IAuthService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, username),
+            new(JwtRegisteredClaimNames.Email, email),
             new("role", "User")
         };
 

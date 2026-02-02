@@ -43,7 +43,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "test-user",
+                Email = "test-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -58,7 +58,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             result.IsSuccess.ShouldBeTrue();
             result.Data.ShouldNotBeNull();
             result.Data.Id.ShouldBe(user.Id);
-            result.Data.Username.ShouldBe("test-user");
+            result.Data.Email.ShouldBe("test-user");
         }
 
         [Test]
@@ -73,13 +73,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         }
 
         [Test]
-        public async Task FindByUsernameAsync_WithValidUsername_ReturnsUser()
+        public async Task FindByEmailAsync_WithValidEmail_ReturnsUser()
         {
             // Arrange
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "unique-user",
+                Email = "unique-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -88,20 +88,20 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.FindByUsernameAsync("unique-user");
+            var result = await _repository.FindByEmailAsync("unique-user");
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
             result.Data.ShouldNotBeNull();
-            result.Data.Username.ShouldBe("unique-user");
+            result.Data.Email.ShouldBe("unique-user");
             result.Data.Id.ShouldBe(user.Id);
         }
 
         [Test]
-        public async Task FindByUsernameAsync_WithInvalidUsername_ReturnsNotFound()
+        public async Task FindByEmailAsync_WithInvalidEmail_ReturnsNotFound()
         {
             // Act
-            var result = await _repository.FindByUsernameAsync("non-existent-user");
+            var result = await _repository.FindByEmailAsync("non-existent-user");
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -109,13 +109,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         }
 
         [Test]
-        public async Task FindByUsernameAsync_IsCaseSensitive()
+        public async Task FindByEmailAsync_IsCaseSensitive()
         {
             // Arrange
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "test-user",
+                Email = "test-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -124,8 +124,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             await _context.SaveChangesAsync();
 
             // Act
-            var resultCorrectCase = await _repository.FindByUsernameAsync("test-user");
-            var resultWrongCase = await _repository.FindByUsernameAsync("TEST-USER");
+            var resultCorrectCase = await _repository.FindByEmailAsync("test-user");
+            var resultWrongCase = await _repository.FindByEmailAsync("TEST-USER");
 
             // Assert
             resultCorrectCase.IsSuccess.ShouldBeTrue();
@@ -140,7 +140,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = userId,
-                Username = "new-user",
+                Email = "new-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -152,7 +152,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             result.IsSuccess.ShouldBeTrue();
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
             dbUser.ShouldNotBeNull();
-            dbUser.Username.ShouldBe("new-user");
+            dbUser.Email.ShouldBe("new-user");
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "new-user",
+                Email = "new-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -188,7 +188,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "original-user",
+                Email = "original-user",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -196,7 +196,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            user.Username = "updated-user";
+            user.Email = "updated-user";
             user.PasswordHashed = "new-hash";
 
             // Act
@@ -206,7 +206,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             result.IsSuccess.ShouldBeTrue();
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
             dbUser.ShouldNotBeNull();
-            dbUser.Username.ShouldBe("updated-user");
+            dbUser.Email.ShouldBe("updated-user");
             dbUser.PasswordHashed.ShouldBe("new-hash");
         }
 
@@ -217,7 +217,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "user-to-delete",
+                Email = "user-to-delete",
                 PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
@@ -246,13 +246,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         }
 
         [Test]
-        public async Task AddAsync_WithDuplicateUsername_ReturnsDuplicateName()
+        public async Task AddAsync_WithDuplicateEmail_ReturnsDuplicateName()
         {
             // Arrange
             var user1 = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "duplicate-user",
+                Email = "duplicate-user",
                 PasswordHashed = "hash1",
                 CreatedAt = DateTime.UtcNow
             };
@@ -260,7 +260,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user2 = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "duplicate-user",
+                Email = "duplicate-user",
                 PasswordHashed = "hash2",
                 CreatedAt = DateTime.UtcNow
             };

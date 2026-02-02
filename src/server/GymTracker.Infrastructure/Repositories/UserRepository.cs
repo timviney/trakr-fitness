@@ -10,9 +10,9 @@ namespace GymTracker.Infrastructure.Repositories
     {
         public async Task<DbResult> AddAsync(User user)
         {
-            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == user.Username);
+            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
             if (existingUser != null)
-                return DbResult.DuplicateName($"A user with username '{user.Username}' already exists.");
+                return DbResult.DuplicateName($"A user with email '{user.Email}' already exists.");
 
             await db.Users.AddAsync(user);
             await db.SaveChangesAsync();
@@ -30,11 +30,11 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult.Ok();
         }
 
-        public async Task<DbResult<User>> FindByUsernameAsync(string username)
+        public async Task<DbResult<User>> FindByEmailAsync(string email)
         {
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user is null)
-                return DbResult<User>.NotFound($"User with username '{username}' not found.");
+                return DbResult<User>.NotFound($"User with email '{email}' not found.");
             
             return DbResult<User>.Ok(user);
         }
@@ -50,9 +50,9 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task<DbResult> UpdateAsync(User user)
         {
-            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == user.Username && u.Id != user.Id);
+            var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == user.Email && u.Id != user.Id);
             if (existingUser != null)
-                return DbResult.DuplicateName($"A user with username '{user.Username}' already exists.");
+                return DbResult.DuplicateName($"A user with email '{user.Email}' already exists.");
 
             db.Users.Update(user);
             await db.SaveChangesAsync();

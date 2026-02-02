@@ -40,7 +40,7 @@ The database schema follows a relational structure to ensure data integrity and 
 erDiagram
     USERS {
         uuid id PK
-        text username
+        text email
         text password_hashed
         timestamp created_at
     }

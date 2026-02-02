@@ -3,5 +3,5 @@
 public interface IAuthContext
 {
     Guid UserId { get; }
-    string Username { get; }
+    string Email { get; }
 }

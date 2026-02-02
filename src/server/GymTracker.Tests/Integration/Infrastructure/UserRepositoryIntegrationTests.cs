@@ -22,7 +22,7 @@ public class UserRepositoryIntegrationTests
     }
 
     [Test]
-    public async Task AddDuplicateUsername_Throws()
+    public async Task AddDuplicateEmail_Throws()
     {
         // Use SQLite in-memory which enforces uniqueness constraints
         var connection = new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:");
@@ -42,18 +42,18 @@ public class UserRepositoryIntegrationTests
             var user1 = _fixture.Build<User>()
                 .OmitAutoProperties()
                 .With(u => u.PasswordHashed, "h1")
-                .With(u => u.Username, "dup")
+                .With(u => u.Email, "dup")
                 .Create();
 
             var user2 = _fixture.Build<User>()
                 .OmitAutoProperties()
                 .With(u => u.PasswordHashed, "h2")
-                .With(u => u.Username, "dup")
+                .With(u => u.Email, "dup")
                 .Create();
 
             await sqliteRepo.AddAsync(user1);
 
-            // adding second user with same Username should fail and return DuplicateName status
+            // adding second user with same Email should fail and return DuplicateName status
             var result = await sqliteRepo.AddAsync(user2);
             result.IsSuccess.ShouldBeFalse();
             result.Status.ShouldBe(DbResultStatus.DuplicateName);
