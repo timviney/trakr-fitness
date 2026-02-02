@@ -66,7 +66,7 @@ public class AuthService : IAuthService
             };
             await _userRepository.AddAsync(newUser);
         }
-        catch (DbUpdateException e)
+        catch (InvalidOperationException e)
         {
             // Username unique constraint violation
             return new RegisterResponse(false, Error: RegisterError.UsernameTaken, ErrorMessage: "Username is already taken.");

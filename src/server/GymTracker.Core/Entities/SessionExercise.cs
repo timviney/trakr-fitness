@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace GymTracker.Core.Entities
 {
@@ -11,8 +12,11 @@ namespace GymTracker.Core.Entities
         public int ExerciseNumber { get; set; }
 
         // Navigation properties
+        [JsonIgnore]
         public Session Session { get; set; } = null!;
+        [JsonIgnore]
         public Exercise Exercise { get; set; } = null!;
+        [JsonIgnore]
         public ICollection<Set> Sets { get; set; } = new List<Set>();
     }
 }

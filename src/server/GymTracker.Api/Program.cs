@@ -15,6 +15,9 @@ if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);
 
 var app = builder.Build();
 
+// Seed default data if enabled
+await DbSetup.SeedDataAsync(app);
+
 if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 
 if (runSwagger) SwaggerSetup.UseSwagger(app);

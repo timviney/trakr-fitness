@@ -256,7 +256,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             await _context.SaveChangesAsync();
 
             // Act & Assert
-            Assert.ThrowsAsync<DbUpdateException>(async () => await _repository.AddAsync(user2));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await _repository.AddAsync(user2));
         }
     }
 }

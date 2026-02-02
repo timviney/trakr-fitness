@@ -52,7 +52,7 @@ public class UserRepositoryIntegrationTests
             await sqliteRepo.AddAsync(user1);
 
             // adding second user with same Username should fail due to unique index
-            Assert.ThrowsAsync<DbUpdateException>(async () => await sqliteRepo.AddAsync(user2));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await sqliteRepo.AddAsync(user2));
         }
         finally
         {

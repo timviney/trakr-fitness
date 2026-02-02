@@ -15,7 +15,7 @@ namespace GymTracker.Infrastructure.Repositories
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == user.Username);
             if (existingUser != null)
             {
-                throw new DbUpdateException($"A user with username '{user.Username}' already exists.");
+                throw new InvalidOperationException($"A user with username '{user.Username}' already exists.");
             }
 
             await db.Users.AddAsync(user);
@@ -46,7 +46,7 @@ namespace GymTracker.Infrastructure.Repositories
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Username == user.Username && u.Id != user.Id);
             if (existingUser != null)
             {
-                throw new DbUpdateException($"A user with username '{user.Username}' already exists.");
+                throw new InvalidOperationException($"A user with username '{user.Username}' already exists.");
             }
 
             db.Users.Update(user);

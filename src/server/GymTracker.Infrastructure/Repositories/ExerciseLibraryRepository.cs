@@ -36,12 +36,20 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task AddMuscleCategoryAsync(MuscleCategory category)
         {
+            var existing = (await GetMuscleCategoriesByUserIdAsync(category.UserId))
+                .FirstOrDefault(mc => mc.Name == category.Name);
+            if (existing is not null) return;
+            
             await db.MuscleCategories.AddAsync(category);
             await db.SaveChangesAsync();
         }
 
         public async Task UpdateMuscleCategoryAsync(MuscleCategory category)
         {
+            var existing = (await GetMuscleCategoriesByUserIdAsync(category.UserId))
+                .FirstOrDefault(mc => mc.Name == category.Name && mc.Id != category.Id);
+            if (existing is not null) return;
+            
             db.MuscleCategories.Update(category);
             await db.SaveChangesAsync();
         }
@@ -95,12 +103,20 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task AddMuscleGroupAsync(MuscleGroup group)
         {
+            var existing = (await GetMuscleGroupsByUserIdAsync(group.UserId))
+                .FirstOrDefault(mg => mg.Name == group.Name);
+            if (existing is not null) return;
+            
             await db.MuscleGroups.AddAsync(group);
             await db.SaveChangesAsync();
         }
 
         public async Task UpdateMuscleGroupAsync(MuscleGroup group)
         {
+            var existing = (await GetMuscleGroupsByUserIdAsync(group.UserId))
+                .FirstOrDefault(mg => mg.Name == group.Name && mg.Id != group.Id);
+            if (existing is not null) return;
+            
             db.MuscleGroups.Update(group);
             await db.SaveChangesAsync();
         }
@@ -154,12 +170,20 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task AddExerciseAsync(Exercise exercise)
         {
+            var existing = (await GetExercisesByUserIdAsync(exercise.UserId))
+                .FirstOrDefault(e => e.Name == exercise.Name);
+            if (existing is not null) return;
+            
             await db.Exercises.AddAsync(exercise);
             await db.SaveChangesAsync();
         }
 
         public async Task UpdateExerciseAsync(Exercise exercise)
         {
+            var existing = (await GetExercisesByUserIdAsync(exercise.UserId))
+                .FirstOrDefault(e => e.Name == exercise.Name && e.Id != exercise.Id);
+            if (existing is not null) return;
+            
             db.Exercises.Update(exercise);
             await db.SaveChangesAsync();
         }
@@ -196,12 +220,20 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task AddWorkoutAsync(Workout workout)
         {
+            var existing = (await GetWorkoutsByUserIdAsync(workout.UserId))
+                .FirstOrDefault(w => w.Name == workout.Name);
+            if (existing is not null) return;
+            
             await db.Workouts.AddAsync(workout);
             await db.SaveChangesAsync();
         }
 
         public async Task UpdateWorkoutAsync(Workout workout)
         {
+            var existing = (await GetWorkoutsByUserIdAsync(workout.UserId))
+                .FirstOrDefault(w => w.Name == workout.Name && w.Id != workout.Id);
+            if (existing is not null) return;
+            
             db.Workouts.Update(workout);
             await db.SaveChangesAsync();
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace GymTracker.Core.Entities
 {
@@ -9,7 +10,9 @@ namespace GymTracker.Core.Entities
         public string Name { get; set; } = null!;
 
         // Navigation properties
+        [JsonIgnore]
         public User? User { get; set; }
+        [JsonIgnore]
         public ICollection<MuscleGroup> MuscleGroups { get; set; } = new List<MuscleGroup>();
     }
 }

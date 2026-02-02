@@ -32,4 +32,21 @@ public static class DbSetup
         webApplicationBuilder.Services.AddScoped<IExerciseLibraryRepository, ExerciseLibraryRepository>();
         webApplicationBuilder.Services.AddScoped<ISessionRepository, SessionRepository>();
     }
+
+    public static async Task SeedDataAsync(WebApplication app)
+    {
+        var seedDefaultData = app.Configuration.GetValue<bool>("SeedDefaultData");
+        
+        if (!seedDefaultData)
+            return;
+
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
+            
+        // Apply any pending migrations
+        // await context.Database.MigrateAsync();
+            
+        // Seed the data
+        await DataSeeder.SeedDefaultDataAsync(context);
+    }
 }

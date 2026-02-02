@@ -758,5 +758,361 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         }
 
         #endregion
+
+        #region Duplicate Name Tests
+
+        [Test]
+        public async Task AddMuscleCategoryAsync_WithDuplicateName_DoesNotAdd()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var existingCategory = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = userId
+            };
+            _context.MuscleCategories.Add(existingCategory);
+            await _context.SaveChangesAsync();
+
+            var duplicateCategory = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = userId
+            };
+
+            // Act
+            await _repository.AddMuscleCategoryAsync(duplicateCategory);
+
+            // Assert
+            var result = await _context.MuscleCategories.CountAsync(x => x.Name == "Chest" && x.UserId == userId);
+            Assert.That(result, Is.EqualTo(1), "Should not have added duplicate");
+        }
+
+        [Test]
+        public async Task AddMuscleCategoryAsync_WithDuplicateNameSystemDefaults_DoesNotAdd()
+        {
+            // Arrange
+            var existingCategory = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = null
+            };
+            _context.MuscleCategories.Add(existingCategory);
+            await _context.SaveChangesAsync();
+
+            var duplicateCategory = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = null
+            };
+
+            // Act
+            await _repository.AddMuscleCategoryAsync(duplicateCategory);
+
+            // Assert
+            var result = await _context.MuscleCategories.CountAsync(x => x.Name == "Chest" && x.UserId == null);
+            Assert.That(result, Is.EqualTo(1), "Should not have added duplicate system default");
+        }
+
+        [Test]
+        public async Task AddMuscleCategoryAsync_WithSameNameDifferentUser_Adds()
+        {
+            // Arrange
+            var userId1 = Guid.NewGuid();
+            var userId2 = Guid.NewGuid();
+            var category1 = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = userId1
+            };
+            _context.MuscleCategories.Add(category1);
+            await _context.SaveChangesAsync();
+
+            var category2 = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = userId2
+            };
+
+            // Act
+            await _repository.AddMuscleCategoryAsync(category2);
+
+            // Assert
+            var result = await _context.MuscleCategories.CountAsync(x => x.Name == "Chest");
+            Assert.That(result, Is.EqualTo(2), "Should allow same name for different users");
+        }
+
+        [Test]
+        public async Task UpdateMuscleCategoryAsync_WithDuplicateName_DoesNotUpdate()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var category1 = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = userId
+            };
+            var category2 = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Back",
+                UserId = userId
+            };
+            _context.MuscleCategories.AddRange(category1, category2);
+            await _context.SaveChangesAsync();
+
+            category2.Name = "Chest"; // Try to rename to existing name
+
+            // Act
+            await _repository.UpdateMuscleCategoryAsync(category2);
+
+            // Assert
+            var result = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category2.Id);
+            Assert.That(result.Name, Is.EqualTo("Back"), "Should not have updated to duplicate name");
+        }
+
+        [Test]
+        public async Task UpdateMuscleCategoryAsync_WithSameName_Updates()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var category = new MuscleCategory
+            {
+                Id = Guid.NewGuid(),
+                Name = "Chest",
+                UserId = userId
+            };
+            _context.MuscleCategories.Add(category);
+            await _context.SaveChangesAsync();
+
+            category.Name = "Updated Chest";
+
+            // Act
+            await _repository.UpdateMuscleCategoryAsync(category);
+
+            // Assert
+            var result = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category.Id);
+            Assert.That(result.Name, Is.EqualTo("Updated Chest"), "Should allow updating the same item");
+        }
+
+        [Test]
+        public async Task AddMuscleGroupAsync_WithDuplicateName_DoesNotAdd()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
+            var existingGroup = new MuscleGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = "Upper Chest",
+                CategoryId = category.Id,
+                UserId = userId
+            };
+            _context.MuscleCategories.Add(category);
+            _context.MuscleGroups.Add(existingGroup);
+            await _context.SaveChangesAsync();
+
+            var duplicateGroup = new MuscleGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = "Upper Chest",
+                CategoryId = category.Id,
+                UserId = userId
+            };
+
+            // Act
+            await _repository.AddMuscleGroupAsync(duplicateGroup);
+
+            // Assert
+            var result = await _context.MuscleGroups.CountAsync(x => x.Name == "Upper Chest" && x.UserId == userId);
+            Assert.That(result, Is.EqualTo(1), "Should not have added duplicate");
+        }
+
+        [Test]
+        public async Task UpdateMuscleGroupAsync_WithDuplicateName_DoesNotUpdate()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
+            var group1 = new MuscleGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = "Upper Chest",
+                CategoryId = category.Id,
+                UserId = userId
+            };
+            var group2 = new MuscleGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = "Lower Chest",
+                CategoryId = category.Id,
+                UserId = userId
+            };
+            _context.MuscleCategories.Add(category);
+            _context.MuscleGroups.AddRange(group1, group2);
+            await _context.SaveChangesAsync();
+
+            group2.Name = "Upper Chest";
+
+            // Act
+            await _repository.UpdateMuscleGroupAsync(group2);
+
+            // Assert
+            var result = await _context.MuscleGroups.FirstOrDefaultAsync(x => x.Id == group2.Id);
+            Assert.That(result.Name, Is.EqualTo("Lower Chest"), "Should not have updated to duplicate name");
+        }
+
+        [Test]
+        public async Task AddExerciseAsync_WithDuplicateName_DoesNotAdd()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
+            var muscleGroup = new MuscleGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = "Group",
+                CategoryId = category.Id,
+                UserId = null
+            };
+            var existingExercise = new Exercise
+            {
+                Id = Guid.NewGuid(),
+                Name = "Bench Press",
+                MuscleGroupId = muscleGroup.Id,
+                UserId = userId
+            };
+            _context.MuscleCategories.Add(category);
+            _context.MuscleGroups.Add(muscleGroup);
+            _context.Exercises.Add(existingExercise);
+            await _context.SaveChangesAsync();
+
+            var duplicateExercise = new Exercise
+            {
+                Id = Guid.NewGuid(),
+                Name = "Bench Press",
+                MuscleGroupId = muscleGroup.Id,
+                UserId = userId
+            };
+
+            // Act
+            await _repository.AddExerciseAsync(duplicateExercise);
+
+            // Assert
+            var result = await _context.Exercises.CountAsync(x => x.Name == "Bench Press" && x.UserId == userId);
+            Assert.That(result, Is.EqualTo(1), "Should not have added duplicate");
+        }
+
+        [Test]
+        public async Task UpdateExerciseAsync_WithDuplicateName_DoesNotUpdate()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
+            var muscleGroup = new MuscleGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = "Group",
+                CategoryId = category.Id,
+                UserId = null
+            };
+            var exercise1 = new Exercise
+            {
+                Id = Guid.NewGuid(),
+                Name = "Bench Press",
+                MuscleGroupId = muscleGroup.Id,
+                UserId = userId
+            };
+            var exercise2 = new Exercise
+            {
+                Id = Guid.NewGuid(),
+                Name = "Dumbbell Press",
+                MuscleGroupId = muscleGroup.Id,
+                UserId = userId
+            };
+            _context.MuscleCategories.Add(category);
+            _context.MuscleGroups.Add(muscleGroup);
+            _context.Exercises.AddRange(exercise1, exercise2);
+            await _context.SaveChangesAsync();
+
+            exercise2.Name = "Bench Press";
+
+            // Act
+            await _repository.UpdateExerciseAsync(exercise2);
+
+            // Assert
+            var result = await _context.Exercises.FirstOrDefaultAsync(x => x.Id == exercise2.Id);
+            Assert.That(result.Name, Is.EqualTo("Dumbbell Press"), "Should not have updated to duplicate name");
+        }
+
+        [Test]
+        public async Task AddWorkoutAsync_WithDuplicateName_DoesNotAdd()
+        {
+            // Arrange
+            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash" };
+            var existingWorkout = new Workout
+            {
+                Id = Guid.NewGuid(),
+                Name = "Push Day",
+                UserId = user.Id
+            };
+            _context.Users.Add(user);
+            _context.Workouts.Add(existingWorkout);
+            await _context.SaveChangesAsync();
+
+            var duplicateWorkout = new Workout
+            {
+                Id = Guid.NewGuid(),
+                Name = "Push Day",
+                UserId = user.Id
+            };
+
+            // Act
+            await _repository.AddWorkoutAsync(duplicateWorkout);
+
+            // Assert
+            var result = await _context.Workouts.CountAsync(x => x.Name == "Push Day" && x.UserId == user.Id);
+            Assert.That(result, Is.EqualTo(1), "Should not have added duplicate");
+        }
+
+        [Test]
+        public async Task UpdateWorkoutAsync_WithDuplicateName_DoesNotUpdate()
+        {
+            // Arrange
+            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash" };
+            var workout1 = new Workout
+            {
+                Id = Guid.NewGuid(),
+                Name = "Push Day",
+                UserId = user.Id
+            };
+            var workout2 = new Workout
+            {
+                Id = Guid.NewGuid(),
+                Name = "Pull Day",
+                UserId = user.Id
+            };
+            _context.Users.Add(user);
+            _context.Workouts.AddRange(workout1, workout2);
+            await _context.SaveChangesAsync();
+
+            workout2.Name = "Push Day";
+
+            // Act
+            await _repository.UpdateWorkoutAsync(workout2);
+
+            // Assert
+            var result = await _context.Workouts.FirstOrDefaultAsync(x => x.Id == workout2.Id);
+            Assert.That(result.Name, Is.EqualTo("Pull Day"), "Should not have updated to duplicate name");
+        }
+
+        #endregion
     }
 }
