@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoFixture;
+﻿using AutoFixture;
 using GymTracker.Core.Entities;
 using GymTracker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -45,8 +41,8 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "testuser",
-                PasswordHashed = "hashedpassword",
+                Username = "test-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -57,7 +53,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             // Assert
             var result = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Username, Is.EqualTo("testuser"));
+            Assert.That(result.Username, Is.EqualTo("test-user"));
         }
 
         [Test]
@@ -66,8 +62,8 @@ namespace GymTracker.Tests.Integration.Infrastructure
             // Arrange
             var user = new User
             {
-                Username = "testuser",
-                PasswordHashed = "hashedpassword",
+                Username = "test-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -114,7 +110,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var user = new User
             {
                 Id = userId,
-                Username = "testuser",
+                Username = "test-user",
                 PasswordHashed = "hash",
                 CreatedAt = DateTime.UtcNow
             };
@@ -187,7 +183,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var user = new User
             {
                 Id = userId,
-                Username = "testuser",
+                Username = "test-user",
                 PasswordHashed = "hash",
                 CreatedAt = DateTime.UtcNow
             };
@@ -264,7 +260,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var user = new User { Id = userId, Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = userId, Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
             var group = new MuscleGroup { Id = Guid.NewGuid(), Name = "Group", CategoryId = category.Id, UserId = null };
 
@@ -308,7 +304,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertWorkoutWithUserReference()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Push Day", UserId = user.Id };
 
             _context.Users.Add(user);
@@ -323,7 +319,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
                 .FirstOrDefaultAsync(w => w.Id == workout.Id);
             Assert.That(result, Is.Not.Null);
             Assert.That(result.UserId, Is.EqualTo(user.Id));
-            Assert.That(result.User.Username, Is.EqualTo("testuser"));
+            Assert.That(result.User.Username, Is.EqualTo("test-user"));
         }
 
         #endregion
@@ -334,7 +330,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertSessionWithWorkoutReference()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
 
@@ -361,7 +357,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertSessionExerciseWithReferences()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -405,7 +401,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task CanInsertSetWithSessionExerciseReference()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -457,7 +453,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingUserCascadesDeleteToWorkouts()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
 
             _context.Users.Add(user);
@@ -477,7 +473,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingWorkoutCascadesDeleteToSessions()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id };
 
@@ -499,7 +495,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingSessionCascadesDeleteToSessionExercises()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -529,7 +525,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
         public async Task DeletingSessionExerciseCascadesDeleteToSets()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id };
             var category = new MuscleCategory { Id = Guid.NewGuid(), Name = "Category", UserId = null };
@@ -567,7 +563,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
             // Create a complete workout session with exercises and sets
             
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "completeuser", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
+            var user = new User { Id = Guid.NewGuid(), Username = "complete-user", PasswordHashed = "hash", CreatedAt = DateTime.UtcNow };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Full Body", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
 
@@ -608,7 +604,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
                 .FirstOrDefaultAsync(s => s.Id == session.Id);
 
             Assert.That(retrievedSession, Is.Not.Null);
-            Assert.That(retrievedSession.Workout.User.Username, Is.EqualTo("completeuser"));
+            Assert.That(retrievedSession.Workout.User.Username, Is.EqualTo("complete-user"));
             Assert.That(retrievedSession.SessionExercises, Has.Count.EqualTo(2));
             
             var firstExercise = retrievedSession.SessionExercises.First(se => se.ExerciseNumber == 1);

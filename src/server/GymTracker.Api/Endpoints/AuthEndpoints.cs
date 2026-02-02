@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using GymTracker.Api.Auth;
+﻿using GymTracker.Api.Auth;
 using GymTracker.Api.Auth.Requests;
 using GymTracker.Api.Auth.Responses;
 

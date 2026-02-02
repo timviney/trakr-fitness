@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using AutoFixture;
+﻿using AutoFixture;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Results;
 using GymTracker.Infrastructure.Data;
@@ -13,9 +11,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
     [TestFixture]
     public class UserRepositoryTests
     {
-        private GymTrackerDbContext _context;
-        private UserRepository _repository;
-        private Fixture _fixture;
+        private GymTrackerDbContext _context = null!;
+        private UserRepository _repository = null!;
+        private Fixture _fixture = null!;
 
         [SetUp]
         public void Setup()
@@ -44,8 +42,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "testuser",
-                PasswordHashed = "hashedpassword",
+                Username = "test-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -58,7 +56,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             // Assert
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Data!.Id, Is.EqualTo(user.Id));
-            Assert.That(result.Data.Username, Is.EqualTo("testuser"));
+            Assert.That(result.Data.Username, Is.EqualTo("test-user"));
         }
 
         [Test]
@@ -79,8 +77,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "uniqueuser",
-                PasswordHashed = "hashedpassword",
+                Username = "unique-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -88,11 +86,11 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.FindByUsernameAsync("uniqueuser");
+            var result = await _repository.FindByUsernameAsync("unique-user");
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data!.Username, Is.EqualTo("uniqueuser"));
+            Assert.That(result.Data!.Username, Is.EqualTo("unique-user"));
             Assert.That(result.Data.Id, Is.EqualTo(user.Id));
         }
 
@@ -100,7 +98,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task FindByUsernameAsync_WithInvalidUsername_ReturnsNotFound()
         {
             // Act
-            var result = await _repository.FindByUsernameAsync("nonexistentuser");
+            var result = await _repository.FindByUsernameAsync("non-existent-user");
 
             // Assert
             Assert.That(result.IsSuccess, Is.False);
@@ -114,8 +112,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "TestUser",
-                PasswordHashed = "hashedpassword",
+                Username = "test-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -123,8 +121,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             await _context.SaveChangesAsync();
 
             // Act
-            var resultCorrectCase = await _repository.FindByUsernameAsync("TestUser");
-            var resultWrongCase = await _repository.FindByUsernameAsync("testuser");
+            var resultCorrectCase = await _repository.FindByUsernameAsync("test-user");
+            var resultWrongCase = await _repository.FindByUsernameAsync("test-user");
 
             // Assert
             Assert.That(resultCorrectCase.IsSuccess, Is.True);
@@ -139,8 +137,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = userId,
-                Username = "newuser",
-                PasswordHashed = "hashedpassword",
+                Username = "new-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -151,7 +149,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             Assert.That(result.IsSuccess, Is.True);
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
             Assert.That(dbUser, Is.Not.Null);
-            Assert.That(dbUser!.Username, Is.EqualTo("newuser"));
+            Assert.That(dbUser!.Username, Is.EqualTo("new-user"));
         }
 
         [Test]
@@ -161,8 +159,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "newuser",
-                PasswordHashed = "hashedpassword",
+                Username = "new-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -186,16 +184,16 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "originaluser",
-                PasswordHashed = "hashedpassword",
+                Username = "original-user",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            user.Username = "updateduser";
-            user.PasswordHashed = "newhash";
+            user.Username = "updated-user";
+            user.PasswordHashed = "new-hash";
 
             // Act
             var result = await _repository.UpdateAsync(user);
@@ -203,8 +201,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             // Assert
             Assert.That(result.IsSuccess, Is.True);
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
-            Assert.That(dbUser.Username, Is.EqualTo("updateduser"));
-            Assert.That(dbUser.PasswordHashed, Is.EqualTo("newhash"));
+            Assert.That(dbUser.Username, Is.EqualTo("updated-user"));
+            Assert.That(dbUser.PasswordHashed, Is.EqualTo("new-hash"));
         }
 
         [Test]
@@ -214,8 +212,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "usertoDelete",
-                PasswordHashed = "hashedpassword",
+                Username = "user-to-delete",
+                PasswordHashed = "hashed-password",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -249,7 +247,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user1 = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "duplicateuser",
+                Username = "duplicate-user",
                 PasswordHashed = "hash1",
                 CreatedAt = DateTime.UtcNow
             };
@@ -257,7 +255,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var user2 = new User
             {
                 Id = Guid.NewGuid(),
-                Username = "duplicateuser",
+                Username = "duplicate-user",
                 PasswordHashed = "hash2",
                 CreatedAt = DateTime.UtcNow
             };

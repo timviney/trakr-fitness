@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoFixture;
+﻿using AutoFixture;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Results;
 using GymTracker.Infrastructure.Data;
@@ -15,9 +11,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
     [TestFixture]
     public class SessionRepositoryTests
     {
-        private GymTrackerDbContext _context;
-        private SessionRepository _repository;
-        private Fixture _fixture;
+        private GymTrackerDbContext _context = null!;
+        private SessionRepository _repository = null!;
+        private Fixture _fixture = null!;
 
         [SetUp]
         public void Setup()
@@ -41,7 +37,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
 
         private async Task<(User, Workout, Session)> SetupWorkoutWithSessionAsync()
         {
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
             var workout = new Workout { Id = Guid.NewGuid(), Name = "Test Workout", UserId = user.Id };
             var session = new Session { Id = Guid.NewGuid(), WorkoutId = workout.Id, CreatedAt = DateTime.UtcNow };
 
@@ -126,7 +122,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         public async Task GetSessionsByWorkoutIdAsync_ReturnsSessionsByWorkout()
         {
             // Arrange
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHashed = "hash" };
+            var user = new User { Id = Guid.NewGuid(), Username = "test-user", PasswordHashed = "hash" };
             var workout1 = new Workout { Id = Guid.NewGuid(), Name = "Workout1", UserId = user.Id };
             var workout2 = new Workout { Id = Guid.NewGuid(), Name = "Workout2", UserId = user.Id };
 

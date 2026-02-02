@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
 using GymTracker.Core.Results;
