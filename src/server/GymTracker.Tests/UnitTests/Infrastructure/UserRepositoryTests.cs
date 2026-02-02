@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using AutoFixture;
 using GymTracker.Core.Entities;
+using GymTracker.Core.Results;
 using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -55,19 +56,20 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetByIdAsync(user.Id);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Id, Is.EqualTo(user.Id));
-            Assert.That(result.Username, Is.EqualTo("testuser"));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data!.Id, Is.EqualTo(user.Id));
+            Assert.That(result.Data.Username, Is.EqualTo("testuser"));
         }
 
         [Test]
-        public async Task GetByIdAsync_WithInvalidId_ReturnsNull()
+        public async Task GetByIdAsync_WithInvalidId_ReturnsNotFound()
         {
             // Act
             var result = await _repository.GetByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result, Is.Null);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         [Test]
@@ -89,19 +91,20 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.FindByUsernameAsync("uniqueuser");
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Username, Is.EqualTo("uniqueuser"));
-            Assert.That(result.Id, Is.EqualTo(user.Id));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data!.Username, Is.EqualTo("uniqueuser"));
+            Assert.That(result.Data.Id, Is.EqualTo(user.Id));
         }
 
         [Test]
-        public async Task FindByUsernameAsync_WithInvalidUsername_ReturnsNull()
+        public async Task FindByUsernameAsync_WithInvalidUsername_ReturnsNotFound()
         {
             // Act
             var result = await _repository.FindByUsernameAsync("nonexistentuser");
 
             // Assert
-            Assert.That(result, Is.Null);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         [Test]
@@ -124,8 +127,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var resultWrongCase = await _repository.FindByUsernameAsync("testuser");
 
             // Assert
-            Assert.That(resultCorrectCase, Is.Not.Null);
-            Assert.That(resultWrongCase, Is.Null);
+            Assert.That(resultCorrectCase.IsSuccess, Is.True);
+            Assert.That(resultWrongCase.IsSuccess, Is.False);
         }
 
         [Test]
@@ -142,12 +145,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             };
 
             // Act
-            await _repository.AddAsync(user);
+            var result = await _repository.AddAsync(user);
 
             // Assert
-            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Username, Is.EqualTo("newuser"));
+            Assert.That(result.IsSuccess, Is.True);
+            var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            Assert.That(dbUser, Is.Not.Null);
+            Assert.That(dbUser!.Username, Is.EqualTo("newuser"));
         }
 
         [Test]
@@ -194,12 +198,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             user.PasswordHashed = "newhash";
 
             // Act
-            await _repository.UpdateAsync(user);
+            var result = await _repository.UpdateAsync(user);
 
             // Assert
-            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
-            Assert.That(result.Username, Is.EqualTo("updateduser"));
-            Assert.That(result.PasswordHashed, Is.EqualTo("newhash"));
+            Assert.That(result.IsSuccess, Is.True);
+            var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
+            Assert.That(dbUser.Username, Is.EqualTo("updateduser"));
+            Assert.That(dbUser.PasswordHashed, Is.EqualTo("newhash"));
         }
 
         [Test]
@@ -218,22 +223,27 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             await _context.SaveChangesAsync();
 
             // Act
-            await _repository.DeleteAsync(user.Id);
+            var result = await _repository.DeleteAsync(user.Id);
 
             // Assert
-            var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
-            Assert.That(result, Is.Null);
+            Assert.That(result.IsSuccess, Is.True);
+            var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
+            Assert.That(dbUser, Is.Null);
         }
 
         [Test]
-        public async Task DeleteAsync_WithNonExistentId_DoesNotThrow()
+        public async Task DeleteAsync_WithNonExistentId_ReturnsNotFound()
         {
-            // Act & Assert
-            Assert.DoesNotThrowAsync(async () => await _repository.DeleteAsync(Guid.NewGuid()));
+            // Act
+            var result = await _repository.DeleteAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         [Test]
-        public async Task AddAsync_WithDuplicateUsername_ThrowsException()
+        public async Task AddAsync_WithDuplicateUsername_ReturnsDuplicateName()
         {
             // Arrange
             var user1 = new User
@@ -255,8 +265,12 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             _context.Users.Add(user1);
             await _context.SaveChangesAsync();
 
-            // Act & Assert
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await _repository.AddAsync(user2));
+            // Act
+            var result = await _repository.AddAsync(user2);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
         }
     }
 }

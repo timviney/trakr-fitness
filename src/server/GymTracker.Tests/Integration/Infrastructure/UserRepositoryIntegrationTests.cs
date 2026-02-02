@@ -4,6 +4,7 @@ using NUnit.Framework;
 using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using GymTracker.Core.Entities;
+using GymTracker.Core.Results;
 
 namespace GymTracker.Tests.Integration.Infrastructure;
 
@@ -51,8 +52,10 @@ public class UserRepositoryIntegrationTests
 
             await sqliteRepo.AddAsync(user1);
 
-            // adding second user with same Username should fail due to unique index
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await sqliteRepo.AddAsync(user2));
+            // adding second user with same Username should fail and return DuplicateName status
+            var result = await sqliteRepo.AddAsync(user2);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
         }
         finally
         {

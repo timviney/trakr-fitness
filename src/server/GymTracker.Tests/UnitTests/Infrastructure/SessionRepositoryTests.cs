@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoFixture;
 using GymTracker.Core.Entities;
+using GymTracker.Core.Results;
 using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -78,19 +79,20 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionByIdAsync(session.Id);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Id, Is.EqualTo(session.Id));
-            Assert.That(result.WorkoutId, Is.EqualTo(session.WorkoutId));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.Id, Is.EqualTo(session.Id));
+            Assert.That(result.Data.WorkoutId, Is.EqualTo(session.WorkoutId));
         }
 
         [Test]
-        public async Task GetSessionByIdAsync_WithInvalidId_ReturnsNull()
+        public async Task GetSessionByIdAsync_WithInvalidId_ReturnsNotFound()
         {
             // Act
             var result = await _repository.GetSessionByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result, Is.Null);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         [Test]
@@ -115,9 +117,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionByIdAsync(session.Id);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.SessionExercises, Has.Count.EqualTo(1));
-            Assert.That(result.SessionExercises.First().Exercise.Name, Is.EqualTo(exercise.Name));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.SessionExercises, Has.Count.EqualTo(1));
+            Assert.That(result.Data.SessionExercises.First().Exercise.Name, Is.EqualTo(exercise.Name));
         }
 
         [Test]
@@ -143,8 +145,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionsByWorkoutIdAsync(workout1.Id);
 
             // Assert
-            Assert.That(result, Has.Count.EqualTo(2));
-            var ids = result.Select(x => x.Id).ToList();
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data, Has.Count.EqualTo(2));
+            var ids = result.Data.Select(x => x.Id).ToList();
             Assert.That(ids, Does.Contain(session1.Id));
             Assert.That(ids, Does.Contain(session2.Id));
         }
@@ -163,12 +166,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             };
 
             // Act
-            await _repository.AddSessionAsync(newSession);
+            var result = await _repository.AddSessionAsync(newSession);
 
             // Assert
-            var result = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == newSession.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.WorkoutId, Is.EqualTo(workout.Id));
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSession = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == newSession.Id);
+            Assert.That(dbSession, Is.Not.Null);
+            Assert.That(dbSession.WorkoutId, Is.EqualTo(workout.Id));
         }
 
         [Test]
@@ -182,11 +186,12 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             session.CreatedAt = newCreatedAt;
 
             // Act
-            await _repository.UpdateSessionAsync(session);
+            var result = await _repository.UpdateSessionAsync(session);
 
             // Assert
-            var result = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
-            Assert.That(result.CreatedAt, Is.EqualTo(newCreatedAt));
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSession = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
+            Assert.That(dbSession.CreatedAt, Is.EqualTo(newCreatedAt));
         }
 
         [Test]
@@ -196,18 +201,23 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var (_, _, session) = await SetupWorkoutWithSessionAsync();
 
             // Act
-            await _repository.DeleteSessionAsync(session.Id);
+            var result = await _repository.DeleteSessionAsync(session.Id);
 
             // Assert
-            var result = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
-            Assert.That(result, Is.Null);
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSession = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
+            Assert.That(dbSession, Is.Null);
         }
 
         [Test]
-        public async Task DeleteSessionAsync_WithNonExistentId_DoesNotThrow()
+        public async Task DeleteSessionAsync_WithNonExistentId_ReturnsNotFound()
         {
-            // Act & Assert
-            Assert.DoesNotThrowAsync(async () => await _repository.DeleteSessionAsync(Guid.NewGuid()));
+            // Act
+            var result = await _repository.DeleteSessionAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         #endregion
@@ -236,19 +246,20 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionExerciseByIdAsync(sessionExercise.Id);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Id, Is.EqualTo(sessionExercise.Id));
-            Assert.That(result.ExerciseNumber, Is.EqualTo(1));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.Id, Is.EqualTo(sessionExercise.Id));
+            Assert.That(result.Data.ExerciseNumber, Is.EqualTo(1));
         }
 
         [Test]
-        public async Task GetSessionExerciseByIdAsync_WithInvalidId_ReturnsNull()
+        public async Task GetSessionExerciseByIdAsync_WithInvalidId_ReturnsNotFound()
         {
             // Act
             var result = await _repository.GetSessionExerciseByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result, Is.Null);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         [Test]
@@ -281,39 +292,101 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionExercisesBySessionIdAsync(session.Id);
 
             // Assert
-            Assert.That(result, Has.Count.EqualTo(2));
-            var exerciseNumbers = result.Select(x => x.ExerciseNumber).OrderBy(x => x).ToList();
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data, Has.Count.EqualTo(2));
+            var exerciseNumbers = result.Data.Select(x => x.ExerciseNumber).OrderBy(x => x).ToList();
             Assert.That(exerciseNumbers, Is.EqualTo(new[] { 1, 2 }));
-        }
-
-        [Test]
-        public async Task GetSessionExercisesBySessionIdAsync_OrdersByExerciseNumber()
-        {
-            // ...existing code...
         }
 
         [Test]
         public async Task AddSessionExerciseAsync_AddsSessionExercise()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            // Act
+            var result = await _repository.AddSessionExerciseAsync(sessionExercise);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSessionExercise = await _context.SessionExercises.FirstOrDefaultAsync(x => x.Id == sessionExercise.Id);
+            Assert.That(dbSessionExercise, Is.Not.Null);
         }
 
         [Test]
         public async Task UpdateSessionExerciseAsync_UpdatesSessionExercise()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            _context.SessionExercises.Add(sessionExercise);
+            await _context.SaveChangesAsync();
+
+            sessionExercise.ExerciseNumber = 5;
+
+            // Act
+            var result = await _repository.UpdateSessionExerciseAsync(sessionExercise);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSessionExercise = await _context.SessionExercises.FirstOrDefaultAsync(x => x.Id == sessionExercise.Id);
+            Assert.That(dbSessionExercise.ExerciseNumber, Is.EqualTo(5));
         }
 
         [Test]
         public async Task DeleteSessionExerciseAsync_DeletesSessionExercise()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            _context.SessionExercises.Add(sessionExercise);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.DeleteSessionExerciseAsync(sessionExercise.Id);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSessionExercise = await _context.SessionExercises.FirstOrDefaultAsync(x => x.Id == sessionExercise.Id);
+            Assert.That(dbSessionExercise, Is.Null);
         }
 
         [Test]
-        public async Task DeleteSessionExerciseAsync_WithNonExistentId_DoesNotThrow()
+        public async Task DeleteSessionExerciseAsync_WithNonExistentId_ReturnsNotFound()
         {
-            // ...existing code...
+            // Act
+            var result = await _repository.DeleteSessionExerciseAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         #endregion
@@ -323,49 +396,236 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
         [Test]
         public async Task GetSetByIdAsync_WithValidId_ReturnsSet()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            var set = new Set
+            {
+                Id = Guid.NewGuid(),
+                SessionExerciseId = sessionExercise.Id,
+                SetNumber = 1,
+                Reps = 10,
+                Weight = 100
+            };
+
+            _context.SessionExercises.Add(sessionExercise);
+            _context.Sets.Add(set);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetSetByIdAsync(set.Id);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data.Id, Is.EqualTo(set.Id));
+            Assert.That(result.Data.SetNumber, Is.EqualTo(1));
         }
 
         [Test]
-        public async Task GetSetByIdAsync_WithInvalidId_ReturnsNull()
+        public async Task GetSetByIdAsync_WithInvalidId_ReturnsNotFound()
         {
-            // ...existing code...
+            // Act
+            var result = await _repository.GetSetByIdAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         [Test]
         public async Task GetSetsBySessionExerciseIdAsync_ReturnsSets()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            var set1 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 1, Reps = 10, Weight = 100 };
+            var set2 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 2, Reps = 8, Weight = 110 };
+
+            _context.SessionExercises.Add(sessionExercise);
+            _context.Sets.AddRange(set1, set2);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetSetsBySessionExerciseIdAsync(sessionExercise.Id);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Data, Has.Count.EqualTo(2));
         }
 
         [Test]
         public async Task GetSetsBySessionExerciseIdAsync_OrdersBySetNumber()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            var set2 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 2, Reps = 8, Weight = 110 };
+            var set1 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 1, Reps = 10, Weight = 100 };
+            var set3 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 3, Reps = 6, Weight = 120 };
+
+            _context.SessionExercises.Add(sessionExercise);
+            _context.Sets.AddRange(set2, set1, set3);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetSetsBySessionExerciseIdAsync(sessionExercise.Id);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var setNumbers = result.Data.Select(x => x.SetNumber).ToList();
+            Assert.That(setNumbers, Is.EqualTo(new[] { 1, 2, 3 }));
         }
 
         [Test]
         public async Task AddSetAsync_AddsSet()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            var set = new Set
+            {
+                Id = Guid.NewGuid(),
+                SessionExerciseId = sessionExercise.Id,
+                SetNumber = 1,
+                Reps = 10,
+                Weight = 100
+            };
+
+            _context.SessionExercises.Add(sessionExercise);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.AddSetAsync(set);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
+            Assert.That(dbSet, Is.Not.Null);
         }
 
         [Test]
         public async Task UpdateSetAsync_UpdatesSet()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            var set = new Set
+            {
+                Id = Guid.NewGuid(),
+                SessionExerciseId = sessionExercise.Id,
+                SetNumber = 1,
+                Reps = 10,
+                Weight = 100
+            };
+
+            _context.SessionExercises.Add(sessionExercise);
+            _context.Sets.Add(set);
+            await _context.SaveChangesAsync();
+
+            set.Reps = 12;
+            set.Weight = 120;
+
+            // Act
+            var result = await _repository.UpdateSetAsync(set);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
+            Assert.That(dbSet.Reps, Is.EqualTo(12));
+            Assert.That(dbSet.Weight, Is.EqualTo(120));
         }
 
         [Test]
         public async Task DeleteSetAsync_DeletesSet()
         {
-            // ...existing code...
+            // Arrange
+            var (_, _, session) = await SetupWorkoutWithSessionAsync();
+            var (_, _, exercise) = await SetupExerciseAsync();
+
+            var sessionExercise = new SessionExercise
+            {
+                Id = Guid.NewGuid(),
+                SessionId = session.Id,
+                ExerciseId = exercise.Id,
+                ExerciseNumber = 1
+            };
+
+            var set = new Set
+            {
+                Id = Guid.NewGuid(),
+                SessionExerciseId = sessionExercise.Id,
+                SetNumber = 1,
+                Reps = 10,
+                Weight = 100
+            };
+
+            _context.SessionExercises.Add(sessionExercise);
+            _context.Sets.Add(set);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.DeleteSetAsync(set.Id);
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.True);
+            var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
+            Assert.That(dbSet, Is.Null);
         }
 
         [Test]
-        public async Task DeleteSetAsync_WithNonExistentId_DoesNotThrow()
+        public async Task DeleteSetAsync_WithNonExistentId_ReturnsNotFound()
         {
-            // ...existing code...
+            // Act
+            var result = await _repository.DeleteSetAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
         }
 
         #endregion
