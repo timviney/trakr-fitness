@@ -5,6 +5,7 @@ using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
+using Shouldly;
 
 namespace GymTracker.Tests.UnitTests.Infrastructure
 {
@@ -54,9 +55,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleCategoryByIdAsync(category.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(category.Id));
-            Assert.That(result.Data.Name, Is.EqualTo("Chest"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(category.Id);
+            result.Data.Name.ShouldBe("Chest");
         }
 
         [Test]
@@ -66,8 +68,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleCategoryByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -85,9 +87,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleCategoriesByUserIdAsync(null);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(1));
-            Assert.That(result.Data.First().Name, Is.EqualTo("System"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Count().ShouldBe(1);
+            result.Data.First().Name.ShouldBe("System");
         }
 
         [Test]
@@ -107,12 +110,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleCategoriesByUserIdAsync(userId);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var names = result.Data.Select(x => x.Name).ToList();
-            Assert.That(names, Does.Contain("System"));
-            Assert.That(names, Does.Contain("User"));
-            Assert.That(names, Does.Not.Contain("Another"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var data = result.Data.ToList();
+            data.Count.ShouldBe(2);
+            var names = data.Select(x => x.Name).ToList();
+            names.ShouldContain("System");
+            names.ShouldContain("User");
+            names.ShouldNotContain("Another");
         }
 
         [Test]
@@ -133,8 +138,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetAllMuscleCategoriesAsync();
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(3));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Count().ShouldBe(3);
         }
 
         [Test]
@@ -152,10 +158,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddMuscleCategoryAsync(category);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbCategory = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category.Id);
-            Assert.That(dbCategory, Is.Not.Null);
-            Assert.That(dbCategory.Name, Is.EqualTo("Back"));
+            dbCategory.ShouldNotBeNull();
+            dbCategory.Name.ShouldBe("Back");
         }
 
         [Test]
@@ -177,9 +183,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateMuscleCategoryAsync(category);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbCategory = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category.Id);
-            Assert.That(dbCategory.Name, Is.EqualTo("Lower Body"));
+            dbCategory.ShouldNotBeNull();
+            dbCategory.Name.ShouldBe("Lower Body");
         }
 
         [Test]
@@ -199,9 +206,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteMuscleCategoryAsync(category.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbCategory = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category.Id);
-            Assert.That(dbCategory, Is.Null);
+            dbCategory.ShouldBeNull();
         }
 
         #endregion
@@ -229,9 +236,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleGroupByIdAsync(muscleGroup.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(muscleGroup.Id));
-            Assert.That(result.Data.Name, Is.EqualTo("Upper Chest"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(muscleGroup.Id);
+            result.Data.Name.ShouldBe("Upper Chest");
         }
 
         [Test]
@@ -241,8 +249,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleGroupByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -274,9 +282,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleGroupsByUserIdAsync(null);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(1));
-            Assert.That(result.Data.First().Name, Is.EqualTo("System Group"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Count().ShouldBe(1);
+            result.Data.First().Name.ShouldBe("System Group");
         }
 
         [Test]
@@ -316,12 +325,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleGroupsByUserIdAsync(userId);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var names = result.Data.Select(x => x.Name).ToList();
-            Assert.That(names, Does.Contain("System"));
-            Assert.That(names, Does.Contain("User"));
-            Assert.That(names, Does.Not.Contain("Another"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var data = result.Data.ToList();
+            data.Count.ShouldBe(2);
+            var names = data.Select(x => x.Name).ToList();
+            names.ShouldContain("System");
+            names.ShouldContain("User");
+            names.ShouldNotContain("Another");
         }
 
         [Test]
@@ -342,11 +353,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetMuscleGroupsByCategoryIdAsync(category1.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var names = result.Data.Select(x => x.Name).ToList();
-            Assert.That(names, Does.Contain("Group1"));
-            Assert.That(names, Does.Contain("Group2"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var data = result.Data.ToList();
+            data.Count.ShouldBe(2);
+            var names = data.Select(x => x.Name).ToList();
+            names.ShouldContain("Group1");
+            names.ShouldContain("Group2");
         }
 
         [Test]
@@ -369,10 +382,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddMuscleGroupAsync(muscleGroup);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbGroup = await _context.MuscleGroups.FirstOrDefaultAsync(x => x.Id == muscleGroup.Id);
-            Assert.That(dbGroup, Is.Not.Null);
-            Assert.That(dbGroup.Name, Is.EqualTo("New Group"));
+            dbGroup.ShouldNotBeNull();
+            dbGroup.Name.ShouldBe("New Group");
         }
 
         [Test]
@@ -398,9 +411,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateMuscleGroupAsync(muscleGroup);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbGroup = await _context.MuscleGroups.FirstOrDefaultAsync(x => x.Id == muscleGroup.Id);
-            Assert.That(dbGroup.Name, Is.EqualTo("New Name"));
+            dbGroup.ShouldNotBeNull();
+            dbGroup.Name.ShouldBe("New Name");
         }
 
         [Test]
@@ -424,9 +438,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteMuscleGroupAsync(muscleGroup.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbGroup = await _context.MuscleGroups.FirstOrDefaultAsync(x => x.Id == muscleGroup.Id);
-            Assert.That(dbGroup, Is.Null);
+            dbGroup.ShouldBeNull();
         }
 
         #endregion
@@ -456,9 +470,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetExerciseByIdAsync(exercise.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(exercise.Id));
-            Assert.That(result.Data.Name, Is.EqualTo("Bench Press"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(exercise.Id);
+            result.Data.Name.ShouldBe("Bench Press");
         }
 
         [Test]
@@ -468,8 +483,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetExerciseByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -503,9 +518,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetExercisesByUserIdAsync(null);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(1));
-            Assert.That(result.Data.First().Name, Is.EqualTo("System Exercise"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Count().ShouldBe(1);
+            result.Data.First().Name.ShouldBe("System Exercise");
         }
 
         [Test]
@@ -547,12 +563,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetExercisesByUserIdAsync(userId);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var names = result.Data.Select(x => x.Name).ToList();
-            Assert.That(names, Does.Contain("System"));
-            Assert.That(names, Does.Contain("User"));
-            Assert.That(names, Does.Not.Contain("Another"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var data = result.Data.ToList();
+            data.Count.ShouldBe(2);
+            var names = data.Select(x => x.Name).ToList();
+            names.ShouldContain("System");
+            names.ShouldContain("User");
+            names.ShouldNotContain("Another");
         }
 
         [Test]
@@ -575,11 +593,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetExercisesByMuscleGroupIdAsync(muscleGroup1.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var names = result.Data.Select(x => x.Name).ToList();
-            Assert.That(names, Does.Contain("Ex1"));
-            Assert.That(names, Does.Contain("Ex2"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var data = result.Data.ToList();
+            data.Count.ShouldBe(2);
+            var names = data.Select(x => x.Name).ToList();
+            names.ShouldContain("Ex1");
+            names.ShouldContain("Ex2");
         }
 
         [Test]
@@ -604,10 +624,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddExerciseAsync(exercise);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbExercise = await _context.Exercises.FirstOrDefaultAsync(x => x.Id == exercise.Id);
-            Assert.That(dbExercise, Is.Not.Null);
-            Assert.That(dbExercise.Name, Is.EqualTo("New Exercise"));
+            dbExercise.ShouldNotBeNull();
+            dbExercise.Name.ShouldBe("New Exercise");
         }
 
         [Test]
@@ -635,9 +655,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateExerciseAsync(exercise);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbExercise = await _context.Exercises.FirstOrDefaultAsync(x => x.Id == exercise.Id);
-            Assert.That(dbExercise.Name, Is.EqualTo("New Name"));
+            dbExercise.ShouldNotBeNull();
+            dbExercise.Name.ShouldBe("New Name");
         }
 
         [Test]
@@ -663,9 +684,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteExerciseAsync(exercise.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbExercise = await _context.Exercises.FirstOrDefaultAsync(x => x.Id == exercise.Id);
-            Assert.That(dbExercise, Is.Null);
+            dbExercise.ShouldBeNull();
         }
 
         #endregion
@@ -692,9 +713,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetWorkoutByIdAsync(workout.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(workout.Id));
-            Assert.That(result.Data.Name, Is.EqualTo("Push Day"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(workout.Id);
+            result.Data.Name.ShouldBe("Push Day");
         }
 
         [Test]
@@ -704,8 +726,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetWorkoutByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -726,11 +748,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetWorkoutsByUserIdAsync(user1.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var names = result.Data.Select(x => x.Name).ToList();
-            Assert.That(names, Does.Contain("Workout1"));
-            Assert.That(names, Does.Contain("Workout2"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var data = result.Data.ToList();
+            data.Count.ShouldBe(2);
+            var names = data.Select(x => x.Name).ToList();
+            names.ShouldContain("Workout1");
+            names.ShouldContain("Workout2");
         }
 
         [Test]
@@ -752,10 +776,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddWorkoutAsync(workout);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbWorkout = await _context.Workouts.FirstOrDefaultAsync(x => x.Id == workout.Id);
-            Assert.That(dbWorkout, Is.Not.Null);
-            Assert.That(dbWorkout.Name, Is.EqualTo("New Workout"));
+            dbWorkout.ShouldNotBeNull();
+            dbWorkout.Name.ShouldBe("New Workout");
         }
 
         [Test]
@@ -780,9 +804,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateWorkoutAsync(workout);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbWorkout = await _context.Workouts.FirstOrDefaultAsync(x => x.Id == workout.Id);
-            Assert.That(dbWorkout.Name, Is.EqualTo("New Name"));
+            dbWorkout.ShouldNotBeNull();
+            dbWorkout.Name.ShouldBe("New Name");
         }
 
         [Test]
@@ -805,9 +830,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteWorkoutAsync(workout.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbWorkout = await _context.Workouts.FirstOrDefaultAsync(x => x.Id == workout.Id);
-            Assert.That(dbWorkout, Is.Null);
+            dbWorkout.ShouldBeNull();
         }
 
         #endregion
@@ -839,10 +864,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddMuscleCategoryAsync(duplicateCategory);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
             var dbCount = await _context.MuscleCategories.CountAsync(x => x.Name == "Chest" && x.UserId == userId);
-            Assert.That(dbCount, Is.EqualTo(1), "Should not have added duplicate");
+            dbCount.ShouldBe(1, "Should not have added duplicate");
         }
 
         [Test]
@@ -869,10 +894,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddMuscleCategoryAsync(duplicateCategory);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
             var dbCount = await _context.MuscleCategories.CountAsync(x => x.Name == "Chest" && x.UserId == null);
-            Assert.That(dbCount, Is.EqualTo(1), "Should not have added duplicate system default");
+            dbCount.ShouldBe(1, "Should not have added duplicate system default");
         }
 
         [Test]
@@ -901,9 +926,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddMuscleCategoryAsync(category2);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbCount = await _context.MuscleCategories.CountAsync(x => x.Name == "Chest");
-            Assert.That(dbCount, Is.EqualTo(2), "Should allow same name for different users");
+            dbCount.ShouldBe(2, "Should allow same name for different users");
         }
 
         [Test]
@@ -932,13 +957,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateMuscleCategoryAsync(category2);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
             
             // Reload from database to verify it wasn't actually updated
             await _context.Entry(category2).ReloadAsync();
             var dbCategory = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category2.Id);
-            Assert.That(dbCategory.Name, Is.EqualTo("Back"), "Should not have updated to duplicate name");
+            dbCategory.ShouldNotBeNull();
+            dbCategory.Name.ShouldBe("Back", "Should not have updated to duplicate name");
         }
 
         [Test]
@@ -961,9 +987,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateMuscleCategoryAsync(category);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbCategory = await _context.MuscleCategories.FirstOrDefaultAsync(x => x.Id == category.Id);
-            Assert.That(dbCategory.Name, Is.EqualTo("Updated Chest"), "Should allow updating the same item");
+            dbCategory.ShouldNotBeNull();
+            dbCategory.Name.ShouldBe("Updated Chest", "Should allow updating the same item");
         }
 
         [Test]
@@ -995,8 +1022,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddMuscleGroupAsync(duplicateGroup);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
         }
 
         [Test]
@@ -1029,13 +1056,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateMuscleGroupAsync(group2);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
             
             // Reload from database to verify it wasn't updated
             await _context.Entry(group2).ReloadAsync();
             var dbGroup = await _context.MuscleGroups.FirstOrDefaultAsync(x => x.Id == group2.Id);
-            Assert.That(dbGroup.Name, Is.EqualTo("Lower Chest"), "Should not have updated to duplicate name");
+            dbGroup.ShouldNotBeNull();
+            dbGroup.Name.ShouldBe("Lower Chest", "Should not have updated to duplicate name");
         }
 
         [Test]
@@ -1075,8 +1103,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddExerciseAsync(duplicateExercise);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
         }
 
         [Test]
@@ -1117,13 +1145,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateExerciseAsync(exercise2);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
             
             // Reload from database to verify it wasn't updated
             await _context.Entry(exercise2).ReloadAsync();
             var dbExercise = await _context.Exercises.FirstOrDefaultAsync(x => x.Id == exercise2.Id);
-            Assert.That(dbExercise.Name, Is.EqualTo("Dumbbell Press"), "Should not have updated to duplicate name");
+            dbExercise.ShouldNotBeNull();
+            dbExercise.Name.ShouldBe("Dumbbell Press", "Should not have updated to duplicate name");
         }
 
         [Test]
@@ -1152,8 +1181,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddWorkoutAsync(duplicateWorkout);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
         }
 
         [Test]
@@ -1183,13 +1212,14 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateWorkoutAsync(workout2);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
             
             // Reload from database to verify it wasn't updated
             await _context.Entry(workout2).ReloadAsync();
             var dbWorkout = await _context.Workouts.FirstOrDefaultAsync(x => x.Id == workout2.Id);
-            Assert.That(dbWorkout.Name, Is.EqualTo("Pull Day"), "Should not have updated to duplicate name");
+            dbWorkout.ShouldNotBeNull();
+            dbWorkout.Name.ShouldBe("Pull Day", "Should not have updated to duplicate name");
         }
 
         #endregion

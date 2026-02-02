@@ -47,7 +47,7 @@ public class AuthService : IAuthService
             
             return GenerateTokenAsync(user.Id, username);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return new LoginResponse("", DateTime.MinValue, "", LoginError.UnknownError);
         }

@@ -5,6 +5,7 @@ using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Results;
+using Shouldly;
 
 namespace GymTracker.Tests.Integration.Infrastructure;
 
@@ -54,8 +55,8 @@ public class UserRepositoryIntegrationTests
 
             // adding second user with same Username should fail and return DuplicateName status
             var result = await sqliteRepo.AddAsync(user2);
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
         }
         finally
         {

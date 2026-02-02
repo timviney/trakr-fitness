@@ -3,6 +3,7 @@ using GymTracker.Core.Entities;
 using GymTracker.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
+using Shouldly;
 
 namespace GymTracker.Tests.Integration.Infrastructure
 {
@@ -10,8 +11,8 @@ namespace GymTracker.Tests.Integration.Infrastructure
     [Category("Integration")]
     public class DatabaseStructureTests
     {
-        private GymTrackerDbContext _context;
-        private Fixture _fixture;
+        private GymTrackerDbContext _context = null!;
+        private Fixture _fixture = null!;
 
         [SetUp]
         public void Setup()
@@ -52,12 +53,12 @@ namespace GymTracker.Tests.Integration.Infrastructure
 
             // Assert
             var result = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Username, Is.EqualTo("test-user"));
+            result.ShouldNotBeNull();
+            result.Username.ShouldBe("test-user");
         }
 
         [Test]
-        public async Task UserIdIsRequired()
+        public Task UserIdIsRequired()
         {
             // Arrange
             var user = new User
@@ -68,13 +69,14 @@ namespace GymTracker.Tests.Integration.Infrastructure
             };
 
             // Act & Assert
-            Assert.DoesNotThrowAsync(async () =>
+            return Should.NotThrowAsync(async () =>
             {
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
+            }).ContinueWith(_ =>
+            {
+                user.Id.ShouldNotBe(Guid.Empty);
             });
-
-            Assert.That(user.Id, Is.Not.EqualTo(Guid.Empty));
         }
 
         #endregion
@@ -98,8 +100,8 @@ namespace GymTracker.Tests.Integration.Infrastructure
 
             // Assert
             var result = await _context.MuscleCategories.FirstOrDefaultAsync(c => c.Id == category.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.UserId, Is.Null);
+            result.ShouldNotBeNull();
+            result.UserId.ShouldBeNull();
         }
 
         [Test]
@@ -132,9 +134,9 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var result = await _context.MuscleCategories
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == category.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.UserId, Is.EqualTo(userId));
-            Assert.That(result.User, Is.Not.Null);
+            result.ShouldNotBeNull();
+            result.UserId.ShouldBe(userId);
+            result.User.ShouldNotBeNull();
         }
 
         #endregion
@@ -170,9 +172,9 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var result = await _context.MuscleGroups
                 .Include(g => g.Category)
                 .FirstOrDefaultAsync(g => g.Id == group.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.CategoryId, Is.EqualTo(category.Id));
-            Assert.That(result.Category.Name, Is.EqualTo("Category"));
+            result.ShouldNotBeNull();
+            result.CategoryId.ShouldBe(category.Id);
+            result.Category.Name.ShouldBe("Category");
         }
 
         [Test]
@@ -217,8 +219,10 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var systemResult = await _context.MuscleGroups.FirstOrDefaultAsync(g => g.Id == systemGroup.Id);
             var userResult = await _context.MuscleGroups.FirstOrDefaultAsync(g => g.Id == userGroup.Id);
 
-            Assert.That(systemResult.UserId, Is.Null);
-            Assert.That(userResult.UserId, Is.EqualTo(userId));
+            systemResult.ShouldNotBeNull();
+            userResult.ShouldNotBeNull();
+            systemResult.UserId.ShouldBeNull();
+            userResult.UserId.ShouldBe(userId);
         }
 
         #endregion
@@ -250,9 +254,9 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var result = await _context.Exercises
                 .Include(e => e.MuscleGroup)
                 .FirstOrDefaultAsync(e => e.Id == exercise.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.MuscleGroupId, Is.EqualTo(group.Id));
-            Assert.That(result.MuscleGroup.Name, Is.EqualTo("Group"));
+            result.ShouldNotBeNull();
+            result.MuscleGroupId.ShouldBe(group.Id);
+            result.MuscleGroup.Name.ShouldBe("Group");
         }
 
         [Test]
@@ -292,8 +296,10 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var systemResult = await _context.Exercises.FirstOrDefaultAsync(e => e.Id == systemExercise.Id);
             var userResult = await _context.Exercises.FirstOrDefaultAsync(e => e.Id == userExercise.Id);
 
-            Assert.That(systemResult.UserId, Is.Null);
-            Assert.That(userResult.UserId, Is.EqualTo(userId));
+            systemResult.ShouldNotBeNull();
+            userResult.ShouldNotBeNull();
+            systemResult.UserId.ShouldBeNull();
+            userResult.UserId.ShouldBe(userId);
         }
 
         #endregion
@@ -317,9 +323,9 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var result = await _context.Workouts
                 .Include(w => w.User)
                 .FirstOrDefaultAsync(w => w.Id == workout.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.UserId, Is.EqualTo(user.Id));
-            Assert.That(result.User.Username, Is.EqualTo("test-user"));
+            result.ShouldNotBeNull();
+            result.UserId.ShouldBe(user.Id);
+            result.User.Username.ShouldBe("test-user");
         }
 
         #endregion
@@ -345,8 +351,8 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var result = await _context.Sessions
                 .Include(s => s.Workout)
                 .FirstOrDefaultAsync(s => s.Id == session.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.WorkoutId, Is.EqualTo(workout.Id));
+            result.ShouldNotBeNull();
+            result.WorkoutId.ShouldBe(workout.Id);
         }
 
         #endregion
@@ -387,10 +393,10 @@ namespace GymTracker.Tests.Integration.Infrastructure
                 .Include(se => se.Session)
                 .Include(se => se.Exercise)
                 .FirstOrDefaultAsync(se => se.Id == sessionExercise.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.SessionId, Is.EqualTo(session.Id));
-            Assert.That(result.ExerciseId, Is.EqualTo(exercise.Id));
-            Assert.That(result.ExerciseNumber, Is.EqualTo(1));
+            result.ShouldNotBeNull();
+            result.SessionId.ShouldBe(session.Id);
+            result.ExerciseId.ShouldBe(exercise.Id);
+            result.ExerciseNumber.ShouldBe(1);
         }
 
         #endregion
@@ -439,10 +445,10 @@ namespace GymTracker.Tests.Integration.Infrastructure
             var result = await _context.Sets
                 .Include(s => s.SessionExercise)
                 .FirstOrDefaultAsync(s => s.Id == set.Id);
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.SessionExerciseId, Is.EqualTo(sessionExercise.Id));
-            Assert.That(result.Weight, Is.EqualTo(100.0));
-            Assert.That(result.Reps, Is.EqualTo(10));
+            result.ShouldNotBeNull();
+            result.SessionExerciseId.ShouldBe(sessionExercise.Id);
+            result.Weight.ShouldBe(100.0);
+            result.Reps.ShouldBe(10);
         }
 
         #endregion
@@ -466,7 +472,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
 
             // Assert
             var workoutResult = await _context.Workouts.FirstOrDefaultAsync(w => w.Id == workout.Id);
-            Assert.That(workoutResult, Is.Null);
+            workoutResult.ShouldBeNull();
         }
 
         [Test]
@@ -488,7 +494,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
 
             // Assert
             var sessionResult = await _context.Sessions.FirstOrDefaultAsync(s => s.Id == session.Id);
-            Assert.That(sessionResult, Is.Null);
+            sessionResult.ShouldBeNull();
         }
 
         [Test]
@@ -518,7 +524,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
 
             // Assert
             var result = await _context.SessionExercises.FirstOrDefaultAsync(se => se.Id == sessionExercise.Id);
-            Assert.That(result, Is.Null);
+            result.ShouldBeNull();
         }
 
         [Test]
@@ -550,7 +556,7 @@ namespace GymTracker.Tests.Integration.Infrastructure
 
             // Assert
             var setResult = await _context.Sets.FirstOrDefaultAsync(s => s.Id == set.Id);
-            Assert.That(setResult, Is.Null);
+            setResult.ShouldBeNull();
         }
 
         #endregion
@@ -603,17 +609,17 @@ namespace GymTracker.Tests.Integration.Infrastructure
                     .ThenInclude(se => se.Sets)
                 .FirstOrDefaultAsync(s => s.Id == session.Id);
 
-            Assert.That(retrievedSession, Is.Not.Null);
-            Assert.That(retrievedSession.Workout.User.Username, Is.EqualTo("complete-user"));
-            Assert.That(retrievedSession.SessionExercises, Has.Count.EqualTo(2));
-            
+            retrievedSession.ShouldNotBeNull();
+            retrievedSession.Workout.User.Username.ShouldBe("complete-user");
+            retrievedSession.SessionExercises.Count.ShouldBe(2);
+
             var firstExercise = retrievedSession.SessionExercises.First(se => se.ExerciseNumber == 1);
-            Assert.That(firstExercise.Exercise.Name, Is.EqualTo("Bench Press"));
-            Assert.That(firstExercise.Sets, Has.Count.EqualTo(2));
-            
+            firstExercise.Exercise.Name.ShouldBe("Bench Press");
+            firstExercise.Sets.Count.ShouldBe(2);
+
             var secondExercise = retrievedSession.SessionExercises.First(se => se.ExerciseNumber == 2);
-            Assert.That(secondExercise.Exercise.Name, Is.EqualTo("Incline Press"));
-            Assert.That(secondExercise.Sets, Has.Count.EqualTo(1));
+            secondExercise.Exercise.Name.ShouldBe("Incline Press");
+            secondExercise.Sets.Count.ShouldBe(1);
         }
 
         #endregion

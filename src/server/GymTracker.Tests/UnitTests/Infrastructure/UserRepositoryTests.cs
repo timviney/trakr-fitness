@@ -5,6 +5,7 @@ using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
+using Shouldly;
 
 namespace GymTracker.Tests.UnitTests.Infrastructure
 {
@@ -54,9 +55,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetByIdAsync(user.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data!.Id, Is.EqualTo(user.Id));
-            Assert.That(result.Data.Username, Is.EqualTo("test-user"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(user.Id);
+            result.Data.Username.ShouldBe("test-user");
         }
 
         [Test]
@@ -66,8 +68,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -89,9 +91,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.FindByUsernameAsync("unique-user");
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data!.Username, Is.EqualTo("unique-user"));
-            Assert.That(result.Data.Id, Is.EqualTo(user.Id));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Username.ShouldBe("unique-user");
+            result.Data.Id.ShouldBe(user.Id);
         }
 
         [Test]
@@ -101,8 +104,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.FindByUsernameAsync("non-existent-user");
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -122,11 +125,11 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
 
             // Act
             var resultCorrectCase = await _repository.FindByUsernameAsync("test-user");
-            var resultWrongCase = await _repository.FindByUsernameAsync("test-user");
+            var resultWrongCase = await _repository.FindByUsernameAsync("TEST-USER");
 
             // Assert
-            Assert.That(resultCorrectCase.IsSuccess, Is.True);
-            Assert.That(resultWrongCase.IsSuccess, Is.False);
+            resultCorrectCase.IsSuccess.ShouldBeTrue();
+            resultWrongCase.IsSuccess.ShouldBeFalse();
         }
 
         [Test]
@@ -146,10 +149,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddAsync(user);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
-            Assert.That(dbUser, Is.Not.Null);
-            Assert.That(dbUser!.Username, Is.EqualTo("new-user"));
+            dbUser.ShouldNotBeNull();
+            dbUser.Username.ShouldBe("new-user");
         }
 
         [Test]
@@ -173,8 +176,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
 
             // Assert
             var result = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
-            Assert.That(result.CreatedAt, Is.GreaterThanOrEqualTo(beforeAdd));
-            Assert.That(result.CreatedAt, Is.LessThanOrEqualTo(afterAdd));
+            result.ShouldNotBeNull();
+            result.CreatedAt.ShouldBeGreaterThanOrEqualTo(beforeAdd);
+            result.CreatedAt.ShouldBeLessThanOrEqualTo(afterAdd);
         }
 
         [Test]
@@ -199,10 +203,11 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateAsync(user);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
-            Assert.That(dbUser.Username, Is.EqualTo("updated-user"));
-            Assert.That(dbUser.PasswordHashed, Is.EqualTo("new-hash"));
+            dbUser.ShouldNotBeNull();
+            dbUser.Username.ShouldBe("updated-user");
+            dbUser.PasswordHashed.ShouldBe("new-hash");
         }
 
         [Test]
@@ -224,9 +229,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteAsync(user.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbUser = await _context.Users.FirstOrDefaultAsync(x => x.Id == user.Id);
-            Assert.That(dbUser, Is.Null);
+            dbUser.ShouldBeNull();
         }
 
         [Test]
@@ -236,8 +241,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -267,8 +272,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddAsync(user2);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.DuplicateName));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.DuplicateName);
         }
     }
 }

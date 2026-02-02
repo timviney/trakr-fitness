@@ -5,6 +5,7 @@ using GymTracker.Infrastructure.Data;
 using GymTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using NUnit.Framework;
+using Shouldly;
 
 namespace GymTracker.Tests.UnitTests.Infrastructure
 {
@@ -75,9 +76,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionByIdAsync(session.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(session.Id));
-            Assert.That(result.Data.WorkoutId, Is.EqualTo(session.WorkoutId));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(session.Id);
+            result.Data.WorkoutId.ShouldBe(session.WorkoutId);
         }
 
         [Test]
@@ -87,8 +89,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -113,9 +115,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionByIdAsync(session.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.SessionExercises, Has.Count.EqualTo(1));
-            Assert.That(result.Data.SessionExercises.First().Exercise.Name, Is.EqualTo(exercise.Name));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.SessionExercises.Count.ShouldBe(1);
+            result.Data.SessionExercises.First().Exercise.Name.ShouldBe(exercise.Name);
         }
 
         [Test]
@@ -141,11 +144,13 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionsByWorkoutIdAsync(workout1.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var ids = result.Data.Select(x => x.Id).ToList();
-            Assert.That(ids, Does.Contain(session1.Id));
-            Assert.That(ids, Does.Contain(session2.Id));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var sessions = result.Data.ToList();
+            sessions.Count.ShouldBe(2);
+            var ids = sessions.Select(x => x.Id).ToList();
+            ids.ShouldContain(session1.Id);
+            ids.ShouldContain(session2.Id);
         }
 
         [Test]
@@ -165,10 +170,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddSessionAsync(newSession);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSession = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == newSession.Id);
-            Assert.That(dbSession, Is.Not.Null);
-            Assert.That(dbSession.WorkoutId, Is.EqualTo(workout.Id));
+            dbSession.ShouldNotBeNull();
+            dbSession.WorkoutId.ShouldBe(workout.Id);
         }
 
         [Test]
@@ -185,9 +190,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateSessionAsync(session);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSession = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
-            Assert.That(dbSession.CreatedAt, Is.EqualTo(newCreatedAt));
+            dbSession.ShouldNotBeNull();
+            dbSession.CreatedAt.ShouldBe(newCreatedAt);
         }
 
         [Test]
@@ -200,9 +206,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteSessionAsync(session.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSession = await _context.Sessions.FirstOrDefaultAsync(x => x.Id == session.Id);
-            Assert.That(dbSession, Is.Null);
+            dbSession.ShouldBeNull();
         }
 
         [Test]
@@ -212,8 +218,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteSessionAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         #endregion
@@ -242,9 +248,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionExerciseByIdAsync(sessionExercise.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(sessionExercise.Id));
-            Assert.That(result.Data.ExerciseNumber, Is.EqualTo(1));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(sessionExercise.Id);
+            result.Data.ExerciseNumber.ShouldBe(1);
         }
 
         [Test]
@@ -254,8 +261,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionExerciseByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -288,10 +295,12 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSessionExercisesBySessionIdAsync(session.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
-            var exerciseNumbers = result.Data.Select(x => x.ExerciseNumber).OrderBy(x => x).ToList();
-            Assert.That(exerciseNumbers, Is.EqualTo(new[] { 1, 2 }));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var sessionExercises = result.Data.ToList();
+            sessionExercises.Count.ShouldBe(2);
+            var exerciseNumbers = sessionExercises.Select(x => x.ExerciseNumber).OrderBy(x => x).ToList();
+            exerciseNumbers.ShouldBe(new[] { 1, 2 });
         }
 
         [Test]
@@ -313,9 +322,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddSessionExerciseAsync(sessionExercise);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSessionExercise = await _context.SessionExercises.FirstOrDefaultAsync(x => x.Id == sessionExercise.Id);
-            Assert.That(dbSessionExercise, Is.Not.Null);
+            dbSessionExercise.ShouldNotBeNull();
         }
 
         [Test]
@@ -342,9 +351,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateSessionExerciseAsync(sessionExercise);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSessionExercise = await _context.SessionExercises.FirstOrDefaultAsync(x => x.Id == sessionExercise.Id);
-            Assert.That(dbSessionExercise.ExerciseNumber, Is.EqualTo(5));
+            dbSessionExercise.ShouldNotBeNull();
+            dbSessionExercise.ExerciseNumber.ShouldBe(5);
         }
 
         [Test]
@@ -369,9 +379,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteSessionExerciseAsync(sessionExercise.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSessionExercise = await _context.SessionExercises.FirstOrDefaultAsync(x => x.Id == sessionExercise.Id);
-            Assert.That(dbSessionExercise, Is.Null);
+            dbSessionExercise.ShouldBeNull();
         }
 
         [Test]
@@ -381,8 +391,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteSessionExerciseAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         #endregion
@@ -421,9 +431,10 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSetByIdAsync(set.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data.Id, Is.EqualTo(set.Id));
-            Assert.That(result.Data.SetNumber, Is.EqualTo(1));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            result.Data.Id.ShouldBe(set.Id);
+            result.Data.SetNumber.ShouldBe(1);
         }
 
         [Test]
@@ -433,8 +444,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSetByIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         [Test]
@@ -463,8 +474,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSetsBySessionExerciseIdAsync(sessionExercise.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Data, Has.Count.EqualTo(2));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.Count().ShouldBe(2);
         }
 
         [Test]
@@ -494,9 +505,11 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.GetSetsBySessionExerciseIdAsync(sessionExercise.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            var setNumbers = result.Data.Select(x => x.SetNumber).ToList();
-            Assert.That(setNumbers, Is.EqualTo(new[] { 1, 2, 3 }));
+            result.IsSuccess.ShouldBeTrue();
+            result.Data.ShouldNotBeNull();
+            var sets = result.Data!;
+            var setNumbers = sets.Select(x => x.SetNumber).ToList();
+            setNumbers.ShouldBe(new[] { 1, 2, 3 });
         }
 
         [Test]
@@ -530,9 +543,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.AddSetAsync(set);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
-            Assert.That(dbSet, Is.Not.Null);
+            dbSet.ShouldNotBeNull();
         }
 
         [Test]
@@ -570,10 +583,11 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.UpdateSetAsync(set);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
-            Assert.That(dbSet.Reps, Is.EqualTo(12));
-            Assert.That(dbSet.Weight, Is.EqualTo(120));
+            dbSet.ShouldNotBeNull();
+            dbSet.Reps.ShouldBe(12);
+            dbSet.Weight.ShouldBe(120);
         }
 
         [Test]
@@ -608,9 +622,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteSetAsync(set.Id);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
+            result.IsSuccess.ShouldBeTrue();
             var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
-            Assert.That(dbSet, Is.Null);
+            dbSet.ShouldBeNull();
         }
 
         [Test]
@@ -620,8 +634,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             var result = await _repository.DeleteSetAsync(Guid.NewGuid());
 
             // Assert
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Status, Is.EqualTo(DbResultStatus.NotFound));
+            result.IsSuccess.ShouldBeFalse();
+            result.Status.ShouldBe(DbResultStatus.NotFound);
         }
 
         #endregion
