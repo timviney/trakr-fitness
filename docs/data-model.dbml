@@ -1,6 +1,6 @@
 Table users {
   id uuid [primary key]
-  username text
+  email text
   created_at timestamp
   password_hashed text
 }
