@@ -60,18 +60,59 @@ const onSubmit = async () => {
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  padding: var(--trk-space-8);
+  padding: var(--trk-space-5);
   background: var(--trk-bg);
 }
 
 .auth-card {
-  width: min(90%, 420px);
+  width: min(90vw, 420px);
   background: var(--trk-surface);
   border: 1px solid var(--trk-surface-border);
   border-radius: var(--trk-radius-lg);
-  padding: var(--trk-space-8);
+  padding: var(--trk-space-6);
   box-shadow: var(--trk-shadow);
   position: relative;
+}
+
+.auth-brand {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  gap: var(--trk-space-3);
+  align-items: center;
+  margin-bottom: var(--trk-space-8);
+}
+
+.auth-logo {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+}
+
+/* Larger screens */
+@media (min-width: 640px) {
+  .auth-shell {
+    padding: var(--trk-space-8);
+  }
+
+  .auth-card {
+    width: min(90%, 420px);
+    padding: var(--trk-space-8);
+  }
+
+  .auth-brand {
+    grid-template-columns: 72px 1fr 72px;
+    gap: var(--trk-space-4);
+    margin-bottom: var(--trk-space-6);
+  }
+
+  .auth-logo {
+    width: 72px;
+    height: 72px;
+  }
+}
+.auth-brand::after {
+  content: '';
 }
 
 .auth-card::before {
@@ -82,25 +123,6 @@ const onSubmit = async () => {
   border-radius: calc(var(--trk-radius-lg) - 4px);
   pointer-events: none;
   opacity: 0.6;
-}
-
-.auth-brand {
-  display: grid;
-  grid-template-columns: 72px 1fr 72px;
-  gap: var(--trk-space-4);
-  align-items: center;
-  margin-bottom: var(--trk-space-6);
-}
-
-.auth-brand::after {
-  content: '';
-}
-
-.auth-logo {
-  width: 72px;
-  height: 72px;
-  display: grid;
-  place-items: center;
 }
 
 .auth-logo img {

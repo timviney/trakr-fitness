@@ -35,6 +35,12 @@ body {
   color: var(--trk-text);
 }
 
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
 a {
   color: var(--trk-accent);
   text-decoration: none;
@@ -51,11 +57,17 @@ a {
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  transition: transform 60ms ease, box-shadow 60ms ease, background 60ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn:hover {
   background: var(--trk-accent-strong);
+}
+
+.btn:active {
+  opacity: 0.85;
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn:disabled {
@@ -99,4 +111,10 @@ a {
   color: var(--trk-text-muted);
   font-size: 0.9rem;
   text-align: center;
+}
+
+@media (min-width: 640px) {
+  h1 {
+    font-size: 2rem;
+  }
 }
