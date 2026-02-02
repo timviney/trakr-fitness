@@ -4,8 +4,8 @@ using System.Security.Cryptography;
 using GymTracker.Api.Auth.Responses;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
+using GymTracker.Core.Results;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -34,13 +34,13 @@ public class AuthService : IAuthService
     {
         try
         {
-            var user = await _userRepository.FindByUsernameAsync(username);
+            var result = await _userRepository.FindByUsernameAsync(username);
             
-            if (user == null) return new LoginResponse("", DateTime.MinValue, "", LoginError.UserNotFound);
+            if (!result.IsSuccess) return new LoginResponse("", DateTime.MinValue, "", LoginError.UserNotFound);
             
+            var user = result.Data!;
             var ph = new PasswordHasher<User>();
-            var result = ph.VerifyHashedPassword(user, user.PasswordHashed, password);
-            if (result == PasswordVerificationResult.Failed)
+            if (ph.VerifyHashedPassword(user, user.PasswordHashed, password) == PasswordVerificationResult.Failed)
             {
                 return new LoginResponse("", DateTime.MinValue, "", LoginError.InvalidCredentials);
             }
@@ -64,12 +64,13 @@ public class AuthService : IAuthService
                 Username = username,
                 PasswordHashed = ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
             };
-            await _userRepository.AddAsync(newUser);
-        }
-        catch (InvalidOperationException e)
-        {
-            // Username unique constraint violation
-            return new RegisterResponse(false, Error: RegisterError.UsernameTaken, ErrorMessage: "Username is already taken.");
+            var result = await _userRepository.AddAsync(newUser);
+            if (!result.IsSuccess)
+            {
+                return result.Status == DbResultStatus.DuplicateName 
+                    ? new RegisterResponse(false, Error: RegisterError.UsernameTaken, ErrorMessage: "Username is already taken.") 
+                    : new RegisterResponse(false, Error: RegisterError.UnknownError, ErrorMessage: result.Message);
+            }
         }
         catch (ArgumentException e)
         {

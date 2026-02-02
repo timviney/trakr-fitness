@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
+using GymTracker.Core.Results;
 using GymTracker.Infrastructure.Data;
 
 namespace GymTracker.Infrastructure.Repositories
@@ -12,20 +13,25 @@ namespace GymTracker.Infrastructure.Repositories
     public class SessionRepository(GymTrackerDbContext db) : ISessionRepository
     {
         // ===== Sessions =====
-        public async Task<Session?> GetSessionByIdAsync(Guid id)
+        public async Task<DbResult<Session>> GetSessionByIdAsync(Guid id)
         {
-            return await db.Sessions
+            var session = await db.Sessions
                 .Include(s => s.Workout)
                 .Include(s => s.SessionExercises)
                     .ThenInclude(se => se.Exercise)
                 .Include(s => s.SessionExercises)
                     .ThenInclude(se => se.Sets)
                 .FirstOrDefaultAsync(s => s.Id == id);
+            
+            if (session is null)
+                return DbResult<Session>.NotFound($"Session with id '{id}' not found.");
+            
+            return DbResult<Session>.Ok(session);
         }
 
-        public async Task<IEnumerable<Session>> GetSessionsByWorkoutIdAsync(Guid workoutId)
+        public async Task<DbResult<IEnumerable<Session>>> GetSessionsByWorkoutIdAsync(Guid workoutId)
         {
-            return await db.Sessions
+            var sessions = await db.Sessions
                 .Include(s => s.Workout)
                 .Include(s => s.SessionExercises)
                     .ThenInclude(se => se.Exercise)
@@ -33,104 +39,135 @@ namespace GymTracker.Infrastructure.Repositories
                     .ThenInclude(se => se.Sets)
                 .Where(s => s.WorkoutId == workoutId)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<Session>>.Ok(sessions);
         }
 
-        public async Task AddSessionAsync(Session session)
+        public async Task<DbResult> AddSessionAsync(Session session)
         {
             await db.Sessions.AddAsync(session);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateSessionAsync(Session session)
+        public async Task<DbResult> UpdateSessionAsync(Session session)
         {
             db.Sessions.Update(session);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteSessionAsync(Guid id)
+        public async Task<DbResult> DeleteSessionAsync(Guid id)
         {
             var session = await db.Sessions.FindAsync(id);
-            if (session is null) return;
+            if (session is null)
+                return DbResult.NotFound($"Session with id '{id}' not found.");
+            
             db.Sessions.Remove(session);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
         // ===== Session Exercises =====
-        public async Task<SessionExercise?> GetSessionExerciseByIdAsync(Guid id)
+        public async Task<DbResult<SessionExercise>> GetSessionExerciseByIdAsync(Guid id)
         {
-            return await db.SessionExercises
+            var sessionExercise = await db.SessionExercises
                 .Include(se => se.Session)
                 .Include(se => se.Exercise)
                 .Include(se => se.Sets)
                 .FirstOrDefaultAsync(se => se.Id == id);
+            
+            if (sessionExercise is null)
+                return DbResult<SessionExercise>.NotFound($"Session exercise with id '{id}' not found.");
+            
+            return DbResult<SessionExercise>.Ok(sessionExercise);
         }
 
-        public async Task<IEnumerable<SessionExercise>> GetSessionExercisesBySessionIdAsync(Guid sessionId)
+        public async Task<DbResult<IEnumerable<SessionExercise>>> GetSessionExercisesBySessionIdAsync(Guid sessionId)
         {
-            return await db.SessionExercises
+            var sessionExercises = await db.SessionExercises
                 .Include(se => se.Session)
                 .Include(se => se.Exercise)
                 .Include(se => se.Sets)
                 .Where(se => se.SessionId == sessionId)
                 .OrderBy(se => se.ExerciseNumber)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<SessionExercise>>.Ok(sessionExercises);
         }
 
-        public async Task AddSessionExerciseAsync(SessionExercise sessionExercise)
+        public async Task<DbResult> AddSessionExerciseAsync(SessionExercise sessionExercise)
         {
             await db.SessionExercises.AddAsync(sessionExercise);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateSessionExerciseAsync(SessionExercise sessionExercise)
+        public async Task<DbResult> UpdateSessionExerciseAsync(SessionExercise sessionExercise)
         {
             db.SessionExercises.Update(sessionExercise);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteSessionExerciseAsync(Guid id)
+        public async Task<DbResult> DeleteSessionExerciseAsync(Guid id)
         {
             var sessionExercise = await db.SessionExercises.FindAsync(id);
-            if (sessionExercise is null) return;
+            if (sessionExercise is null)
+                return DbResult.NotFound($"Session exercise with id '{id}' not found.");
+            
             db.SessionExercises.Remove(sessionExercise);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
         // ===== Sets =====
-        public async Task<Set?> GetSetByIdAsync(Guid id)
+        public async Task<DbResult<Set>> GetSetByIdAsync(Guid id)
         {
-            return await db.Sets
+            var set = await db.Sets
                 .Include(s => s.SessionExercise)
                 .FirstOrDefaultAsync(s => s.Id == id);
+            
+            if (set is null)
+                return DbResult<Set>.NotFound($"Set with id '{id}' not found.");
+            
+            return DbResult<Set>.Ok(set);
         }
 
-        public async Task<IEnumerable<Set>> GetSetsBySessionExerciseIdAsync(Guid sessionExerciseId)
+        public async Task<DbResult<IEnumerable<Set>>> GetSetsBySessionExerciseIdAsync(Guid sessionExerciseId)
         {
-            return await db.Sets
+            var sets = await db.Sets
                 .Include(s => s.SessionExercise)
                 .Where(s => s.SessionExerciseId == sessionExerciseId)
                 .OrderBy(s => s.SetNumber)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<Set>>.Ok(sets);
         }
 
-        public async Task AddSetAsync(Set set)
+        public async Task<DbResult> AddSetAsync(Set set)
         {
             await db.Sets.AddAsync(set);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateSetAsync(Set set)
+        public async Task<DbResult> UpdateSetAsync(Set set)
         {
             db.Sets.Update(set);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteSetAsync(Guid id)
+        public async Task<DbResult> DeleteSetAsync(Guid id)
         {
             var set = await db.Sets.FindAsync(id);
-            if (set is null) return;
+            if (set is null)
+                return DbResult.NotFound($"Set with id '{id}' not found.");
+            
             db.Sets.Remove(set);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
     }
 }

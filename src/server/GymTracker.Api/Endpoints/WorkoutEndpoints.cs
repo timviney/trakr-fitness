@@ -45,12 +45,16 @@ public static class WorkoutEndpoints
         UpdateWorkoutRequest req,
         [FromServices] IExerciseLibraryRepository repository)
     {
-        var workout = await repository.GetWorkoutByIdAsync(id);
-        if (workout == null)
+        var result = await repository.GetWorkoutByIdAsync(id);
+        if (!result.IsSuccess)
             return Results.NotFound();
 
+        var workout = result.Data!;
         workout.Name = req.Name;
-        await repository.UpdateWorkoutAsync(workout);
+        var updateResult = await repository.UpdateWorkoutAsync(workout);
+        if (!updateResult.IsSuccess)
+            return Results.BadRequest(updateResult.Message);
+        
         return Results.Ok();
     }
 }

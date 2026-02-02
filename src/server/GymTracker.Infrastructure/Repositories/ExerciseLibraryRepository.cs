@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
+using GymTracker.Core.Results;
 using GymTracker.Infrastructure.Data;
 
 namespace GymTracker.Infrastructure.Repositories
@@ -12,238 +13,330 @@ namespace GymTracker.Infrastructure.Repositories
     public class ExerciseLibraryRepository(GymTrackerDbContext db) : IExerciseLibraryRepository
     {
         // ===== Muscle Categories =====
-        public async Task<MuscleCategory?> GetMuscleCategoryByIdAsync(Guid id)
+        public async Task<DbResult<MuscleCategory>> GetMuscleCategoryByIdAsync(Guid id)
         {
-            return await db.MuscleCategories
+            var category = await db.MuscleCategories
                 .Include(mc => mc.User)
                 .FirstOrDefaultAsync(mc => mc.Id == id);
+            
+            if (category is null)
+                return DbResult<MuscleCategory>.NotFound($"Muscle category with id '{id}' not found.");
+            
+            return DbResult<MuscleCategory>.Ok(category);
         }
 
-        public async Task<IEnumerable<MuscleCategory>> GetMuscleCategoriesByUserIdAsync(Guid? userId)
+        public async Task<DbResult<IEnumerable<MuscleCategory>>> GetMuscleCategoriesByUserIdAsync(Guid? userId)
         {
-            return await db.MuscleCategories
+            var categories = await db.MuscleCategories
                 .Include(mc => mc.User)
                 .Where(mc => mc.UserId == userId || mc.UserId == null)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<MuscleCategory>>.Ok(categories);
         }
 
-        public async Task<IEnumerable<MuscleCategory>> GetAllMuscleCategoriesAsync()
+        public async Task<DbResult<IEnumerable<MuscleCategory>>> GetAllMuscleCategoriesAsync()
         {
-            return await db.MuscleCategories
+            var categories = await db.MuscleCategories
                 .Include(mc => mc.User)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<MuscleCategory>>.Ok(categories);
         }
 
-        public async Task AddMuscleCategoryAsync(MuscleCategory category)
+        public async Task<DbResult> AddMuscleCategoryAsync(MuscleCategory category)
         {
-            var existing = (await GetMuscleCategoriesByUserIdAsync(category.UserId))
-                .FirstOrDefault(mc => mc.Name == category.Name);
-            if (existing is not null) return;
+            var result = await GetMuscleCategoriesByUserIdAsync(category.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(mc => mc.Name == category.Name);
+            if (existing is not null)
+                return DbResult.DuplicateName($"A muscle category named '{category.Name}' already exists.");
             
             await db.MuscleCategories.AddAsync(category);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateMuscleCategoryAsync(MuscleCategory category)
+        public async Task<DbResult> UpdateMuscleCategoryAsync(MuscleCategory category)
         {
-            var existing = (await GetMuscleCategoriesByUserIdAsync(category.UserId))
-                .FirstOrDefault(mc => mc.Name == category.Name && mc.Id != category.Id);
-            if (existing is not null) return;
+            var result = await GetMuscleCategoriesByUserIdAsync(category.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(mc => mc.Name == category.Name && mc.Id != category.Id);
+            if (existing is not null)
+                return DbResult.DuplicateName($"A muscle category named '{category.Name}' already exists.");
             
             db.MuscleCategories.Update(category);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteMuscleCategoryAsync(Guid id)
+        public async Task<DbResult> DeleteMuscleCategoryAsync(Guid id)
         {
             var category = await db.MuscleCategories.FindAsync(id);
-            if (category is null) return;
+            if (category is null)
+                return DbResult.NotFound($"Muscle category with id '{id}' not found.");
+            
             db.MuscleCategories.Remove(category);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
         // ===== Muscle Groups =====
-        public async Task<MuscleGroup?> GetMuscleGroupByIdAsync(Guid id)
+        public async Task<DbResult<MuscleGroup>> GetMuscleGroupByIdAsync(Guid id)
         {
-            return await db.MuscleGroups
+            var group = await db.MuscleGroups
                 .Include(mg => mg.User)
                 .Include(mg => mg.Category)
                 .Include(mg => mg.Exercises)
                 .FirstOrDefaultAsync(mg => mg.Id == id);
+            
+            if (group is null)
+                return DbResult<MuscleGroup>.NotFound($"Muscle group with id '{id}' not found.");
+            
+            return DbResult<MuscleGroup>.Ok(group);
         }
 
-        public async Task<IEnumerable<MuscleGroup>> GetMuscleGroupsByUserIdAsync(Guid? userId)
+        public async Task<DbResult<IEnumerable<MuscleGroup>>> GetMuscleGroupsByUserIdAsync(Guid? userId)
         {
-            return await db.MuscleGroups
+            var groups = await db.MuscleGroups
                 .Include(mg => mg.User)
                 .Include(mg => mg.Category)
                 .Include(mg => mg.Exercises)
                 .Where(mg => mg.UserId == userId || mg.UserId == null)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<MuscleGroup>>.Ok(groups);
         }
 
-        public async Task<IEnumerable<MuscleGroup>> GetMuscleGroupsByCategoryIdAsync(Guid categoryId)
+        public async Task<DbResult<IEnumerable<MuscleGroup>>> GetMuscleGroupsByCategoryIdAsync(Guid categoryId)
         {
-            return await db.MuscleGroups
+            var groups = await db.MuscleGroups
                 .Include(mg => mg.User)
                 .Include(mg => mg.Category)
                 .Include(mg => mg.Exercises)
                 .Where(mg => mg.CategoryId == categoryId)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<MuscleGroup>>.Ok(groups);
         }
 
-        public async Task<IEnumerable<MuscleGroup>> GetAllMuscleGroupsAsync()
+        public async Task<DbResult<IEnumerable<MuscleGroup>>> GetAllMuscleGroupsAsync()
         {
-            return await db.MuscleGroups
+            var groups = await db.MuscleGroups
                 .Include(mg => mg.User)
                 .Include(mg => mg.Category)
                 .Include(mg => mg.Exercises)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<MuscleGroup>>.Ok(groups);
         }
 
-        public async Task AddMuscleGroupAsync(MuscleGroup group)
+        public async Task<DbResult> AddMuscleGroupAsync(MuscleGroup group)
         {
-            var existing = (await GetMuscleGroupsByUserIdAsync(group.UserId))
-                .FirstOrDefault(mg => mg.Name == group.Name);
-            if (existing is not null) return;
+            var result = await GetMuscleGroupsByUserIdAsync(group.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(mg => mg.Name == group.Name);
+            if (existing is not null)
+                return DbResult.DuplicateName($"A muscle group named '{group.Name}' already exists.");
             
             await db.MuscleGroups.AddAsync(group);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateMuscleGroupAsync(MuscleGroup group)
+        public async Task<DbResult> UpdateMuscleGroupAsync(MuscleGroup group)
         {
-            var existing = (await GetMuscleGroupsByUserIdAsync(group.UserId))
-                .FirstOrDefault(mg => mg.Name == group.Name && mg.Id != group.Id);
-            if (existing is not null) return;
+            var result = await GetMuscleGroupsByUserIdAsync(group.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(mg => mg.Name == group.Name && mg.Id != group.Id);
+            if (existing is not null)
+                return DbResult.DuplicateName($"A muscle group named '{group.Name}' already exists.");
             
             db.MuscleGroups.Update(group);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteMuscleGroupAsync(Guid id)
+        public async Task<DbResult> DeleteMuscleGroupAsync(Guid id)
         {
             var group = await db.MuscleGroups.FindAsync(id);
-            if (group is null) return;
+            if (group is null)
+                return DbResult.NotFound($"Muscle group with id '{id}' not found.");
+            
             db.MuscleGroups.Remove(group);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
         // ===== Exercises =====
-        public async Task<Exercise?> GetExerciseByIdAsync(Guid id)
+        public async Task<DbResult<Exercise>> GetExerciseByIdAsync(Guid id)
         {
-            return await db.Exercises
+            var exercise = await db.Exercises
                 .Include(e => e.User)
                 .Include(e => e.MuscleGroup)
                 .Include(e => e.SessionExercises)
                 .FirstOrDefaultAsync(e => e.Id == id);
+            
+            if (exercise is null)
+                return DbResult<Exercise>.NotFound($"Exercise with id '{id}' not found.");
+            
+            return DbResult<Exercise>.Ok(exercise);
         }
 
-        public async Task<IEnumerable<Exercise>> GetExercisesByUserIdAsync(Guid? userId)
+        public async Task<DbResult<IEnumerable<Exercise>>> GetExercisesByUserIdAsync(Guid? userId)
         {
-            return await db.Exercises
+            var exercises = await db.Exercises
                 .Include(e => e.User)
                 .Include(e => e.MuscleGroup)
                 .Include(e => e.SessionExercises)
                 .Where(e => e.UserId == userId || e.UserId == null)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<Exercise>>.Ok(exercises);
         }
 
-        public async Task<IEnumerable<Exercise>> GetExercisesByMuscleGroupIdAsync(Guid muscleGroupId)
+        public async Task<DbResult<IEnumerable<Exercise>>> GetExercisesByMuscleGroupIdAsync(Guid muscleGroupId)
         {
-            return await db.Exercises
+            var exercises = await db.Exercises
                 .Include(e => e.User)
                 .Include(e => e.MuscleGroup)
                 .Include(e => e.SessionExercises)
                 .Where(e => e.MuscleGroupId == muscleGroupId)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<Exercise>>.Ok(exercises);
         }
 
-        public async Task<IEnumerable<Exercise>> GetAllExercisesAsync()
+        public async Task<DbResult<IEnumerable<Exercise>>> GetAllExercisesAsync()
         {
-            return await db.Exercises
+            var exercises = await db.Exercises
                 .Include(e => e.User)
                 .Include(e => e.MuscleGroup)
                 .Include(e => e.SessionExercises)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<Exercise>>.Ok(exercises);
         }
 
-        public async Task AddExerciseAsync(Exercise exercise)
+        public async Task<DbResult> AddExerciseAsync(Exercise exercise)
         {
-            var existing = (await GetExercisesByUserIdAsync(exercise.UserId))
-                .FirstOrDefault(e => e.Name == exercise.Name);
-            if (existing is not null) return;
+            var result = await GetExercisesByUserIdAsync(exercise.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(e => e.Name == exercise.Name);
+            if (existing is not null)
+                return DbResult.DuplicateName($"An exercise named '{exercise.Name}' already exists.");
             
             await db.Exercises.AddAsync(exercise);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateExerciseAsync(Exercise exercise)
+        public async Task<DbResult> UpdateExerciseAsync(Exercise exercise)
         {
-            var existing = (await GetExercisesByUserIdAsync(exercise.UserId))
-                .FirstOrDefault(e => e.Name == exercise.Name && e.Id != exercise.Id);
-            if (existing is not null) return;
+            var result = await GetExercisesByUserIdAsync(exercise.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(e => e.Name == exercise.Name && e.Id != exercise.Id);
+            if (existing is not null)
+                return DbResult.DuplicateName($"An exercise named '{exercise.Name}' already exists.");
             
             db.Exercises.Update(exercise);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteExerciseAsync(Guid id)
+        public async Task<DbResult> DeleteExerciseAsync(Guid id)
         {
             var exercise = await db.Exercises.FindAsync(id);
-            if (exercise is null) return;
+            if (exercise is null)
+                return DbResult.NotFound($"Exercise with id '{id}' not found.");
+            
             db.Exercises.Remove(exercise);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
         // ===== Workouts =====
-        public async Task<Workout?> GetWorkoutByIdAsync(Guid id)
+        public async Task<DbResult<Workout>> GetWorkoutByIdAsync(Guid id)
         {
-            return await db.Workouts
+            var workout = await db.Workouts
                 .Include(w => w.User)
                 .Include(w => w.Sessions)
                     .ThenInclude(s => s.SessionExercises)
                         .ThenInclude(se => se.Exercise)
                 .FirstOrDefaultAsync(w => w.Id == id);
+            
+            if (workout is null)
+                return DbResult<Workout>.NotFound($"Workout with id '{id}' not found.");
+            
+            return DbResult<Workout>.Ok(workout);
         }
 
-        public async Task<IEnumerable<Workout>> GetWorkoutsByUserIdAsync(Guid userId)
+        public async Task<DbResult<IEnumerable<Workout>>> GetWorkoutsByUserIdAsync(Guid userId)
         {
-            return await db.Workouts
+            var workouts = await db.Workouts
                 .Include(w => w.User)
                 .Include(w => w.Sessions)
                     .ThenInclude(s => s.SessionExercises)
                         .ThenInclude(se => se.Exercise)
                 .Where(w => w.UserId == userId)
                 .ToListAsync();
+            
+            return DbResult<IEnumerable<Workout>>.Ok(workouts);
         }
 
-        public async Task AddWorkoutAsync(Workout workout)
+        public async Task<DbResult> AddWorkoutAsync(Workout workout)
         {
-            var existing = (await GetWorkoutsByUserIdAsync(workout.UserId))
-                .FirstOrDefault(w => w.Name == workout.Name);
-            if (existing is not null) return;
+            var result = await GetWorkoutsByUserIdAsync(workout.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(w => w.Name == workout.Name);
+            if (existing is not null)
+                return DbResult.DuplicateName($"A workout named '{workout.Name}' already exists.");
             
             await db.Workouts.AddAsync(workout);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task UpdateWorkoutAsync(Workout workout)
+        public async Task<DbResult> UpdateWorkoutAsync(Workout workout)
         {
-            var existing = (await GetWorkoutsByUserIdAsync(workout.UserId))
-                .FirstOrDefault(w => w.Name == workout.Name && w.Id != workout.Id);
-            if (existing is not null) return;
+            var result = await GetWorkoutsByUserIdAsync(workout.UserId);
+            if (!result.IsSuccess)
+                return DbResult.DatabaseError(result.Message);
+            
+            var existing = result.Data?.FirstOrDefault(w => w.Name == workout.Name && w.Id != workout.Id);
+            if (existing is not null)
+                return DbResult.DuplicateName($"A workout named '{workout.Name}' already exists.");
             
             db.Workouts.Update(workout);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
 
-        public async Task DeleteWorkoutAsync(Guid id)
+        public async Task<DbResult> DeleteWorkoutAsync(Guid id)
         {
             var workout = await db.Workouts.FindAsync(id);
-            if (workout is null) return;
+            if (workout is null)
+                return DbResult.NotFound($"Workout with id '{id}' not found.");
+            
             db.Workouts.Remove(workout);
             await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
     }
 }
+
+
