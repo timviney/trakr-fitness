@@ -27,6 +27,8 @@
         </button>
       </form>
 
+      <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
+
       <p class="form-hint">
         Don’t have an account?
         <a href="/register">Sign up here</a>
@@ -37,20 +39,30 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { api } from '../api/api'
 
 const logoUrl = new URL('../assets/logo.svg', import.meta.url).href
 
 const email = ref('')
 const password = ref('')
 const isSubmitting = ref(false)
+const errorMessage = ref('')
 
 const onSubmit = async () => {
   if (isSubmitting.value) return
   isSubmitting.value = true
+  errorMessage.value = ''
 
-  // TODO: replace with real API call
-  await new Promise((r) => setTimeout(r, 600))
-  isSubmitting.value = false
+  try {
+    await api.auth.login({
+      email: email.value,
+      password: password.value
+    })
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -65,7 +77,7 @@ const onSubmit = async () => {
 }
 
 .auth-card {
-  width: min(90vw, 420px);
+  width: min(86vw, 420px);
   background: var(--trk-surface);
   border: 1px solid var(--trk-surface-border);
   border-radius: var(--trk-radius-lg);
@@ -89,6 +101,14 @@ const onSubmit = async () => {
   place-items: center;
 }
 
+.auth-subtitle {
+  text-align: center;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  color: var(--trk-text-muted);
+  font-size: small;
+}
+
 /* Larger screens */
 @media (min-width: 640px) {
   .auth-shell {
@@ -110,7 +130,12 @@ const onSubmit = async () => {
     width: 72px;
     height: 72px;
   }
+
+  .auth-subtitle {
+   font-size: medium; 
+  }
 }
+
 .auth-brand::after {
   content: '';
 }
@@ -137,15 +162,14 @@ const onSubmit = async () => {
   margin: 0;
 }
 
-.auth-subtitle {
-  text-align: center;
-  margin-top: 0.25rem;
-  margin-bottom: 0;
-  color: var(--trk-text-muted);
-}
-
 .btn-login {
   width: 100%;
   text-transform: uppercase;
+}
+
+.form-error {
+  margin-top: var(--trk-space-4);
+  color: var(--trk-danger, #e5484d);
+  text-align: center;
 }
 </style>

@@ -57,7 +57,7 @@ a {
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 60ms ease, box-shadow 60ms ease, background 60ms ease;
+  transition: transform 60ms ease, box-shadow 60ms ease, background 160ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 
