@@ -9,23 +9,13 @@ public static class DbSetup
 {
     public static void SetupDb(WebApplicationBuilder webApplicationBuilder)
     {
-        // Database configuration: use in-memory by default in Development, otherwise look for DB_CONNECTION_STRING
-        var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
-                               webApplicationBuilder.Configuration.GetConnectionString("Default");
+        var connectionString = BuildConnectionString(webApplicationBuilder.Configuration);
 
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            // Use in-memory for local development or if no connection string provided
-            webApplicationBuilder.Services.AddDbContext<GymTrackerDbContext>(options =>
-                options.UseInMemoryDatabase("GymTracker_Local"));
-        }
-        else
-        {
-            // Use Postgres when a connection string is available
-            webApplicationBuilder.Services.AddDbContext<GymTrackerDbContext>(options =>
-                options.UseNpgsql(connectionString,
-                    npgsqlOptions => npgsqlOptions.MigrationsAssembly("GymTracker.Infrastructure")));
-        }
+        // Use Postgres when a connection string is available
+        webApplicationBuilder.Services.AddDbContext<GymTrackerDbContext>(options =>
+            options.UseNpgsql(connectionString,
+                    npgsqlOptions => npgsqlOptions.MigrationsAssembly("GymTracker.Infrastructure"))
+                .UseSnakeCaseNamingConvention());
 
         // Register repositories
         webApplicationBuilder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -33,20 +23,52 @@ public static class DbSetup
         webApplicationBuilder.Services.AddScoped<ISessionRepository, SessionRepository>();
     }
 
+    private static string BuildConnectionString(IConfiguration configuration)
+    {
+        // First check for full connection string in environment or config
+        var connectionString = Environment.GetEnvironmentVariable("TRACKR_DB_CONNECTION_STRING");
+
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+        
+        // Build connection string from PostgresSettings
+        var host = configuration["PostgresSettings:Host"];
+        var port = configuration["PostgresSettings:Port"];
+        var database = configuration["PostgresSettings:Database"];
+        var username = configuration["PostgresSettings:Username"];
+        var password = Environment.GetEnvironmentVariable("TRAKR_POSTGRES_PASSWORD");
+
+        // If any required setting is missing, return null to fall back to in-memory
+        if (string.IsNullOrWhiteSpace(host) ||
+            string.IsNullOrWhiteSpace(database) ||
+            string.IsNullOrWhiteSpace(username) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            throw new Exception("Missing postgres configuration");
+        }
+
+        return $"Host={host};Port={port ?? "5432"};Database={database};Username={username};Password={password}";
+    }
+
     public static async Task SeedDataAsync(WebApplication app)
     {
+        // Apply pending migrations only in development (not in Lambda/production)
+        if (app.Environment.IsDevelopment())
+        {
+            using var scope = app.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
+            await context.Database.MigrateAsync();
+        }
+        
         var seedDefaultData = app.Configuration.GetValue<bool>("SeedDefaultData");
         
         if (!seedDefaultData)
             return;
 
-        using var scope = app.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
-            
-        // Apply any pending migrations
-        // await context.Database.MigrateAsync();
+        using var seedScope = app.Services.CreateScope();
+        var seedContext = seedScope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
             
         // Seed the data
-        await DataSeeder.SeedDefaultDataAsync(context);
+        await DataSeeder.SeedDefaultDataAsync(seedContext);
     }
 }
