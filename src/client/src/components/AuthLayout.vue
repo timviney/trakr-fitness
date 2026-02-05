@@ -50,7 +50,7 @@ const logoUrl = new URL('../assets/logo.svg', import.meta.url).href
 }
 
 .auth-card {
-    width: min(86vw, 420px);
+    width: min(86vw, 600px);
     background: var(--trk-surface);
     border: 1px solid var(--trk-surface-border);
     border-radius: var(--trk-radius-lg);
@@ -79,20 +79,10 @@ const logoUrl = new URL('../assets/logo.svg', import.meta.url).href
     margin-top: 0.25rem;
     margin-bottom: 0;
     color: var(--trk-text-muted);
-    font-size: small;
 }
 
 /* Larger screens */
 @media (min-width: 640px) {
-    .auth-shell {
-        padding: var(--trk-space-8);
-    }
-
-    .auth-card {
-        width: min(90%, 420px);
-        padding: var(--trk-space-8);
-    }
-
     .auth-brand {
         grid-template-columns: 72px 1fr 72px;
         gap: var(--trk-space-4);
@@ -102,10 +92,6 @@ const logoUrl = new URL('../assets/logo.svg', import.meta.url).href
     .auth-logo {
         width: 72px;
         height: 72px;
-    }
-
-    .auth-subtitle {
-        font-size: medium;
     }
 }
 

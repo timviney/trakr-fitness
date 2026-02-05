@@ -23,6 +23,11 @@
   --trk-space-8: 2rem;
 }
 
+html {
+  /* Fluid base font: scales from 14px (mobile) to 20px (desktop) */
+  font-size: clamp(0.875rem, 0.75rem + 0.625vw, 1.25rem);
+}
+
 html, body, #app {
   height: 100%;
   margin: 0;
@@ -37,7 +42,8 @@ body {
 
 h1 {
   margin: 0;
-  font-size: 1.5rem;
+  /* Fluid heading: scales from 24px to 36px */
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
   line-height: 1.2;
 }
 
@@ -54,6 +60,7 @@ a {
   border-radius: var(--trk-radius-md);
   border: none;
   padding: 0.75rem 0.85rem;
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -98,6 +105,8 @@ a {
   border: 1px solid var(--trk-surface-border);
   background: var(--trk-input-bg);
   color: var(--trk-text);
+  font-size: 1rem;
+  font-family: inherit;
   outline: none;
 }
 
@@ -113,8 +122,3 @@ a {
   text-align: center;
 }
 
-@media (min-width: 640px) {
-  h1 {
-    font-size: 2rem;
-  }
-}
