@@ -2,4 +2,4 @@
 
 namespace GymTracker.Api.Endpoints.Responses.Results;
 
-public record LoginResult(string Token, DateTime ExpiresAt, string UserId);
+public record LoginResult(string Token, DateTime ExpiresAt, string UserId, string Email);

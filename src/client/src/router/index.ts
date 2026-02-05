@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../components/Login.vue'
 import Register from '../components/Register.vue'
+import StatsView from '../views/StatsView.vue'
+import ExercisesView from '../views/ExercisesView.vue'
+import ProfileView from '../views/ProfileView.vue'
+import NewSessionView from '../views/NewSessionView.vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
@@ -9,7 +13,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Home',
-      redirect: '/login'
+      redirect: '/stats'
     },
     {
       path: '/login',
@@ -22,6 +26,26 @@ const router = createRouter({
       name: 'Register',
       component: Register,
       meta: { requiresAuth: false }
+    },
+    {
+      path: '/stats',
+      name: 'Stats',
+      component: StatsView
+    },
+    {
+      path: '/exercises',
+      name: 'Exercises',
+      component: ExercisesView
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      component: ProfileView
+    },
+    {
+      path: '/session/new',
+      name: 'NewSession',
+      component: NewSessionView
     }
   ]
 })
@@ -34,9 +58,8 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
   } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
-    // TODO: Redirect to dashboard/home when you create protected pages
-    // For now, just allow it to prevent infinite loop
-    next()
+    // Redirect authenticated users away from auth pages to the main app
+    next({ name: 'Stats' })
   } else {
     next()
   }

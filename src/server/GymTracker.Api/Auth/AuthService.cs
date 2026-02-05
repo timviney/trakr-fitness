@@ -115,7 +115,7 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwt = tokenHandler.WriteToken(token);
 
-        var resp = new LoginResult(jwt, expires, userId.ToString());
+        var resp = new LoginResult(jwt, expires, userId.ToString(), email);
         return resp;
     }
 
