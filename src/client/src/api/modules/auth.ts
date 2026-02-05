@@ -7,6 +7,10 @@ export type LoginRequest = {
 
 export type LoginResponse = {
   token: string
+  expiresAt: string
+  userId: string
+  email: string
+  error?: 'InvalidCredentials' | 'UserNotFound' | 'UnknownError'
 }
 
 export type RegisterRequest = {

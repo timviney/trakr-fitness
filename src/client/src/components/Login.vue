@@ -30,8 +30,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { api } from '../api/api'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import AuthLayout from './AuthLayout.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -44,10 +48,14 @@ const onSubmit = async () => {
   errorMessage.value = ''
 
   try {
-    await api.auth.login({
+    await authStore.login({
       email: email.value,
       password: password.value
     })
+    
+    // Redirect to home or previous page on success
+    const redirect = router.currentRoute.value.query.redirect as string
+    router.push(redirect || '/')
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
   } finally {

@@ -8,14 +8,31 @@ type RequestOptions = {
   headers?: Record<string, string>
 }
 
+// Function to get auth token - will be called at request time
+let getAuthToken: (() => string | null) | null = null
+
+export function setAuthTokenGetter(getter: () => string | null) {
+  getAuthToken = getter
+}
+
 export class ApiClient {
   private async request<T>(path: string, options: RequestOptions): Promise<T> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers ?? {})
+    }
+
+    // Auto-inject Authorization header if token exists
+    if (getAuthToken) {
+      const token = getAuthToken()
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+    }
+
     const response = await fetch(buildApiUrl(path), {
       method: options.method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers ?? {})
-      },
+      headers,
       body: options.body ? JSON.stringify(options.body) : undefined
     })
 
