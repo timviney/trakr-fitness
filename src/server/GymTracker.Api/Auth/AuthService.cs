@@ -76,12 +76,12 @@ public class AuthService : IAuthService
                     : ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
             }
         }
-        catch (ArgumentException e)
+        catch (ArgumentException)
         {
             // Invalid input validation
             return ApiResponse<RegisterResult>.Failure(ApiError.InvalidEmail);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // Unknown error
             return ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);

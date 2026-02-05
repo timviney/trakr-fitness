@@ -1,5 +1,6 @@
 using GymTracker.Api.Endpoints;
 using GymTracker.Api.Setup;
+using GymTracker.Api.Middleware;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,8 @@ var app = builder.Build();
 
 // Seed default data if enabled
 await DbSetup.SeedDataAsync(app);
+
+app.UseMiddleware<ApiExceptionMiddleware>();
 
 if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 
