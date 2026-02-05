@@ -71,7 +71,7 @@ const onSubmit = async () => {
       password: password.value
     })
 
-    if (response.success) {
+    if (response.isSuccess) {
       successMessage.value = '🎉 Account created successfully! Redirecting to login in 3 seconds...'
       
       // Disable form during success state
@@ -89,7 +89,7 @@ const onSubmit = async () => {
       } else if (response.error === 'WeakPassword') {
         errorMessage.value = 'Password is too weak. Please use a stronger password.'
       } else {
-        errorMessage.value = response.errorMessage || 'Registration failed. Please try again.'
+        errorMessage.value = 'Registration failed. Please try again.'
       }
     }
   } catch (error) {

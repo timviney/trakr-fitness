@@ -48,17 +48,24 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (credentials: LoginRequest) => {
     const response = await api.auth.login(credentials)
+
+    if (!response.isSuccess){
+        console.log('Login failed:', response.error)
+        return
+    }
+
+    const data = response.data!
     
-    token.value = response.token
-    userId.value = response.userId
-    email.value = response.email
-    expiresAt.value = response.expiresAt
+    token.value = data.token
+    userId.value = data.userId
+    email.value = data.email
+    expiresAt.value = data.expiresAt
 
     // Persist to localStorage
-    localStorage.setItem(TOKEN_KEY, response.token)
-    localStorage.setItem(USER_ID_KEY, response.userId)
-    localStorage.setItem(EMAIL_KEY, response.email)
-    localStorage.setItem(EXPIRES_AT_KEY, response.expiresAt)
+    localStorage.setItem(TOKEN_KEY, data.token)
+    localStorage.setItem(USER_ID_KEY, data.userId)
+    localStorage.setItem(EMAIL_KEY, data.email)
+    localStorage.setItem(EXPIRES_AT_KEY, data.expiresAt)
   }
 
   const logout = () => {

@@ -1,3 +1,4 @@
+import { ApiResponse } from '../api-response'
 import { ApiClient } from '../client'
 
 export type LoginRequest = {
@@ -5,12 +6,11 @@ export type LoginRequest = {
   password: string
 }
 
-export type LoginResponse = {
+export type LoginResult = {
   token: string
   expiresAt: string
   userId: string
   email: string
-  error?: 'InvalidCredentials' | 'UserNotFound' | 'UnknownError'
 }
 
 export type RegisterRequest = {
@@ -18,21 +18,18 @@ export type RegisterRequest = {
   password: string
 }
 
-export type RegisterResponse = {
-  success: boolean
-  userId?: string
-  error?: 'EmailTaken' | 'WeakPassword' | 'InvalidEmail' | 'UnknownError'
-  errorMessage?: string
+export type RegisterResult = {
+  userId: string
 }
 
 export class AuthApi {
   constructor(private client: ApiClient) {}
 
   login(payload: LoginRequest) {
-    return this.client.post<LoginResponse>('/auth/login', payload)
+    return this.client.post<ApiResponse<LoginResult>>('/auth/login', payload)
   }
 
   register(payload: RegisterRequest) {
-    return this.client.post<RegisterResponse>('/auth/register', payload)
+    return this.client.post<ApiResponse<RegisterResult>>('/auth/register', payload)
   }
 }
