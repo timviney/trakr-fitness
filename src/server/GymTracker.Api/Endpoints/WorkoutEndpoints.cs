@@ -1,5 +1,6 @@
 ﻿using GymTracker.Api.Auth;
 using GymTracker.Api.Endpoints.Requests;
+using GymTracker.Api.Endpoints.Responses.Structure;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +22,11 @@ public static class WorkoutEndpoints
 
     private static async Task<IResult> GetUserWorkouts(
         [FromServices] IAuthContext authContext,
-        [FromServices] IExerciseLibraryRepository repository) =>
-        Results.Ok(await repository.GetWorkoutsByUserIdAsync(authContext.UserId));
+        [FromServices] IExerciseLibraryRepository repository)
+    {
+        var result = await repository.GetWorkoutsByUserIdAsync(authContext.UserId);
+        return result.ToApiResult().ToOkResult();
+    }
 
     private static async Task<IResult> CreateWorkout(
         CreateWorkoutRequest req,
@@ -36,8 +40,8 @@ public static class WorkoutEndpoints
             UserId = authContext.UserId
         };
 
-        await repository.AddWorkoutAsync(workout);
-        return Results.Created($"/workouts/{workout.Id}", workout);
+        var result = await repository.AddWorkoutAsync(workout);
+        return result.ToApiResult().ToCreatedResult($"/workouts/{workout.Id}");
     }
 
     private static async Task<IResult> UpdateWorkout(
@@ -52,9 +56,6 @@ public static class WorkoutEndpoints
         var workout = result.Data!;
         workout.Name = req.Name;
         var updateResult = await repository.UpdateWorkoutAsync(workout);
-        if (!updateResult.IsSuccess)
-            return Results.BadRequest(updateResult.Message);
-        
-        return Results.Ok();
+        return updateResult.ToApiResult().ToOkResult();
     }
 }

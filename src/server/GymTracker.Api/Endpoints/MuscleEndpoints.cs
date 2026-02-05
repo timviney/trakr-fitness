@@ -1,5 +1,6 @@
 ﻿using GymTracker.Api.Auth;
 using GymTracker.Api.Endpoints.Requests;
+using GymTracker.Api.Endpoints.Responses.Structure;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -30,8 +31,8 @@ public static class MuscleEndpoints
             UserId = authContext.UserId
         };
 
-        await repository.AddMuscleCategoryAsync(category);
-        return Results.Created($"/muscle/categories/{category.Id}", category);
+        var result = await repository.AddMuscleCategoryAsync(category);
+        return result.ToApiResult().ToCreatedResult($"/muscle/categories/{category.Id}");
     }
 
     private static async Task<IResult> CreateMuscleGroup(
@@ -47,7 +48,7 @@ public static class MuscleEndpoints
             UserId = authContext.UserId
         };
 
-        await repository.AddMuscleGroupAsync(group);
-        return Results.Created($"/muscle/groups/{group.Id}", group);
+        var result = await repository.AddMuscleGroupAsync(group);
+        return result.ToApiResult().ToCreatedResult($"/muscle/groups/{group.Id}");
     }
 }
