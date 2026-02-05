@@ -3,10 +3,10 @@
         <div class="auth-card">
             <div class="auth-brand">
                 <div class="auth-logo">
-                    <img :src="logoUrl" alt="Trakr Fitness logo" />
+                    <img :src="logoUrl" alt="Trakr.Fitness logo" />
                 </div>
                 <div>
-                    <h1 class="auth-title">Trakr Fitness</h1>
+                    <h1 class="auth-title">Trakr.Fitness</h1>
                     <p class="auth-subtitle">{{ subtitle }}</p>
                 </div>
             </div>

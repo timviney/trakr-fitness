@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
   color-scheme: dark;
   --trk-bg: #0b0f14;
@@ -38,16 +40,18 @@ html, body, #app {
 }
 
 body {
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  font-family: 'Inter', sans-serif;
   background: var(--trk-bg);
   color: var(--trk-text);
 }
 
 h1 {
   margin: 0;
-  /* Fluid heading: scales from 24px to 36px */
-  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
-  line-height: 1.2;
+  font-family: 'Bebas Neue', sans-serif;
+  /* Fluid heading: scales from 32px to 48px */
+  font-size: clamp(2rem, 1.5rem + 2.5vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: 0.03em;
 }
 
 a {

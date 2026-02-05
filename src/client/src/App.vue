@@ -16,8 +16,5 @@ onMounted(() => {
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  padding: 2rem;
-}
+/* Global styles are in styles.css */
 </style>
