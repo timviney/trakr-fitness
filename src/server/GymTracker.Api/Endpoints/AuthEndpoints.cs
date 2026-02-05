@@ -1,6 +1,7 @@
 ﻿using GymTracker.Api.Auth;
-using GymTracker.Api.Auth.Requests;
-using GymTracker.Api.Auth.Responses;
+using GymTracker.Api.Endpoints.Requests;
+using GymTracker.Api.Endpoints.Responses;
+using GymTracker.Api.Endpoints.Responses.Structure;
 
 namespace GymTracker.Api.Endpoints;
 
@@ -13,18 +14,15 @@ public static class AuthEndpoints
         group.MapPost("/login", async (LoginRequest req, IAuthService authService) =>
         {
             var resp = await authService.Login(req.Email, req.Password);
-            return Results.Ok(resp);
+
+            return resp.ToOkResult();
         });
 
         group.MapPost("/register", async (RegisterRequest req, IAuthService authService) =>
         {
             var resp = await authService.Register(req.Email, req.Password);
-            return (resp) switch
-            {
-                { Success: true } => Results.Ok(resp),
-                { Error: RegisterError.EmailTaken } => Results.Conflict(resp),
-                _ => Results.BadRequest(resp)
-            };
+
+            return resp.ToOkResult();
         });
     }
 }

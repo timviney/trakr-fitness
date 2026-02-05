@@ -1,3 +1,3 @@
-﻿namespace GymTracker.Api.Auth.Requests;
+﻿namespace GymTracker.Api.Endpoints.Requests;
 
 public record RegisterRequest(string Email, string Password);

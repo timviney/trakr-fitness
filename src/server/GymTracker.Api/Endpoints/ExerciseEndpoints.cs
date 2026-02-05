@@ -1,5 +1,6 @@
 ﻿using GymTracker.Api.Auth;
 using GymTracker.Api.Endpoints.Requests;
+using GymTracker.Api.Endpoints.Responses.Structure;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +21,11 @@ public static class ExerciseEndpoints
 
     private static async Task<IResult> GetUserExercises(
         [FromServices] IAuthContext authContext,
-        [FromServices] IExerciseLibraryRepository repository ) =>
-        Results.Ok(await repository.GetExercisesByUserIdAsync(authContext.UserId));
+        [FromServices] IExerciseLibraryRepository repository)
+    {
+        var result = await repository.GetExercisesByUserIdAsync(authContext.UserId);
+        return result.ToApiResult().ToOkResult();
+    }
 
     private static async Task<IResult> CreateExercise(
         CreateExerciseRequest req,
@@ -36,7 +40,7 @@ public static class ExerciseEndpoints
             MuscleGroupId = req.MuscleGroupId
         };
 
-        await repository.AddExerciseAsync(exercise);
-        return Results.Created($"/exercises/{exercise.Id}", exercise);
+        var result = await repository.AddExerciseAsync(exercise);
+        return result.ToApiResult().ToCreatedResult($"/exercises/{exercise.Id}");
     }
 }

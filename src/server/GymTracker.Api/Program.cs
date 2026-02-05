@@ -1,9 +1,16 @@
 using GymTracker.Api.Endpoints;
 using GymTracker.Api.Setup;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
+
+// Configure JSON options to serialize enums as strings
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 DbSetup.SetupDb(builder);
 

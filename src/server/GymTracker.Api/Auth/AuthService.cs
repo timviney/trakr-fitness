@@ -1,7 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using GymTracker.Api.Auth.Responses;
+using GymTracker.Api.Endpoints.Responses;
+using GymTracker.Api.Endpoints.Responses.Results;
+using GymTracker.Api.Endpoints.Responses.Structure;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
 using GymTracker.Core.Results;
@@ -30,30 +32,32 @@ public class AuthService : IAuthService
         _rsaKey = new RsaSecurityKey(rsa);
     }
 
-    public async Task<LoginResponse> Login(string email, string password)
+    public async Task<ApiResponse<LoginResult>> Login(string email, string password)
     {
         try
         {
             var result = await _userRepository.FindByEmailAsync(email);
-            
-            if (!result.IsSuccess) return new LoginResponse("", DateTime.MinValue, "", LoginError.UserNotFound);
+
+            if (!result.IsSuccess) return ApiResponse<LoginResult>.Failure(ApiError.UserNotFound);
             
             var user = result.Data!;
             var ph = new PasswordHasher<User>();
             if (ph.VerifyHashedPassword(user, user.PasswordHashed, password) == PasswordVerificationResult.Failed)
             {
-                return new LoginResponse("", DateTime.MinValue, "", LoginError.InvalidCredentials);
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidCredentials);
             }
             
-            return GenerateTokenAsync(user.Id, email);
+            var loginResult = GenerateTokenAsync(user.Id, email);
+            
+            return ApiResponse<LoginResult>.Success(loginResult);
         }
         catch (Exception)
         {
-            return new LoginResponse("", DateTime.MinValue, "", LoginError.UnknownError);
+            return ApiResponse<LoginResult>.Failure(ApiError.UnknownError);
         }
     }
 
-    public async Task<RegisterResponse> Register(string email, string password)
+    public async Task<ApiResponse<RegisterResult>> Register(string email, string password)
     {
         User newUser;
         try
@@ -68,25 +72,25 @@ public class AuthService : IAuthService
             if (!result.IsSuccess)
             {
                 return result.Status == DbResultStatus.DuplicateName 
-                    ? new RegisterResponse(false, Error: RegisterError.EmailTaken, ErrorMessage: "Email is already taken.") 
-                    : new RegisterResponse(false, Error: RegisterError.UnknownError, ErrorMessage: result.Message);
+                    ? ApiResponse<RegisterResult>.Failure(ApiError.EmailTaken)
+                    : ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
             }
         }
         catch (ArgumentException e)
         {
             // Invalid input validation
-            return new RegisterResponse(false, Error: RegisterError.InvalidEmail, ErrorMessage: e.Message);
+            return ApiResponse<RegisterResult>.Failure(ApiError.InvalidEmail);
         }
         catch (Exception e)
         {
             // Unknown error
-            return new RegisterResponse(false, Error: RegisterError.UnknownError, ErrorMessage: e.Message);
+            return ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
         }
         
-        return new RegisterResponse(true, newUser.Id);
+        return ApiResponse<RegisterResult>.Success(new RegisterResult(newUser.Id));
     }
     
-    private LoginResponse GenerateTokenAsync(Guid userId, string email)
+    private LoginResult GenerateTokenAsync(Guid userId, string email)
     {
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 60);
@@ -111,7 +115,7 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwt = tokenHandler.WriteToken(token);
 
-        var resp = new LoginResponse(jwt, expires, userId.ToString());
+        var resp = new LoginResult(jwt, expires, userId.ToString());
         return resp;
     }
 
