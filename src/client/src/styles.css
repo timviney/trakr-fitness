@@ -13,6 +13,9 @@
   --trk-text-dark: #0b1016;
   --trk-input-bg: #0b1016;
   --trk-accent-ring: rgba(250, 204, 21, 0.15);
+  --trk-success-bg: #1a3a2e;
+  --trk-success-border: #2d5a47;
+  --trk-success-text: #7fe8b5;
   --trk-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
   --trk-radius-lg: 14px;
   --trk-radius-md: 10px;
