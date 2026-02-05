@@ -90,6 +90,7 @@ erDiagram
         int set_number
         double weight
         int reps
+        boolean warmup
     }
 
     USERS ||--o{ WORKOUTS : owns_and_creates

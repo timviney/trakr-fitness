@@ -9,6 +9,7 @@ namespace GymTracker.Core.Entities
         public int SetNumber { get; set; }
         public double Weight { get; set; }
         public int Reps { get; set; }
+        public bool WarmUp { get; set; }
 
         // Navigation properties
         [JsonIgnore]

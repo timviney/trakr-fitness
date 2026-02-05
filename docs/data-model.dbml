@@ -50,6 +50,7 @@ Table sets {
   set_number integer
   weight double
   reps integer
+  warmup boolean
 }
 
 

@@ -420,7 +420,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
                 SessionExerciseId = sessionExercise.Id,
                 SetNumber = 1,
                 Reps = 10,
-                Weight = 100
+                Weight = 100,
+                WarmUp = true
             };
 
             _context.SessionExercises.Add(sessionExercise);
@@ -435,6 +436,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             result.Data.ShouldNotBeNull();
             result.Data.Id.ShouldBe(set.Id);
             result.Data.SetNumber.ShouldBe(1);
+            result.Data.WarmUp.ShouldBeTrue();
         }
 
         [Test]
@@ -463,8 +465,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
                 ExerciseNumber = 1
             };
 
-            var set1 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 1, Reps = 10, Weight = 100 };
-            var set2 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 2, Reps = 8, Weight = 110 };
+            var set1 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 1, Reps = 10, Weight = 100, WarmUp = true };
+            var set2 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 2, Reps = 8, Weight = 110, WarmUp = false };
 
             _context.SessionExercises.Add(sessionExercise);
             _context.Sets.AddRange(set1, set2);
@@ -493,9 +495,9 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
                 ExerciseNumber = 1
             };
 
-            var set2 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 2, Reps = 8, Weight = 110 };
-            var set1 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 1, Reps = 10, Weight = 100 };
-            var set3 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 3, Reps = 6, Weight = 120 };
+            var set2 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 2, Reps = 8, Weight = 110, WarmUp = true };
+            var set1 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 1, Reps = 10, Weight = 100, WarmUp = false };
+            var set3 = new Set { Id = Guid.NewGuid(), SessionExerciseId = sessionExercise.Id, SetNumber = 3, Reps = 6, Weight = 120, WarmUp = true };
 
             _context.SessionExercises.Add(sessionExercise);
             _context.Sets.AddRange(set2, set1, set3);
@@ -533,7 +535,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
                 SessionExerciseId = sessionExercise.Id,
                 SetNumber = 1,
                 Reps = 10,
-                Weight = 100
+                Weight = 100,
+                WarmUp = true
             };
 
             _context.SessionExercises.Add(sessionExercise);
@@ -546,6 +549,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             result.IsSuccess.ShouldBeTrue();
             var dbSet = await _context.Sets.FirstOrDefaultAsync(x => x.Id == set.Id);
             dbSet.ShouldNotBeNull();
+            dbSet!.WarmUp.ShouldBeTrue();
         }
 
         [Test]
@@ -569,7 +573,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
                 SessionExerciseId = sessionExercise.Id,
                 SetNumber = 1,
                 Reps = 10,
-                Weight = 100
+                Weight = 100,
+                WarmUp = false
             };
 
             _context.SessionExercises.Add(sessionExercise);
@@ -578,6 +583,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
 
             set.Reps = 12;
             set.Weight = 120;
+            set.WarmUp = true;
 
             // Act
             var result = await _repository.UpdateSetAsync(set);
@@ -588,6 +594,7 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
             dbSet.ShouldNotBeNull();
             dbSet.Reps.ShouldBe(12);
             dbSet.Weight.ShouldBe(120);
+            dbSet.WarmUp.ShouldBeTrue();
         }
 
         [Test]
@@ -611,7 +618,8 @@ namespace GymTracker.Tests.UnitTests.Infrastructure
                 SessionExerciseId = sessionExercise.Id,
                 SetNumber = 1,
                 Reps = 10,
-                Weight = 100
+                Weight = 100,
+                WarmUp = true
             };
 
             _context.SessionExercises.Add(sessionExercise);
