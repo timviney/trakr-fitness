@@ -26,11 +26,14 @@
   --trk-space-4: 1rem;
   --trk-space-6: 1.5rem;
   --trk-space-8: 2rem;
+  --trk-logo-size: clamp(48px, 8vw, 60px);
+  --trk-gap-fluid: clamp(0.625rem, 0.8vw, 0.875rem);
+  --trk-margin-fluid: clamp(1.25rem, 2.5vw, 1.75rem);
 }
 
 html {
-  /* Fluid base font: scales from 14px (mobile) to 20px (desktop) */
-  font-size: clamp(0.875rem, 0.75rem + 0.625vw, 1.25rem);
+  /* Fluid base font: scales from 14px (mobile) to 16px (desktop) */
+  font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
 }
 
 html, body, #app {
