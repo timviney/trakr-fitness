@@ -9,10 +9,26 @@ export type LoginResponse = {
   token: string
 }
 
+export type RegisterRequest = {
+  email: string
+  password: string
+}
+
+export type RegisterResponse = {
+  success: boolean
+  userId?: string
+  error?: 'EmailTaken' | 'WeakPassword' | 'InvalidEmail' | 'UnknownError'
+  errorMessage?: string
+}
+
 export class AuthApi {
   constructor(private client: ApiClient) {}
 
   login(payload: LoginRequest) {
     return this.client.post<LoginResponse>('/auth/login', payload)
+  }
+
+  register(payload: RegisterRequest) {
+    return this.client.post<RegisterResponse>('/auth/register', payload)
   }
 }

@@ -7,7 +7,7 @@
         </div>
         <div>
           <h1 class="auth-title">Trakr Fitness</h1>
-          <p class="auth-subtitle">Please log in to continue</p>
+          <p class="auth-subtitle">Create your account</p>
         </div>
       </div>
 
@@ -22,16 +22,21 @@
           <input v-model="password" type="password" placeholder="Your password" required/>
         </label>
 
-        <button type="submit" class="btn btn-primary btn-login" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Logging in...' : 'Log In' }}
+        <label class="form-field">
+          <span>Confirm Password</span>
+          <input v-model="confirmPassword" type="password" placeholder="Confirm your password" required/>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-register" :disabled="isSubmitting">
+          {{ isSubmitting ? 'Creating account...' : 'Sign Up' }}
         </button>
       </form>
 
       <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
 
       <p class="form-hint">
-        Don’t have an account?
-        <router-link to="/register">Sign up here</router-link>
+        Already have an account?
+        <router-link to="/login">Log in here</router-link>
       </p>
     </div>
   </div>
@@ -39,27 +44,53 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { api } from '../api/api'
 
+const router = useRouter()
 const logoUrl = new URL('../assets/logo.svg', import.meta.url).href
 
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
 const onSubmit = async () => {
   if (isSubmitting.value) return
-  isSubmitting.value = true
+  
   errorMessage.value = ''
 
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = 'Passwords do not match.'
+    return
+  }
+
+  isSubmitting.value = true
+
   try {
-    await api.auth.login({
+    const response = await api.auth.register({
       email: email.value,
       password: password.value
     })
+
+    if (response.success) {
+      // Redirect to login page after successful registration
+      router.push('/login')
+    } else {
+      // Handle specific error messages from the API
+      if (response.error === 'EmailTaken') {
+        errorMessage.value = 'This email is already registered.'
+      } else if (response.error === 'InvalidEmail') {
+        errorMessage.value = 'Please enter a valid email address.'
+      } else if (response.error === 'WeakPassword') {
+        errorMessage.value = 'Password is too weak. Please use a stronger password.'
+      } else {
+        errorMessage.value = response.errorMessage || 'Registration failed. Please try again.'
+      }
+    }
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
+    errorMessage.value = error instanceof Error ? error.message : 'Registration failed.'
   } finally {
     isSubmitting.value = false
   }
@@ -162,7 +193,7 @@ const onSubmit = async () => {
   margin: 0;
 }
 
-.btn-login {
+.btn-register {
   width: 100%;
   text-transform: uppercase;
 }

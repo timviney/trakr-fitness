@@ -4,7 +4,7 @@ import { AuthApi } from './modules/auth'
 class Api {
   readonly auth: AuthApi
 
-  constructor(private client: ApiClient) {
+  constructor(client: ApiClient) {
     this.auth = new AuthApi(client)
   }
 }
