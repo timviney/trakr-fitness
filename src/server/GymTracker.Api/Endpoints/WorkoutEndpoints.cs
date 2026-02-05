@@ -16,8 +16,10 @@ public static class WorkoutEndpoints
             .RequireAuthorization();
 
         group.MapGet("/", GetUserWorkouts);
+        group.MapGet("/{id}", GetWorkoutById);
         group.MapPost("/", CreateWorkout);
         group.MapPut("/{id}", UpdateWorkout);
+        group.MapDelete("/{id}", DeleteWorkout);
     }
 
     private static async Task<IResult> GetUserWorkouts(
@@ -25,6 +27,23 @@ public static class WorkoutEndpoints
         [FromServices] IExerciseLibraryRepository repository)
     {
         var result = await repository.GetWorkoutsByUserIdAsync(authContext.UserId);
+        return result.ToApiResult().ToOkResult();
+    }
+
+    private static async Task<IResult> GetWorkoutById(
+        Guid id,
+        [FromServices] IAuthContext authContext,
+        [FromServices] IExerciseLibraryRepository repository)
+    {
+        var result = await repository.GetWorkoutByIdAsync(id);
+        if (!result.IsSuccess)
+            return Results.NotFound();
+
+        var workout = result.Data!;
+        // Only allow access to user's own workouts
+        if (workout.UserId != authContext.UserId)
+            return Results.NotFound();
+
         return result.ToApiResult().ToOkResult();
     }
 
@@ -47,6 +66,7 @@ public static class WorkoutEndpoints
     private static async Task<IResult> UpdateWorkout(
         Guid id,
         UpdateWorkoutRequest req,
+        [FromServices] IAuthContext authContext,
         [FromServices] IExerciseLibraryRepository repository)
     {
         var result = await repository.GetWorkoutByIdAsync(id);
@@ -54,8 +74,30 @@ public static class WorkoutEndpoints
             return Results.NotFound();
 
         var workout = result.Data!;
+        // Only allow updating user's own workouts
+        if (workout.UserId != authContext.UserId)
+            return Results.NotFound();
+
         workout.Name = req.Name;
         var updateResult = await repository.UpdateWorkoutAsync(workout);
         return updateResult.ToApiResult().ToOkResult();
+    }
+
+    private static async Task<IResult> DeleteWorkout(
+        Guid id,
+        [FromServices] IAuthContext authContext,
+        [FromServices] IExerciseLibraryRepository repository)
+    {
+        var result = await repository.GetWorkoutByIdAsync(id);
+        if (!result.IsSuccess)
+            return Results.NotFound();
+
+        var workout = result.Data!;
+        // Only allow deleting user's own workouts
+        if (workout.UserId != authContext.UserId)
+            return Results.NotFound();
+
+        var deleteResult = await repository.DeleteWorkoutAsync(id);
+        return deleteResult.ToApiResult().ToOkResult();
     }
 }

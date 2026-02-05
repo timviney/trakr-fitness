@@ -64,5 +64,6 @@ app.MapAuthEndpoints();
 app.MapExerciseEndpoints();
 app.MapWorkoutEndpoints();
 app.MapMuscleEndpoints();
+app.MapSessionEndpoints();
 
 app.Run();
