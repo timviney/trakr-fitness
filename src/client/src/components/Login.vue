@@ -1,21 +1,22 @@
 <template>
-  <AuthLayout subtitle="Please log in to continue" :error-message="errorMessage">
-    <template #form>
-      <form @submit.prevent="onSubmit">
-        <label class="form-field">
-          <span>Email</span>
-          <input v-model.trim="email" type="email" placeholder="you@example.com" required/>
-        </label>
+  <AuthLayout 
+    subtitle="Please log in to continue" 
+    :error-message="errorMessage" 
+    :is-submitting="isSubmitting"
+    button-text="Log In"
+    loading-text="Logging in..."
+    :on-submit="onSubmit"
+  >
+    <template #fields>
+      <label class="form-field">
+        <span>Email</span>
+        <input v-model.trim="email" type="email" placeholder="you@example.com" required/>
+      </label>
 
-        <label class="form-field">
-          <span>Password</span>
-          <input v-model="password" type="password" placeholder="Your password" required/>
-        </label>
-
-        <button type="submit" class="btn btn-primary btn-submit" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Logging in...' : 'Log In' }}
-        </button>
-      </form>
+      <label class="form-field">
+        <span>Password</span>
+        <input v-model="password" type="password" placeholder="Your password" required/>
+      </label>
     </template>
 
     <template #hint>
@@ -56,8 +57,5 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-.btn-submit {
-  width: 100%;
-  text-transform: uppercase;
-}
+
 </style>

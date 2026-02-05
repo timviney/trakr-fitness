@@ -1,26 +1,27 @@
 <template>
-  <AuthLayout subtitle="Create your account" :error-message="errorMessage">
-    <template #form>
-      <form @submit.prevent="onSubmit">
-        <label class="form-field">
-          <span>Email</span>
-          <input v-model.trim="email" type="email" placeholder="you@example.com" required/>
-        </label>
+  <AuthLayout 
+    subtitle="Create your account" 
+    :error-message="errorMessage"
+    :is-submitting="isSubmitting"
+    button-text="Sign Up"
+    loading-text="Creating account..."
+    :on-submit="onSubmit"
+  >
+    <template #fields>
+      <label class="form-field">
+        <span>Email</span>
+        <input v-model.trim="email" type="email" placeholder="you@example.com" required/>
+      </label>
 
-        <label class="form-field">
-          <span>Password</span>
-          <input v-model="password" type="password" placeholder="Your password" required/>
-        </label>
+      <label class="form-field">
+        <span>Password</span>
+        <input v-model="password" type="password" placeholder="Your password" required/>
+      </label>
 
-        <label class="form-field">
-          <span>Confirm Password</span>
-          <input v-model="confirmPassword" type="password" placeholder="Confirm your password" required/>
-        </label>
-
-        <button type="submit" class="btn btn-primary btn-submit" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Creating account...' : 'Sign Up' }}
-        </button>
-      </form>
+      <label class="form-field">
+        <span>Confirm Password</span>
+        <input v-model="confirmPassword" type="password" placeholder="Confirm your password" required/>
+      </label>
     </template>
 
     <template #hint>
@@ -86,8 +87,5 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-.btn-submit {
-  width: 100%;
-  text-transform: uppercase;
-}
+
 </style>
