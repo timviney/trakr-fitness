@@ -16,7 +16,6 @@ public record UpdateMuscleCategoryRequest(string Name);
 public record CreateMuscleGroupRequest(string Name, Guid CategoryId);
 public record UpdateMuscleGroupRequest(string Name, Guid CategoryId);
 
-
 // Session Exercise requests
 public record CreateSessionExerciseRequest(Guid ExerciseId, int ExerciseNumber);
 public record UpdateSessionExerciseRequest(int ExerciseNumber);
