@@ -26,7 +26,15 @@ export class WorkoutsApi {
     return await this.client.post<Workout>('/workouts/', payload)
   }
 
-  async updateWorkout(id: string, payload: UpdateWorkoutRequest): Promise<ApiResponse<void>> {
-    return await this.client.put<void>(`/workouts/${id}`, payload)
+  async getWorkoutById(id: string): Promise<ApiResponse<Workout>> {
+    return await this.client.get<Workout>(`/workouts/${id}`)
+  }
+
+  async updateWorkout(id: string, payload: UpdateWorkoutRequest): Promise<ApiResponse<Workout>> {
+    return await this.client.put<Workout>(`/workouts/${id}`, payload)
+  }
+
+  async deleteWorkout(id: string): Promise<ApiResponse<void>> {
+    return await this.client.delete<void>(`/workouts/${id}`)
   }
 }
