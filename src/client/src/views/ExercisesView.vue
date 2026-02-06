@@ -244,19 +244,13 @@
             </div>
 
             <div class="form-field">
-              <label for="edit-category">Category</label>
-              <select id="edit-category" v-model="editCategoryId" @change="onEditCategoryChange" :disabled="editProcessing || isEditingDefault">
-                <option value="" disabled>Select a category</option>
-                <option v-for="c in muscleCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label for="edit-group">Muscle Group</label>
-              <select id="edit-group" v-model="editGroupId" :disabled="!editCategoryId || editProcessing || isEditingDefault">
-                <option value="" disabled>Select a group</option>
-                <option v-for="g in editFilteredGroups" :key="g.id" :value="g.id">{{ g.name }}</option>
-              </select>
+              <label>Muscle Group</label>
+              <CategoryGroupSelector
+                v-model="editSelection"
+                :categories="muscleCategories"
+                :groups="muscleGroups"
+                :disabled="editProcessing || isEditingDefault"
+              />
             </div>
 
             <div class="modal-actions">
@@ -272,9 +266,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Dumbbell, Plus, Loader2, ChevronRight } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
+import CategoryGroupSelector from '../components/CategoryGroupSelector.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
@@ -344,6 +339,13 @@ const editFilteredGroups = computed(() => {
   return muscleGroups.value.filter((g) => g.categoryId === editCategoryId.value)
 })
 
+const editSelection = ref({ categoryId: '', groupId: '' })
+
+watch(editSelection, (val) => {
+  editCategoryId.value = val.categoryId ?? ''
+  editGroupId.value = val.groupId ?? ''
+}, { deep: true })
+
 const isEditingDefault = computed(() => {
   return !editingExercise.value?.userId
 })
@@ -354,6 +356,7 @@ function openEditExercise(ex: Exercise) {
   const group = muscleGroups.value.find((g) => g.id === ex.muscleGroupId)
   editGroupId.value = ex.muscleGroupId
   editCategoryId.value = group ? group.categoryId : ''
+  editSelection.value = { categoryId: editCategoryId.value, groupId: editGroupId.value }
   // ensure create modal is closed
   showCreateExercise.value = false
 }
@@ -372,13 +375,13 @@ function onEditCategoryChange() {
 async function updateExercise() {
   if (!editingExercise.value) return
   if (isEditingDefault.value) return
-  if (!editName.value.trim() || !editGroupId.value) return
+  if (!editName.value.trim() || !editSelection.value.groupId) return
 
   editProcessing.value = true
   try {
     const res = await api.exercises.updateExercise(editingExercise.value.id, {
       name: editName.value.trim(),
-      muscleGroupId: editGroupId.value,
+      muscleGroupId: editSelection.value.groupId,
     })
     if (res.isSuccess && res.data) {
       const idx = exercises.value.findIndex((e) => e.id === res.data!.id)
