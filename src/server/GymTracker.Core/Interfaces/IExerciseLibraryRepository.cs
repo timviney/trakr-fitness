@@ -34,8 +34,9 @@ namespace GymTracker.Core.Interfaces
         // Workouts
         Task<DbResult<Workout>> GetWorkoutByIdAsync(Guid id);
         Task<DbResult<IEnumerable<Workout>>> GetWorkoutsByUserIdAsync(Guid userId);
-        Task<DbResult> AddWorkoutAsync(Workout workout);
+        Task<DbResult> AddWorkoutAsync(Workout workout, bool saveChanges = true);
         Task<DbResult> UpdateWorkoutAsync(Workout workout);
         Task<DbResult> DeleteWorkoutAsync(Guid id);
+        Task<DbResult> SaveChangesAsync();
     }
 }

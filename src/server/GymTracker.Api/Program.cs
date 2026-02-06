@@ -17,6 +17,8 @@ DbSetup.SetupDb(builder);
 
 AuthSetup.ConfigureAuth(builder);
 
+ApplicationSetup.ConfigureApplication(builder);
+
 var runSwagger = builder.Configuration.GetValue<bool>("RunSwagger");
 
 if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);

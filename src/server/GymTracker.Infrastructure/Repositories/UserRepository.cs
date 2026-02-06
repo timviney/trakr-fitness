@@ -8,13 +8,20 @@ namespace GymTracker.Infrastructure.Repositories
 {
     public class UserRepository(GymTrackerDbContext db) : IUserRepository
     {
-        public async Task<DbResult> AddAsync(User user)
+        public async Task<DbResult> AddAsync(User user, bool saveChanges = true)
         {
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
             if (existingUser != null)
                 return DbResult.DuplicateName($"A user with email '{user.Email}' already exists.");
 
             await db.Users.AddAsync(user);
+            if (saveChanges)
+                await db.SaveChangesAsync();
+            return DbResult.Ok();
+        }
+
+        public async Task<DbResult> SaveChangesAsync()
+        {
             await db.SaveChangesAsync();
             return DbResult.Ok();
         }

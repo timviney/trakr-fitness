@@ -54,6 +54,18 @@ namespace GymTracker.Core.Results
         public static DbResult<T> NotFound(string message) => new(DbResultStatus.NotFound, message: message);
         public static DbResult<T> InvalidOperation(string message) => new(DbResultStatus.InvalidOperation, message: message);
         public static DbResult<T> DatabaseError(string message) => new(DbResultStatus.DatabaseError, message: message);
+        
+        /// <summary>
+        /// Converts a non-generic DbResult (failure) to a typed DbResult.
+        /// Only use this for error propagation - successful results need data.
+        /// </summary>
+        public static DbResult<T> FromResult(DbResult result)
+        {
+            if (result.IsSuccess)
+                throw new InvalidOperationException("Cannot convert a successful DbResult without data to DbResult<T>.");
+            
+            return new(result.Status, message: result.Message);
+        }
     }
 }
 

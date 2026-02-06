@@ -292,7 +292,7 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<Workout>>.Ok(workouts);
         }
 
-        public async Task<DbResult> AddWorkoutAsync(Workout workout)
+        public async Task<DbResult> AddWorkoutAsync(Workout workout, bool saveChanges = true)
         {
             var result = await GetWorkoutsByUserIdAsync(workout.UserId);
             if (!result.IsSuccess)
@@ -303,6 +303,13 @@ namespace GymTracker.Infrastructure.Repositories
                 return DbResult.DuplicateName($"A workout named '{workout.Name}' already exists.");
             
             await db.Workouts.AddAsync(workout);
+            if (saveChanges)
+                await db.SaveChangesAsync();
+            return DbResult.Ok();
+        }
+
+        public async Task<DbResult> SaveChangesAsync()
+        {
             await db.SaveChangesAsync();
             return DbResult.Ok();
         }

@@ -1,7 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using GymTracker.Api.Endpoints.Responses;
 using GymTracker.Api.Endpoints.Responses.Results;
 using GymTracker.Api.Endpoints.Responses.Structure;
 using GymTracker.Core.Entities;
@@ -18,10 +17,15 @@ public class AuthService : IAuthService
     private readonly JwtSettings _settings;
     private readonly RsaSecurityKey _rsaKey;
     private readonly IUserRepository _userRepository;
+    private readonly IUserRegistrationService _userRegistrationService;
 
-    public AuthService(IOptions<JwtSettings> options, IUserRepository userRepository)
+    public AuthService(
+        IOptions<JwtSettings> options,
+        IUserRepository userRepository,
+        IUserRegistrationService userRegistrationService)
     {
         _userRepository = userRepository;
+        _userRegistrationService = userRegistrationService;
         _settings = options.Value ?? throw new ArgumentNullException(nameof(options));
 
         if (string.IsNullOrWhiteSpace(_settings.PrivateKeyPem))
@@ -59,22 +63,24 @@ public class AuthService : IAuthService
 
     public async Task<ApiResponse<RegisterResult>> Register(string email, string password)
     {
-        User newUser;
         try
         {
             var ph = new PasswordHasher<User>();
-            newUser = new User
+            var newUser = new User
             {
                 Email = email,
                 PasswordHashed = ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
             };
-            var result = await _userRepository.AddAsync(newUser);
+            
+            var result = await _userRegistrationService.RegisterUserAsync(newUser);
             if (!result.IsSuccess)
             {
                 return result.Status == DbResultStatus.DuplicateName 
                     ? ApiResponse<RegisterResult>.Failure(ApiError.EmailTaken)
                     : ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
             }
+            
+            return ApiResponse<RegisterResult>.Success(new RegisterResult(result.Data));
         }
         catch (ArgumentException)
         {
@@ -86,8 +92,6 @@ public class AuthService : IAuthService
             // Unknown error
             return ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
         }
-        
-        return ApiResponse<RegisterResult>.Success(new RegisterResult(newUser.Id));
     }
     
     private LoginResult GenerateTokenAsync(Guid userId, string email)
