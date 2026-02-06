@@ -1,4 +1,6 @@
+import { ApiResponse } from './api-response'
 import { buildApiUrl } from './config'
+import { ApiError } from './api-error'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -16,7 +18,7 @@ export function setAuthTokenGetter(getter: () => string | null) {
 }
 
 export class ApiClient {
-  private async request<T>(path: string, options: RequestOptions): Promise<T> {
+  private async request<T>(path: string, options: RequestOptions): Promise<ApiResponse<T>> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers ?? {})
@@ -36,35 +38,26 @@ export class ApiClient {
       body: options.body ? JSON.stringify(options.body) : undefined
     })
 
-    if (!response.ok) {
-      const message = await response.text()
-      throw new Error(message || 'Request failed.')
-    }
-
-    if (response.status === 204) {
-      return undefined as T
-    }
-
-    return (await response.json()) as T
+    return (await response.json()) as ApiResponse<T>
   }
 
-  get<T>(path: string, headers?: Record<string, string>) {
-    return this.request<T>(path, { method: 'GET', headers })
+  async get<T>(path: string, headers?: Record<string, string>) : Promise<ApiResponse<T>> {
+    return await this.request<T>(path, { method: 'GET', headers })
   }
 
-  post<T>(path: string, body?: unknown, headers?: Record<string, string>) {
-    return this.request<T>(path, { method: 'POST', body, headers })
+  async post<T>(path: string, body?: unknown, headers?: Record<string, string>) : Promise<ApiResponse<T>> {
+    return await this.request<T>(path, { method: 'POST', body, headers })
   }
 
-  put<T>(path: string, body?: unknown, headers?: Record<string, string>) {
-    return this.request<T>(path, { method: 'PUT', body, headers })
+  async put<T>(path: string, body?: unknown, headers?: Record<string, string>) : Promise<ApiResponse<T>> {
+    return await this.request<T>(path, { method: 'PUT', body, headers })
   }
 
-  patch<T>(path: string, body?: unknown, headers?: Record<string, string>) {
-    return this.request<T>(path, { method: 'PATCH', body, headers })
+  async patch<T>(path: string, body?: unknown, headers?: Record<string, string>) : Promise<ApiResponse<T>> {
+    return await this.request<T>(path, { method: 'PATCH', body, headers })
   }
 
-  delete<T>(path: string, headers?: Record<string, string>) {
-    return this.request<T>(path, { method: 'DELETE', headers })
+  async delete<T>(path: string, headers?: Record<string, string>) : Promise<ApiResponse<T>> {
+    return await this.request<T>(path, { method: 'DELETE', headers })
   }
 }

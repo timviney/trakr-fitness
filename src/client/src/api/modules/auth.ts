@@ -23,13 +23,13 @@ export type RegisterResult = {
 }
 
 export class AuthApi {
-  constructor(private client: ApiClient) {}
+  constructor(private client: ApiClient) { }
 
-  login(payload: LoginRequest) {
-    return this.client.post<ApiResponse<LoginResult>>('/auth/login', payload)
+  async login(payload: LoginRequest): Promise<ApiResponse<LoginResult>> {
+    return await this.client.post<LoginResult>('/auth/login', payload)
   }
 
-  register(payload: RegisterRequest) {
-    return this.client.post<ApiResponse<RegisterResult>>('/auth/register', payload)
+  async register(payload: RegisterRequest): Promise<ApiResponse<RegisterResult>> {
+    return await this.client.post<RegisterResult>('/auth/register', payload)
   }
 }

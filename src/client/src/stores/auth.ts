@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../api/api'
-import type { LoginRequest } from '../api/modules/auth'
+import type { LoginRequest, LoginResult } from '../api/modules/auth'
+import { ApiResponse } from '../api/api-response'
 
 const TOKEN_KEY = 'auth_token'
 const USER_ID_KEY = 'auth_user_id'
@@ -46,12 +47,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async (credentials: LoginRequest) : Promise<ApiResponse<LoginResult>> => {
     const response = await api.auth.login(credentials)
 
     if (!response.isSuccess){
         console.log('Login failed:', response.error)
-        return
+        return response
     }
 
     const data = response.data!
@@ -66,6 +67,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem(USER_ID_KEY, data.userId)
     localStorage.setItem(EMAIL_KEY, data.email)
     localStorage.setItem(EXPIRES_AT_KEY, data.expiresAt)
+
+    return response
   }
 
   const logout = () => {

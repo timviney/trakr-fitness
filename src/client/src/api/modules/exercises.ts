@@ -16,11 +16,11 @@ export type Exercise = {
 export class ExercisesApi {
   constructor(private client: ApiClient) {}
 
-  getExercises() {
-    return this.client.get<ApiResponse<Exercise[]>>('/exercises/')
+  async getExercises() : Promise<ApiResponse<Exercise[]>> {
+    return await this.client.get<Exercise[]>('/exercises/')
   }
 
-  createExercise(payload: CreateExerciseRequest) {
-    return this.client.post<ApiResponse<Exercise>>('/exercises/', payload)
+  async createExercise(payload: CreateExerciseRequest) : Promise<ApiResponse<Exercise>> {
+    return await this.client.post<Exercise>('/exercises/', payload)
   }
 }

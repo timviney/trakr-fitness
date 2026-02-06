@@ -26,11 +26,11 @@ export type MuscleGroup = {
 export class MusclesApi {
   constructor(private client: ApiClient) {}
 
-  createMuscleCategory(payload: CreateMuscleCategoryRequest) {
-    return this.client.post<ApiResponse<MuscleCategory>>('/muscle/categories', payload)
+  async createMuscleCategory(payload: CreateMuscleCategoryRequest): Promise<ApiResponse<MuscleCategory>> {
+    return await this.client.post<MuscleCategory>('/muscle/categories', payload)
   }
 
-  createMuscleGroup(payload: CreateMuscleGroupRequest) {
-    return this.client.post<ApiResponse<MuscleGroup>>('/muscle/groups', payload)
+  async createMuscleGroup(payload: CreateMuscleGroupRequest): Promise<ApiResponse<MuscleGroup>> {
+    return await this.client.post<MuscleGroup>('/muscle/groups', payload)
   }
 }

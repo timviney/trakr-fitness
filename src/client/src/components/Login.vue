@@ -33,6 +33,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import AuthLayout from './AuthLayout.vue'
+import { ApiErrorMessages } from '../api/api-error'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -48,16 +49,22 @@ const onSubmit = async () => {
   errorMessage.value = ''
 
   try {
-    await authStore.login({
+    const response = await authStore.login({
       email: email.value,
       password: password.value
     })
     
+    if (!response.isSuccess) {
+      errorMessage.value = ApiErrorMessages[response.error as keyof typeof ApiErrorMessages] || 'Login failed.'
+      return
+    }
+
     // Redirect to home or previous page on success
     const redirect = router.currentRoute.value.query.redirect as string
     router.push(redirect || '/')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
+    console.error('Login failed:', error)
+    errorMessage.value = 'Login failed.'
   } finally {
     isSubmitting.value = false
   }

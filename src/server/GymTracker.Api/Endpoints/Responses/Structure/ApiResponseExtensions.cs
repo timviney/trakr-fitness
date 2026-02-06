@@ -19,7 +19,7 @@ public static class ApiResponseExtensions
         {
             return resp.Error switch
             {
-                ApiError.InvalidCredentials => Unauthorized(),
+                ApiError.InvalidCredentials => Json(resp, statusCode: StatusCodes.Status401Unauthorized),
                 ApiError.UserNotFound => NotFound(resp),
                 ApiError.EmailTaken => Conflict(resp),
                 ApiError.WeakPassword => BadRequest(resp),

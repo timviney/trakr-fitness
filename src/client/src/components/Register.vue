@@ -42,6 +42,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/api'
 import AuthLayout from './AuthLayout.vue'
+import { ApiErrorMessages } from '../api/api-error'
 
 const router = useRouter()
 
@@ -71,29 +72,21 @@ const onSubmit = async () => {
       password: password.value
     })
 
-    if (response.isSuccess) {
-      successMessage.value = '🎉 Account created successfully! Redirecting to login in 3 seconds...'
-      
-      // Disable form during success state
-      isSubmitting.value = true
-      
-      // Redirect after 3 seconds
-      setTimeout(() => {
-        router.push('/login')
-      }, 3000)
-    } else {
-      if (response.error === 'EmailTaken') {
-        errorMessage.value = 'This email is already registered.'
-      } else if (response.error === 'InvalidEmail') {
-        errorMessage.value = 'Please enter a valid email address.'
-      } else if (response.error === 'WeakPassword') {
-        errorMessage.value = 'Password is too weak. Please use a stronger password.'
-      } else {
-        errorMessage.value = 'Registration failed. Please try again.'
-      }
+    if (!response.isSuccess) {
+      errorMessage.value = ApiErrorMessages[response.error as keyof typeof ApiErrorMessages] || 'Registration failed.'
+      return
     }
+
+    successMessage.value = '🎉 Account created successfully! Redirecting to login in 3 seconds...'
+    
+    // Redirect after 3 seconds
+    setTimeout(() => {
+      router.push('/login')
+    }, 3000)
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Registration failed.'
+    console.error('Registration failed:', error)
+    errorMessage.value = 'Registration failed.'
+  } finally {
     isSubmitting.value = false
   }
 }

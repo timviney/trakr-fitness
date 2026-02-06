@@ -18,15 +18,15 @@ export type Workout = {
 export class WorkoutsApi {
   constructor(private client: ApiClient) {}
 
-  getWorkouts() {
-    return this.client.get<ApiResponse<Workout[]>>('/workouts/')
+  async getWorkouts(): Promise<ApiResponse<Workout[]>> {
+    return await this.client.get<Workout[]>('/workouts/')
   }
 
-  createWorkout(payload: CreateWorkoutRequest) {
-    return this.client.post<ApiResponse<Workout>>('/workouts/', payload)
+  async createWorkout(payload: CreateWorkoutRequest): Promise<ApiResponse<Workout>> {
+    return await this.client.post<Workout>('/workouts/', payload)
   }
 
-  updateWorkout(id: string, payload: UpdateWorkoutRequest) {
-    return this.client.put<ApiResponse<void>>(`/workouts/${id}`, payload)
+  async updateWorkout(id: string, payload: UpdateWorkoutRequest): Promise<ApiResponse<void>> {
+    return await this.client.put<void>(`/workouts/${id}`, payload)
   }
 }
