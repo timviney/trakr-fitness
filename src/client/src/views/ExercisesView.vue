@@ -150,7 +150,12 @@
           </div>
 
           <ul v-else class="item-list">
-            <li v-for="exercise in currentExercises" :key="exercise.id" class="item-card">
+            <li
+              v-for="exercise in currentExercises"
+              :key="exercise.id"
+              class="item-card item-card-clickable"
+              @click="openEditExercise(exercise)"
+            >
               <span class="item-name">{{ exercise.name }}</span>
               <span v-if="!exercise.userId" class="item-badge">Default</span>
             </li>
@@ -220,6 +225,48 @@
           </form>
         </div>
       </div>
+
+      <!-- Edit Exercise Modal -->
+      <div v-if="editingExercise" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal">
+          <h2 class="modal-title">{{ isEditingDefault ? "Default Exercise" : "Edit Exercise" }}</h2>
+          <form @submit.prevent="updateExercise">
+            <div class="form-field">
+              <label for="edit-exercise-name">Name</label>
+              <input
+                id="edit-exercise-name"
+                v-model="editName"
+                type="text"
+                placeholder="e.g., Bench Press"
+                required
+                :disabled="editProcessing || isEditingDefault"
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="edit-category">Category</label>
+              <select id="edit-category" v-model="editCategoryId" @change="onEditCategoryChange" :disabled="editProcessing || isEditingDefault">
+                <option value="" disabled>Select a category</option>
+                <option v-for="c in muscleCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="edit-group">Muscle Group</label>
+              <select id="edit-group" v-model="editGroupId" :disabled="!editCategoryId || editProcessing || isEditingDefault">
+                <option value="" disabled>Select a group</option>
+                <option v-for="g in editFilteredGroups" :key="g.id" :value="g.id">{{ g.name }}</option>
+              </select>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" @click="closeEditModal" :disabled="editProcessing">Cancel</button>
+              <button type="button" class="btn btn-danger" @click="deleteExercise" v-if="!isEditingDefault" :disabled="editProcessing">Delete</button>
+              <button type="submit" class="btn btn-primary" v-if="!isEditingDefault" :disabled="editProcessing">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </AppShell>
 </template>
@@ -283,6 +330,94 @@ function navigateToGroup(group: MuscleGroup) {
 function closeExerciseModal() {
   showCreateExercise.value = false
   newExerciseName.value = ''
+}
+
+// Editing state
+const editingExercise = ref<Exercise | null>(null)
+const editName = ref('')
+const editCategoryId = ref('')
+const editGroupId = ref('')
+const editProcessing = ref(false)
+
+const editFilteredGroups = computed(() => {
+  if (!editCategoryId.value) return []
+  return muscleGroups.value.filter((g) => g.categoryId === editCategoryId.value)
+})
+
+const isEditingDefault = computed(() => {
+  return !editingExercise.value?.userId
+})
+
+function openEditExercise(ex: Exercise) {
+  editingExercise.value = ex
+  editName.value = ex.name
+  const group = muscleGroups.value.find((g) => g.id === ex.muscleGroupId)
+  editGroupId.value = ex.muscleGroupId
+  editCategoryId.value = group ? group.categoryId : ''
+  // ensure create modal is closed
+  showCreateExercise.value = false
+}
+
+function closeEditModal() {
+  editingExercise.value = null
+  editName.value = ''
+  editCategoryId.value = ''
+  editGroupId.value = ''
+}
+
+function onEditCategoryChange() {
+  editGroupId.value = ''
+}
+
+async function updateExercise() {
+  if (!editingExercise.value) return
+  if (isEditingDefault.value) return
+  if (!editName.value.trim() || !editGroupId.value) return
+
+  editProcessing.value = true
+  try {
+    const res = await api.exercises.updateExercise(editingExercise.value.id, {
+      name: editName.value.trim(),
+      muscleGroupId: editGroupId.value,
+    })
+    if (res.isSuccess && res.data) {
+      const idx = exercises.value.findIndex((e) => e.id === res.data!.id)
+      if (idx >= 0) exercises.value[idx] = res.data!
+      // if moved group, and current selectedGroup doesn't match, navigate to the new group
+      if (selectedGroup.value && selectedGroup.value.id !== res.data!.muscleGroupId) {
+        const newGroup = muscleGroups.value.find((g) => g.id === res.data!.muscleGroupId)
+        if (newGroup) selectedGroup.value = newGroup
+      }
+      closeEditModal()
+    } else {
+      console.error('Failed to update exercise:', res.error)
+    }
+  } catch (e) {
+    console.error('Failed to update exercise:', e)
+  } finally {
+    editProcessing.value = false
+  }
+}
+
+async function deleteExercise() {
+  if (!editingExercise.value) return
+  if (isEditingDefault.value) return
+  if (!confirm('Delete this exercise?')) return
+
+  editProcessing.value = true
+  try {
+    const res = await api.exercises.deleteExercise(editingExercise.value.id)
+    if (res.isSuccess) {
+      exercises.value = exercises.value.filter((e) => e.id !== editingExercise.value!.id)
+      closeEditModal()
+    } else {
+      console.error('Failed to delete exercise:', res.error)
+    }
+  } catch (e) {
+    console.error('Failed to delete exercise:', e)
+  } finally {
+    editProcessing.value = false
+  }
 }
 
 async function loadData() {
@@ -581,6 +716,14 @@ onMounted(loadData)
   background: transparent;
   border: 1px solid var(--trk-surface-border);
   color: var(--trk-text);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
 /* Breadcrumb Navigation */
