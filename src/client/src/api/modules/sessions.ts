@@ -85,8 +85,8 @@ export class SessionsApi {
     return await this.client.put<SessionExercise>(`/sessions/${sessionId}/exercises/${sessionExerciseId}`, payload)
   }
 
-  async deleteSessionExercise(sessionId: string, sessionExerciseId: string): Promise<ApiResponse<void>> {
-    return await this.client.delete<void>(`/sessions/${sessionId}/exercises/${sessionExerciseId}`)
+  async deleteSessionExercise(sessionId: string, sessionExerciseId: string): Promise<ApiResponse<SessionExercise>> {
+    return await this.client.delete<SessionExercise>(`/sessions/${sessionId}/exercises/${sessionExerciseId}`)
   }
 
   // Set endpoints
@@ -106,7 +106,7 @@ export class SessionsApi {
     return await this.client.put<Set>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`, payload)
   }
 
-  async deleteSet(sessionId: string, sessionExerciseId: string, setId: string): Promise<ApiResponse<void>> {
-    return await this.client.delete<void>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`)
+  async deleteSet(sessionId: string, sessionExerciseId: string, setId: string): Promise<ApiResponse<Set>> {
+    return await this.client.delete<Set>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`)
   }
 }

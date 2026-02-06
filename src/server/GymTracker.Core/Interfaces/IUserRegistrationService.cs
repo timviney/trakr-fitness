@@ -10,5 +10,5 @@ public interface IUserRegistrationService
     /// </summary>
     /// <param name="user">The user to register (must have Email and PasswordHashed set)</param>
     /// <returns>DbResult containing the new user's ID on success</returns>
-    Task<DbResult<Guid>> RegisterUserAsync(User user);
+    Task<DbResult<User>> RegisterUserAsync(User user);
 }

@@ -8,16 +8,16 @@ namespace GymTracker.Infrastructure.Repositories
 {
     public class UserRepository(GymTrackerDbContext db) : IUserRepository
     {
-        public async Task<DbResult> AddAsync(User user, bool saveChanges = true)
+        public async Task<DbResult<User>> AddAsync(User user, bool saveChanges = true)
         {
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
             if (existingUser != null)
-                return DbResult.DuplicateName($"A user with email '{user.Email}' already exists.");
+                return DbResult<User>.DuplicateName($"A user with email '{user.Email}' already exists.");
 
             await db.Users.AddAsync(user);
             if (saveChanges)
                 await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<User>.Ok(user);
         }
 
         public async Task<DbResult> SaveChangesAsync()
@@ -26,15 +26,15 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult.Ok();
         }
 
-        public async Task<DbResult> DeleteAsync(Guid id)
+        public async Task<DbResult<User>> DeleteAsync(Guid id)
         {
             var user = await db.Users.FindAsync(id);
             if (user is null)
-                return DbResult.NotFound($"User with id '{id}' not found.");
+                return DbResult<User>.NotFound($"User with id '{id}' not found.");
             
             db.Users.Remove(user);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<User>.Ok(user);
         }
 
         public async Task<DbResult<User>> FindByEmailAsync(string email)
@@ -55,17 +55,15 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<User>.Ok(user);
         }
 
-        public async Task<DbResult> UpdateAsync(User user)
+        public async Task<DbResult<User>> UpdateAsync(User user)
         {
             var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == user.Email && u.Id != user.Id);
             if (existingUser != null)
-                return DbResult.DuplicateName($"A user with email '{user.Email}' already exists.");
+                return DbResult<User>.DuplicateName($"A user with email '{user.Email}' already exists.");
 
             db.Users.Update(user);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<User>.Ok(user);
         }
     }
 }
-
-

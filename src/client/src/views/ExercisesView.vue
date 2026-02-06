@@ -67,33 +67,104 @@
 
       <!-- Exercises Tab -->
       <template v-else-if="activeTab === 'exercises'">
-        <div v-if="exercises.length === 0" class="empty-state">
-          <Dumbbell class="empty-icon" />
-          <h2 class="empty-title">No exercises yet</h2>
-          <p class="empty-description">
-            Add exercises to track during your workout sessions.
-          </p>
-          <button class="btn btn-primary" @click="showCreateExercise = true">
-            <Plus class="btn-icon" />
-            Add Exercise
+        <!-- Breadcrumb Navigation -->
+        <nav v-if="selectedCategory || selectedGroup" class="breadcrumb">
+          <button class="breadcrumb-link" @click="navigateToCategories">
+            Categories
           </button>
-        </div>
+          <template v-if="selectedCategory">
+            <ChevronRight class="breadcrumb-sep" />
+            <button
+              class="breadcrumb-link"
+              :class="{ current: !selectedGroup }"
+              @click="navigateToCategory(selectedCategory)"
+            >
+              {{ selectedCategory.name }}
+            </button>
+          </template>
+          <template v-if="selectedGroup">
+            <ChevronRight class="breadcrumb-sep" />
+            <span class="breadcrumb-current">{{ selectedGroup.name }}</span>
+          </template>
+        </nav>
 
-        <ul v-else class="item-list">
-          <li v-for="exercise in exercises" :key="exercise.id" class="item-card">
-            <span class="item-name">{{ exercise.name }}</span>
-            <span v-if="!exercise.userId" class="item-badge">Default</span>
-          </li>
-        </ul>
+        <!-- Categories List -->
+        <template v-if="!selectedCategory">
+          <div v-if="muscleCategories.length === 0" class="empty-state">
+            <Dumbbell class="empty-icon" />
+            <h2 class="empty-title">No muscle categories</h2>
+            <p class="empty-description">
+              Muscle categories will appear here once configured.
+            </p>
+          </div>
 
-        <button
-          v-if="exercises.length > 0"
-          class="fab"
-          @click="showCreateExercise = true"
-          aria-label="Add exercise"
-        >
-          <Plus />
-        </button>
+          <ul v-else class="item-list">
+            <li
+              v-for="category in muscleCategories"
+              :key="category.id"
+              class="item-card item-card-clickable"
+              @click="navigateToCategory(category)"
+            >
+              <span class="item-name">{{ category.name }}</span>
+              <ChevronRight class="item-chevron" />
+            </li>
+          </ul>
+        </template>
+
+        <!-- Muscle Groups List -->
+        <template v-else-if="selectedCategory && !selectedGroup">
+          <div v-if="currentMuscleGroups.length === 0" class="empty-state">
+            <Dumbbell class="empty-icon" />
+            <h2 class="empty-title">No muscle groups</h2>
+            <p class="empty-description">
+              No muscle groups in {{ selectedCategory.name }}.
+            </p>
+          </div>
+
+          <ul v-else class="item-list">
+            <li
+              v-for="group in currentMuscleGroups"
+              :key="group.id"
+              class="item-card item-card-clickable"
+              @click="navigateToGroup(group)"
+            >
+              <span class="item-name">{{ group.name }}</span>
+              <span class="item-count">{{ getExerciseCount(group.id) }}</span>
+              <ChevronRight class="item-chevron" />
+            </li>
+          </ul>
+        </template>
+
+        <!-- Exercises List -->
+        <template v-else-if="selectedGroup">
+          <div v-if="currentExercises.length === 0" class="empty-state">
+            <Dumbbell class="empty-icon" />
+            <h2 class="empty-title">No exercises yet</h2>
+            <p class="empty-description">
+              Add your first {{ selectedGroup.name }} exercise.
+            </p>
+            <button class="btn btn-primary" @click="showCreateExercise = true">
+              <Plus class="btn-icon" />
+              Add Exercise
+            </button>
+          </div>
+
+          <ul v-else class="item-list">
+            <li v-for="exercise in currentExercises" :key="exercise.id" class="item-card">
+              <span class="item-name">{{ exercise.name }}</span>
+              <span v-if="!exercise.userId" class="item-badge">Default</span>
+            </li>
+          </ul>
+
+          <button
+            v-if="currentExercises.length > 0"
+            class="fab"
+            @click="showCreateExercise = true"
+            aria-label="Add exercise"
+          >
+            <Plus />
+          </button>
+        </template>
       </template>
 
       <!-- Create Workout Modal -->
@@ -123,17 +194,30 @@
         </div>
       </div>
 
-      <!-- Create Exercise Modal (placeholder - needs muscle group selection) -->
-      <div v-if="showCreateExercise" class="modal-overlay" @click.self="showCreateExercise = false">
+      <!-- Create Exercise Modal -->
+      <div v-if="showCreateExercise" class="modal-overlay" @click.self="closeExerciseModal">
         <div class="modal">
-          <h2 class="modal-title">New Exercise</h2>
-          <p class="modal-note">
-            Exercise creation requires muscle group selection. This feature will be available once
-            muscle group APIs are implemented.
-          </p>
-          <div class="modal-actions">
-            <button class="btn btn-primary" @click="showCreateExercise = false">Got it</button>
-          </div>
+          <h2 class="modal-title">New {{ selectedGroup?.name }} Exercise</h2>
+          <form @submit.prevent="createExercise">
+            <div class="form-field">
+              <label for="exercise-name">Name</label>
+              <input
+                id="exercise-name"
+                v-model="newExerciseName"
+                type="text"
+                placeholder="e.g., Bench Press"
+                required
+              />
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" @click="closeExerciseModal">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary" :disabled="creating">
+                {{ creating ? 'Creating...' : 'Create' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -141,12 +225,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Dumbbell, Plus, Loader2 } from 'lucide-vue-next'
+import { ref, computed, onMounted } from 'vue'
+import { Dumbbell, Plus, Loader2, ChevronRight } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
+import type { MuscleCategory, MuscleGroup } from '../api/modules/muscles'
 
 const activeTab = ref<'workouts' | 'exercises'>('workouts')
 const loading = ref(true)
@@ -155,19 +240,61 @@ const creating = ref(false)
 
 const workouts = ref<Workout[]>([])
 const exercises = ref<Exercise[]>([])
+const muscleCategories = ref<MuscleCategory[]>([])
+const muscleGroups = ref<MuscleGroup[]>([])
 
 const showCreateWorkout = ref(false)
 const showCreateExercise = ref(false)
 const newWorkoutName = ref('')
+const newExerciseName = ref('')
+
+// Drill-down navigation state
+const selectedCategory = ref<MuscleCategory | null>(null)
+const selectedGroup = ref<MuscleGroup | null>(null)
+
+const currentMuscleGroups = computed(() => {
+  if (!selectedCategory.value) return []
+  return muscleGroups.value.filter((g) => g.categoryId === selectedCategory.value!.id)
+})
+
+const currentExercises = computed(() => {
+  if (!selectedGroup.value) return []
+  return exercises.value.filter((e) => e.muscleGroupId === selectedGroup.value!.id)
+})
+
+function getExerciseCount(groupId: string): number {
+  return exercises.value.filter((e) => e.muscleGroupId === groupId).length
+}
+
+function navigateToCategories() {
+  selectedCategory.value = null
+  selectedGroup.value = null
+}
+
+function navigateToCategory(category: MuscleCategory) {
+  selectedCategory.value = category
+  selectedGroup.value = null
+}
+
+function navigateToGroup(group: MuscleGroup) {
+  selectedGroup.value = group
+}
+
+function closeExerciseModal() {
+  showCreateExercise.value = false
+  newExerciseName.value = ''
+}
 
 async function loadData() {
   loading.value = true
   error.value = null
 
   try {
-    const [workoutsRes, exercisesRes] = await Promise.all([
+    const [workoutsRes, exercisesRes, categoriesRes, groupsRes] = await Promise.all([
       api.workouts.getWorkouts(),
       api.exercises.getExercises(),
+      api.muscles.getMuscleCategories(),
+      api.muscles.getMuscleGroups(),
     ])
 
     if (workoutsRes.data) {
@@ -175,6 +302,12 @@ async function loadData() {
     }
     if (exercisesRes.data) {
       exercises.value = exercisesRes.data
+    }
+    if (categoriesRes.data) {
+      muscleCategories.value = categoriesRes.data
+    }
+    if (groupsRes.data) {
+      muscleGroups.value = groupsRes.data
     }
   } catch (e) {
     error.value = 'Failed to load data. Please try again.'
@@ -197,6 +330,26 @@ async function createWorkout() {
     }
   } catch (e) {
     console.error('Failed to create workout:', e)
+  } finally {
+    creating.value = false
+  }
+}
+
+async function createExercise() {
+  if (!newExerciseName.value.trim() || !selectedGroup.value) return
+
+  creating.value = true
+  try {
+    const res = await api.exercises.createExercise({
+      name: newExerciseName.value.trim(),
+      muscleGroupId: selectedGroup.value.id,
+    })
+    if (res.data) {
+      exercises.value.push(res.data)
+      closeExerciseModal()
+    }
+  } catch (e) {
+    console.error('Failed to create exercise:', e)
   } finally {
     creating.value = false
   }
@@ -428,5 +581,82 @@ onMounted(loadData)
   background: transparent;
   border: 1px solid var(--trk-surface-border);
   color: var(--trk-text);
+}
+
+/* Breadcrumb Navigation */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--trk-space-1);
+  padding: var(--trk-space-2) 0;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  padding: var(--trk-space-1) var(--trk-space-2);
+  color: var(--trk-accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--trk-radius-sm);
+  transition: background 150ms ease;
+}
+
+.breadcrumb-link:hover {
+  background: var(--trk-surface);
+}
+
+.breadcrumb-link.current {
+  color: var(--trk-text);
+  cursor: default;
+}
+
+.breadcrumb-link.current:hover {
+  background: transparent;
+}
+
+.breadcrumb-sep {
+  width: 16px;
+  height: 16px;
+  color: var(--trk-text-muted);
+  flex-shrink: 0;
+}
+
+.breadcrumb-current {
+  color: var(--trk-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--trk-space-1) var(--trk-space-2);
+}
+
+/* Clickable Item Cards */
+.item-card-clickable {
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.item-card-clickable:hover {
+  background: var(--trk-surface-hover, rgba(255, 255, 255, 0.05));
+  border-color: var(--trk-accent-muted);
+}
+
+.item-card-clickable:active {
+  transform: scale(0.99);
+}
+
+.item-chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--trk-text-muted);
+  flex-shrink: 0;
+}
+
+.item-count {
+  font-size: 0.75rem;
+  color: var(--trk-text-muted);
+  margin-left: auto;
+  margin-right: var(--trk-space-2);
 }
 </style>

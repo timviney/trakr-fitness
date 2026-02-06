@@ -52,8 +52,8 @@ export class MusclesApi {
     return await this.client.put<MuscleCategory>(`/muscle/categories/${id}`, payload)
   }
 
-  async deleteMuscleCategory(id: string): Promise<ApiResponse<void>> {
-    return await this.client.delete<void>(`/muscle/categories/${id}`)
+  async deleteMuscleCategory(id: string): Promise<ApiResponse<MuscleCategory>> {
+    return await this.client.delete<MuscleCategory>(`/muscle/categories/${id}`)
   }
 
   // Muscle Group endpoints
@@ -73,7 +73,7 @@ export class MusclesApi {
     return await this.client.put<MuscleGroup>(`/muscle/groups/${id}`, payload)
   }
 
-  async deleteMuscleGroup(id: string): Promise<ApiResponse<void>> {
-    return await this.client.delete<void>(`/muscle/groups/${id}`)
+  async deleteMuscleGroup(id: string): Promise<ApiResponse<MuscleCategory>> {
+    return await this.client.delete<MuscleCategory>(`/muscle/groups/${id}`)
   }
 }

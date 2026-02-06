@@ -10,12 +10,12 @@ public class UserRegistrationService(
 {
     private static readonly string[] DefaultWorkoutNames = ["Push", "Pull", "Legs"];
 
-    public async Task<DbResult<Guid>> RegisterUserAsync(User user)
+    public async Task<DbResult<User>> RegisterUserAsync(User user)
     {
         // Add user without saving
         var userResult = await userRepository.AddAsync(user, saveChanges: false);
         if (!userResult.IsSuccess)
-            return DbResult<Guid>.FromResult(userResult);
+            return DbResult<User>.FromResult(userResult);
 
         // Add default workouts without saving - use navigation property so EF links them
         foreach (var workoutName in DefaultWorkoutNames)
@@ -28,14 +28,14 @@ public class UserRegistrationService(
 
             var workoutResult = await exerciseLibraryRepository.AddWorkoutAsync(workout, saveChanges: false);
             if (!workoutResult.IsSuccess)
-                return DbResult<Guid>.FromResult(workoutResult);
+                return DbResult<User>.FromResult(workoutResult);
         }
 
         // Save all changes atomically - EF will generate IDs and link FKs
         var saveResult = await userRepository.SaveChangesAsync();
         if (!saveResult.IsSuccess)
-            return DbResult<Guid>.FromResult(saveResult);
+            return DbResult<User>.FromResult(saveResult);
 
-        return DbResult<Guid>.Ok(user.Id);
+        return DbResult<User>.Ok(user);
     }
 }

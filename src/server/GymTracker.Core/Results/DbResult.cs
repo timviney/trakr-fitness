@@ -2,7 +2,14 @@
 
 namespace GymTracker.Core.Results
 {
-    public record DbResult
+    public interface IDbResult
+    {
+        DbResultStatus Status { get; }
+        string? Message { get; }
+        bool IsSuccess { get; }
+    }    
+    
+    public record DbResult : IDbResult
     {
         public DbResultStatus Status { get; }
         public string? Message { get; }
@@ -26,7 +33,7 @@ namespace GymTracker.Core.Results
         public static DbResult DatabaseError(string message) => new(DbResultStatus.DatabaseError, message);
     }
     
-    public record DbResult<T>
+    public record DbResult<T> : IDbResult
     {
         public DbResultStatus Status { get; init; }
         public T? Data { get; init; }
@@ -59,7 +66,7 @@ namespace GymTracker.Core.Results
         /// Converts a non-generic DbResult (failure) to a typed DbResult.
         /// Only use this for error propagation - successful results need data.
         /// </summary>
-        public static DbResult<T> FromResult(DbResult result)
+        public static DbResult<T> FromResult(IDbResult result)
         {
             if (result.IsSuccess)
                 throw new InvalidOperationException("Cannot convert a successful DbResult without data to DbResult<T>.");

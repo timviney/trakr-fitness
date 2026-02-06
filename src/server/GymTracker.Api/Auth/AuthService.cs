@@ -84,7 +84,7 @@ public class AuthService : IAuthService
                     : ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
             }
 
-            return ApiResponse<RegisterResult>.Success(new RegisterResult(result.Data));
+            return ApiResponse<RegisterResult>.Success(new RegisterResult(result.Data.Id));
         }
         catch (ArgumentException)
         {

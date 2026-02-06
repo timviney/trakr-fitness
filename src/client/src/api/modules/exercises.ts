@@ -37,7 +37,7 @@ export class ExercisesApi {
     return await this.client.put<Exercise>(`/exercises/${id}`, payload)
   }
 
-  async deleteExercise(id: string): Promise<ApiResponse<void>> {
-    return await this.client.delete<void>(`/exercises/${id}`)
+  async deleteExercise(id: string): Promise<ApiResponse<Exercise>> {
+    return await this.client.delete<Exercise>(`/exercises/${id}`)
   }
 }

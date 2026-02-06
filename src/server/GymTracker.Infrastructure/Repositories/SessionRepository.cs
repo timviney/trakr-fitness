@@ -39,29 +39,29 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<Session>>.Ok(sessions);
         }
 
-        public async Task<DbResult> AddSessionAsync(Session session)
+        public async Task<DbResult<Session>> AddSessionAsync(Session session)
         {
             await db.Sessions.AddAsync(session);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Session>.Ok(session);
         }
 
-        public async Task<DbResult> UpdateSessionAsync(Session session)
+        public async Task<DbResult<Session>> UpdateSessionAsync(Session session)
         {
             db.Sessions.Update(session);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Session>.Ok(session);
         }
 
-        public async Task<DbResult> DeleteSessionAsync(Guid id)
+        public async Task<DbResult<Session>> DeleteSessionAsync(Guid id)
         {
             var session = await db.Sessions.FindAsync(id);
             if (session is null)
-                return DbResult.NotFound($"Session with id '{id}' not found.");
+                return DbResult<Session>.NotFound($"Session with id '{id}' not found.");
             
             db.Sessions.Remove(session);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Session>.Ok(session);
         }
 
         // ===== Session Exercises =====
@@ -92,29 +92,29 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<SessionExercise>>.Ok(sessionExercises);
         }
 
-        public async Task<DbResult> AddSessionExerciseAsync(SessionExercise sessionExercise)
+        public async Task<DbResult<SessionExercise>> AddSessionExerciseAsync(SessionExercise sessionExercise)
         {
             await db.SessionExercises.AddAsync(sessionExercise);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<SessionExercise>.Ok(sessionExercise);
         }
 
-        public async Task<DbResult> UpdateSessionExerciseAsync(SessionExercise sessionExercise)
+        public async Task<DbResult<SessionExercise>> UpdateSessionExerciseAsync(SessionExercise sessionExercise)
         {
             db.SessionExercises.Update(sessionExercise);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<SessionExercise>.Ok(sessionExercise);
         }
 
-        public async Task<DbResult> DeleteSessionExerciseAsync(Guid id)
+        public async Task<DbResult<SessionExercise>> DeleteSessionExerciseAsync(Guid id)
         {
             var sessionExercise = await db.SessionExercises.FindAsync(id);
             if (sessionExercise is null)
-                return DbResult.NotFound($"Session exercise with id '{id}' not found.");
+                return DbResult<SessionExercise>.NotFound($"Session exercise with id '{id}' not found.");
             
             db.SessionExercises.Remove(sessionExercise);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<SessionExercise>.Ok(sessionExercise);
         }
 
         // ===== Sets =====
@@ -141,29 +141,29 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<Set>>.Ok(sets);
         }
 
-        public async Task<DbResult> AddSetAsync(Set set)
+        public async Task<DbResult<Set>> AddSetAsync(Set set)
         {
             await db.Sets.AddAsync(set);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Set>.Ok(set);
         }
 
-        public async Task<DbResult> UpdateSetAsync(Set set)
+        public async Task<DbResult<Set>> UpdateSetAsync(Set set)
         {
             db.Sets.Update(set);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Set>.Ok(set);
         }
 
-        public async Task<DbResult> DeleteSetAsync(Guid id)
+        public async Task<DbResult<Set>> DeleteSetAsync(Guid id)
         {
             var set = await db.Sets.FindAsync(id);
             if (set is null)
-                return DbResult.NotFound($"Set with id '{id}' not found.");
+                return DbResult<Set>.NotFound($"Set with id '{id}' not found.");
             
             db.Sets.Remove(set);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Set>.Ok(set);
         }
     }
 }

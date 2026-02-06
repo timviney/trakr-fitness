@@ -40,45 +40,45 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<MuscleCategory>>.Ok(categories);
         }
 
-        public async Task<DbResult> AddMuscleCategoryAsync(MuscleCategory category)
+        public async Task<DbResult<MuscleCategory>> AddMuscleCategoryAsync(MuscleCategory category)
         {
             var result = await GetMuscleCategoriesByUserIdAsync(category.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<MuscleCategory>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(mc => mc.Name == category.Name);
             if (existing is not null)
-                return DbResult.DuplicateName($"A muscle category named '{category.Name}' already exists.");
+                return DbResult<MuscleCategory>.DuplicateName($"A muscle category named '{category.Name}' already exists.");
             
             await db.MuscleCategories.AddAsync(category);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<MuscleCategory>.Ok(category);
         }
 
-        public async Task<DbResult> UpdateMuscleCategoryAsync(MuscleCategory category)
+        public async Task<DbResult<MuscleCategory>> UpdateMuscleCategoryAsync(MuscleCategory category)
         {
             var result = await GetMuscleCategoriesByUserIdAsync(category.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<MuscleCategory>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(mc => mc.Name == category.Name && mc.Id != category.Id);
             if (existing is not null)
-                return DbResult.DuplicateName($"A muscle category named '{category.Name}' already exists.");
+                return DbResult<MuscleCategory>.DuplicateName($"A muscle category named '{category.Name}' already exists.");
             
             db.MuscleCategories.Update(category);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<MuscleCategory>.Ok(category);
         }
 
-        public async Task<DbResult> DeleteMuscleCategoryAsync(Guid id)
+        public async Task<DbResult<MuscleCategory>> DeleteMuscleCategoryAsync(Guid id)
         {
             var category = await db.MuscleCategories.FindAsync(id);
             if (category is null)
-                return DbResult.NotFound($"Muscle category with id '{id}' not found.");
+                return DbResult<MuscleCategory>.NotFound($"Muscle category with id '{id}' not found.");
             
             db.MuscleCategories.Remove(category);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<MuscleCategory>.Ok(category);
         }
 
         // ===== Muscle Groups =====
@@ -131,45 +131,45 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<MuscleGroup>>.Ok(groups);
         }
 
-        public async Task<DbResult> AddMuscleGroupAsync(MuscleGroup group)
+        public async Task<DbResult<MuscleGroup>> AddMuscleGroupAsync(MuscleGroup group)
         {
             var result = await GetMuscleGroupsByUserIdAsync(group.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<MuscleGroup>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(mg => mg.Name == group.Name);
             if (existing is not null)
-                return DbResult.DuplicateName($"A muscle group named '{group.Name}' already exists.");
+                return DbResult<MuscleGroup>.DuplicateName($"A muscle group named '{group.Name}' already exists.");
             
             await db.MuscleGroups.AddAsync(group);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<MuscleGroup>.Ok(group);
         }
 
-        public async Task<DbResult> UpdateMuscleGroupAsync(MuscleGroup group)
+        public async Task<DbResult<MuscleGroup>> UpdateMuscleGroupAsync(MuscleGroup group)
         {
             var result = await GetMuscleGroupsByUserIdAsync(group.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<MuscleGroup>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(mg => mg.Name == group.Name && mg.Id != group.Id);
             if (existing is not null)
-                return DbResult.DuplicateName($"A muscle group named '{group.Name}' already exists.");
+                return DbResult<MuscleGroup>.DuplicateName($"A muscle group named '{group.Name}' already exists.");
             
             db.MuscleGroups.Update(group);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<MuscleGroup>.Ok(group);
         }
 
-        public async Task<DbResult> DeleteMuscleGroupAsync(Guid id)
+        public async Task<DbResult<MuscleGroup>> DeleteMuscleGroupAsync(Guid id)
         {
             var group = await db.MuscleGroups.FindAsync(id);
             if (group is null)
-                return DbResult.NotFound($"Muscle group with id '{id}' not found.");
+                return DbResult<MuscleGroup>.NotFound($"Muscle group with id '{id}' not found.");
             
             db.MuscleGroups.Remove(group);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<MuscleGroup>.Ok(group);
         }
 
         // ===== Exercises =====
@@ -222,45 +222,45 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<Exercise>>.Ok(exercises);
         }
 
-        public async Task<DbResult> AddExerciseAsync(Exercise exercise)
+        public async Task<DbResult<Exercise>> AddExerciseAsync(Exercise exercise)
         {
             var result = await GetExercisesByUserIdAsync(exercise.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<Exercise>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(e => e.Name == exercise.Name);
             if (existing is not null)
-                return DbResult.DuplicateName($"An exercise named '{exercise.Name}' already exists.");
+                return DbResult<Exercise>.DuplicateName($"An exercise named '{exercise.Name}' already exists.");
             
             await db.Exercises.AddAsync(exercise);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Exercise>.Ok(exercise);
         }
 
-        public async Task<DbResult> UpdateExerciseAsync(Exercise exercise)
+        public async Task<DbResult<Exercise>> UpdateExerciseAsync(Exercise exercise)
         {
             var result = await GetExercisesByUserIdAsync(exercise.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<Exercise>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(e => e.Name == exercise.Name && e.Id != exercise.Id);
             if (existing is not null)
-                return DbResult.DuplicateName($"An exercise named '{exercise.Name}' already exists.");
+                return DbResult<Exercise>.DuplicateName($"An exercise named '{exercise.Name}' already exists.");
             
             db.Exercises.Update(exercise);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Exercise>.Ok(exercise);
         }
 
-        public async Task<DbResult> DeleteExerciseAsync(Guid id)
+        public async Task<DbResult<Exercise>> DeleteExerciseAsync(Guid id)
         {
             var exercise = await db.Exercises.FindAsync(id);
             if (exercise is null)
-                return DbResult.NotFound($"Exercise with id '{id}' not found.");
+                return DbResult<Exercise>.NotFound($"Exercise with id '{id}' not found.");
             
             db.Exercises.Remove(exercise);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Exercise>.Ok(exercise);
         }
 
         // ===== Workouts =====
@@ -292,20 +292,20 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<Workout>>.Ok(workouts);
         }
 
-        public async Task<DbResult> AddWorkoutAsync(Workout workout, bool saveChanges = true)
+        public async Task<DbResult<Workout>> AddWorkoutAsync(Workout workout, bool saveChanges = true)
         {
             var result = await GetWorkoutsByUserIdAsync(workout.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<Workout>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(w => w.Name == workout.Name);
             if (existing is not null)
-                return DbResult.DuplicateName($"A workout named '{workout.Name}' already exists.");
+                return DbResult<Workout>.DuplicateName($"A workout named '{workout.Name}' already exists.");
             
             await db.Workouts.AddAsync(workout);
             if (saveChanges)
                 await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Workout>.Ok(workout);
         }
 
         public async Task<DbResult> SaveChangesAsync()
@@ -314,32 +314,31 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult.Ok();
         }
 
-        public async Task<DbResult> UpdateWorkoutAsync(Workout workout)
+        public async Task<DbResult<Workout>> UpdateWorkoutAsync(Workout workout)
         {
             var result = await GetWorkoutsByUserIdAsync(workout.UserId);
             if (!result.IsSuccess)
-                return DbResult.DatabaseError(result.Message);
+                return DbResult<Workout>.DatabaseError(result.Message);
             
             var existing = result.Data?.FirstOrDefault(w => w.Name == workout.Name && w.Id != workout.Id);
             if (existing is not null)
-                return DbResult.DuplicateName($"A workout named '{workout.Name}' already exists.");
+                return DbResult<Workout>.DuplicateName($"A workout named '{workout.Name}' already exists.");
             
             db.Workouts.Update(workout);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Workout>.Ok(workout);
         }
 
-        public async Task<DbResult> DeleteWorkoutAsync(Guid id)
+        public async Task<DbResult<Workout>> DeleteWorkoutAsync(Guid id)
         {
             var workout = await db.Workouts.FindAsync(id);
             if (workout is null)
-                return DbResult.NotFound($"Workout with id '{id}' not found.");
+                return DbResult<Workout>.NotFound($"Workout with id '{id}' not found.");
             
             db.Workouts.Remove(workout);
             await db.SaveChangesAsync();
-            return DbResult.Ok();
+            return DbResult<Workout>.Ok(workout);
         }
     }
 }
-
 
