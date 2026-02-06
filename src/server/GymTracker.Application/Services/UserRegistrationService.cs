@@ -8,7 +8,7 @@ public class UserRegistrationService(
     IUserRepository userRepository,
     IExerciseLibraryRepository exerciseLibraryRepository) : IUserRegistrationService
 {
-    private static readonly string[] DefaultWorkoutNames = ["Push", "Pull", "Legs"];
+    private static readonly string[] DefaultWorkoutNames = ["Push Day", "Pull Day", "Leg Day"];
 
     public async Task<DbResult<User>> RegisterUserAsync(User user)
     {

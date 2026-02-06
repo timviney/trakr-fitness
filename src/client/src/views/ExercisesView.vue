@@ -50,8 +50,14 @@
         </div>
 
         <ul v-else class="item-list">
-          <li v-for="workout in workouts" :key="workout.id" class="item-card">
+          <li
+            v-for="workout in workouts"
+            :key="workout.id"
+            class="item-card item-card-clickable"
+            @click="openEditWorkout(workout)"
+          >
             <span class="item-name">{{ workout.name }}</span>
+            <span v-if="!workout.userId" class="item-badge">Default</span>
           </li>
         </ul>
 
@@ -198,6 +204,32 @@
           </form>
         </div>
       </div>
+
+        <!-- Edit Workout Modal -->
+        <div v-if="editingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal">
+          <div class="modal">
+            <h2 class="modal-title">{{ isEditingWorkoutDefault ? 'Default Workout' : 'Edit Workout' }}</h2>
+            <form @submit.prevent="updateWorkout">
+              <div class="form-field">
+                <label for="edit-workout-name">Name</label>
+                <input
+                  id="edit-workout-name"
+                  v-model="editWorkoutName"
+                  type="text"
+                  placeholder="e.g., Push Day"
+                  required
+                  :disabled="editWorkoutProcessing || isEditingWorkoutDefault"
+                />
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" @click="closeEditWorkoutModal" :disabled="editWorkoutProcessing">Cancel</button>
+                <button type="button" class="btn btn-danger" @click="deleteWorkout" v-if="!isEditingWorkoutDefault" :disabled="editWorkoutProcessing">Delete</button>
+                <button type="submit" class="btn btn-primary" v-if="!isEditingWorkoutDefault" :disabled="editWorkoutProcessing">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
 
       <!-- Create Exercise Modal -->
       <div v-if="showCreateExercise" class="modal-overlay" @click.self="closeExerciseModal">
@@ -359,6 +391,70 @@ function openEditExercise(ex: Exercise) {
   editSelection.value = { categoryId: editCategoryId.value, groupId: editGroupId.value }
   // ensure create modal is closed
   showCreateExercise.value = false
+}
+
+// Workout editing state
+const editingWorkout = ref<Workout | null>(null)
+const editWorkoutName = ref('')
+const editWorkoutProcessing = ref(false)
+
+const isEditingWorkoutDefault = computed(() => {
+  return !editingWorkout.value?.userId
+})
+
+function openEditWorkout(w: Workout) {
+  editingWorkout.value = w
+  editWorkoutName.value = w.name
+  // ensure create modal is closed
+  showCreateWorkout.value = false
+}
+
+function closeEditWorkoutModal() {
+  editingWorkout.value = null
+  editWorkoutName.value = ''
+}
+
+async function updateWorkout() {
+  if (!editingWorkout.value) return
+  if (isEditingWorkoutDefault.value) return
+  if (!editWorkoutName.value.trim()) return
+
+  editWorkoutProcessing.value = true
+  try {
+    const res = await api.workouts.updateWorkout(editingWorkout.value.id, { name: editWorkoutName.value.trim() })
+    if (res.isSuccess && res.data) {
+      const idx = workouts.value.findIndex((w) => w.id === res.data!.id)
+      if (idx >= 0) workouts.value[idx] = res.data!
+      closeEditWorkoutModal()
+    } else {
+      console.error('Failed to update workout:', res.error)
+    }
+  } catch (e) {
+    console.error('Failed to update workout:', e)
+  } finally {
+    editWorkoutProcessing.value = false
+  }
+}
+
+async function deleteWorkout() {
+  if (!editingWorkout.value) return
+  if (isEditingWorkoutDefault.value) return
+  if (!confirm('Delete this workout?')) return
+
+  editWorkoutProcessing.value = true
+  try {
+    const res = await api.workouts.deleteWorkout(editingWorkout.value.id)
+    if (res.isSuccess) {
+      workouts.value = workouts.value.filter((w) => w.id !== editingWorkout.value!.id)
+      closeEditWorkoutModal()
+    } else {
+      console.error('Failed to delete workout:', res.error)
+    }
+  } catch (e) {
+    console.error('Failed to delete workout:', e)
+  } finally {
+    editWorkoutProcessing.value = false
+  }
 }
 
 function closeEditModal() {
@@ -713,20 +809,6 @@ onMounted(loadData)
   width: 18px;
   height: 18px;
   margin-right: 6px;
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 1px solid var(--trk-surface-border);
-  color: var(--trk-text);
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
 }
 
 /* Breadcrumb Navigation */

@@ -18,7 +18,9 @@
   --trk-success-bg: #1a3a2e;
   --trk-success-border: #2d5a47;
   --trk-success-text: #7fe8b5;
-  --trk-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --trk-danger:  #ef4444;
+  --trk-danger-muted: #7f1d1d;
+  --trk-shadow: 0 18px 40px rgba(2, 2, 2, 0.55);
   --trk-radius-lg: 14px;
   --trk-radius-md: 10px;
   --trk-space-2: 0.5rem;
@@ -79,9 +81,6 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn:hover {
-  background: var(--trk-accent-strong);
-}
 
 .btn:active {
   opacity: 0.85;
@@ -96,6 +95,28 @@ a {
 .btn-primary {
   background: var(--trk-accent);
   color: var(--trk-text-dark);
+}
+
+.btn-primary:hover {
+  background: var(--trk-accent-strong);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--trk-surface-border);
+  color: var(--trk-text);
+}
+
+.btn-danger {
+  background: var(--trk-danger);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.btn-danger:hover {
+  background: var(--trk-danger-muted);
 }
 
 .form-field {
