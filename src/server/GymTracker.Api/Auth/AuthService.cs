@@ -40,19 +40,21 @@ public class AuthService : IAuthService
     {
         try
         {
+            Tidy(ref email);
+
             var result = await _userRepository.FindByEmailAsync(email);
 
             if (!result.IsSuccess) return ApiResponse<LoginResult>.Failure(ApiError.UserNotFound);
-            
+
             var user = result.Data!;
             var ph = new PasswordHasher<User>();
             if (ph.VerifyHashedPassword(user, user.PasswordHashed, password) == PasswordVerificationResult.Failed)
             {
                 return ApiResponse<LoginResult>.Failure(ApiError.InvalidCredentials);
             }
-            
+
             var loginResult = GenerateTokenAsync(user.Id, email);
-            
+
             return ApiResponse<LoginResult>.Success(loginResult);
         }
         catch (Exception)
@@ -65,21 +67,23 @@ public class AuthService : IAuthService
     {
         try
         {
+            Tidy(ref email);
+
             var ph = new PasswordHasher<User>();
             var newUser = new User
             {
                 Email = email,
                 PasswordHashed = ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
             };
-            
+
             var result = await _userRegistrationService.RegisterUserAsync(newUser);
             if (!result.IsSuccess)
             {
-                return result.Status == DbResultStatus.DuplicateName 
+                return result.Status == DbResultStatus.DuplicateName
                     ? ApiResponse<RegisterResult>.Failure(ApiError.EmailTaken)
                     : ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
             }
-            
+
             return ApiResponse<RegisterResult>.Success(new RegisterResult(result.Data));
         }
         catch (ArgumentException)
@@ -93,7 +97,7 @@ public class AuthService : IAuthService
             return ApiResponse<RegisterResult>.Failure(ApiError.UnknownError);
         }
     }
-    
+
     private LoginResult GenerateTokenAsync(Guid userId, string email)
     {
         var now = DateTime.UtcNow;
@@ -129,10 +133,35 @@ public class AuthService : IAuthService
         const string endRsaPrivateKey = "-----END RSA PRIVATE KEY-----";
 
         if (!pem.Contains(pkcs1Header)) throw new InvalidOperationException("Unsupported PEM format for private key.");
-        
+
         var base64 = pem.Replace(pkcs1Header, string.Empty).Replace(endRsaPrivateKey, string.Empty)
             .Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
         var bytes = Convert.FromBase64String(base64);
         rsa.ImportRSAPrivateKey(bytes, out _);
+    }
+
+    private static void Tidy(ref string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email cannot be empty.", nameof(email));
+
+        email = email.ToLower().Trim();
+
+        // Validate email format using a standard regex pattern
+        if (!System.Text.RegularExpressions.Regex.IsMatch(email,
+                @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            throw new ArgumentException("Invalid email format.", nameof(email));
+        }
+
+        // Check for potentially dangerous characters that shouldn't be in valid emails
+        if (System.Text.RegularExpressions.Regex.IsMatch(email, @"[;""\\<>(){}|\[\]]"))
+        {
+            throw new ArgumentException("Email contains invalid characters.", nameof(email));
+        }
+
+        // Defense-in-depth: escape apostrophes (even though EF Core parameterizes queries)
+        email = email.Replace("'", "''");
     }
 }
