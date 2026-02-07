@@ -1,5 +1,6 @@
 import { ApiResponse } from '../api-response'
 import { ApiClient } from '../client'
+import { Exercise } from './exercises'
 
 export type CreateWorkoutRequest = {
   name: string
@@ -9,10 +10,19 @@ export type UpdateWorkoutRequest = {
   name: string
 }
 
+export type DefaultExercise = {
+  id: string
+  workoutId: string
+  exerciseId: string
+  exerciseNumber: number
+  exercise: Exercise
+}
+
 export type Workout = {
   id: string
-  userId: string
+  userId: string | null
   name: string
+  defaultExercises?: DefaultExercise[]
 }
 
 export class WorkoutsApi {

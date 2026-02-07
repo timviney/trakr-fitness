@@ -12,7 +12,7 @@ public class UserRegistrationService(
     private static readonly Dictionary<string, List<string>> DefaultExercisesByWorkout = new()
     {
         ["Push Day"] = ["Bench Press", "Overhead Press", "Tricep Dips"],
-        ["Pull Day"] = ["Pull-Ups", "Barbell Rows", "Bicep Curls"],
+        ["Pull Day"] = ["Pull Ups", "Barbell Rows", "Dumbbell Curls"],
         ["Leg Day"] = ["Squats", "Deadlifts", "Standing Calf Raises"]
     };
 

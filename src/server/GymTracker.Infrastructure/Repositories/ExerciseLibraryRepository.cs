@@ -271,6 +271,8 @@ namespace GymTracker.Infrastructure.Repositories
                 .Include(w => w.Sessions)
                     .ThenInclude(s => s.SessionExercises)
                         .ThenInclude(se => se.Exercise)
+                .Include(w => w.DefaultExercises)
+                    .ThenInclude(de => de.Exercise)
                 .FirstOrDefaultAsync(w => w.Id == id);
             
             if (workout is null)
@@ -286,6 +288,8 @@ namespace GymTracker.Infrastructure.Repositories
                 .Include(w => w.Sessions)
                     .ThenInclude(s => s.SessionExercises)
                         .ThenInclude(se => se.Exercise)
+                .Include(w => w.DefaultExercises)
+                    .ThenInclude(de => de.Exercise)
                 .Where(w => w.UserId == userId)
                 .ToListAsync();
             

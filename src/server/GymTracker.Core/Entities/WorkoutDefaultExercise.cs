@@ -11,7 +11,7 @@ public class WorkoutDefaultExercise
 
     // Navigation properties
     [JsonIgnore]
-    public Exercise Exercise { get; set; } = null!;
-    [JsonIgnore]
     public Workout Workout { get; set; } = null!;
+    // We include Exercise in the JSON response because it contains the name 
+    public Exercise Exercise { get; set; } = null!;
 }

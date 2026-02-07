@@ -222,6 +222,17 @@
                 />
               </div>
 
+              <div class="form-field">
+                <div class="section-toggle" role="button" tabindex="0" @click="showDefaultExercises = !showDefaultExercises">
+                  <span class="section-title">Default Exercises</span>
+                  <ChevronDown class="section-icon" :class="{ rotated: showDefaultExercises }" />
+                </div>
+              </div>
+
+              <div v-if="showDefaultExercises" class="form-field">
+                <DefaultExercisesList :exercises="editingWorkout ? workoutDefaultExercises : defaultExercises" :muscleGroups="muscleGroups" />
+              </div>
+
               <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" @click="closeEditWorkoutModal" :disabled="editWorkoutProcessing">Cancel</button>
                 <button type="button" class="btn btn-danger" @click="deleteWorkout" v-if="!isEditingWorkoutDefault" :disabled="editWorkoutProcessing">Delete</button>
@@ -299,9 +310,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Dumbbell, Plus, Loader2, ChevronRight } from 'lucide-vue-next'
+import { Dumbbell, Plus, Loader2, ChevronRight, ChevronDown } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
 import MuscleGroupSelector from '../components/MuscleGroupSelector.vue'
+import DefaultExercisesList from '../components/DefaultExercisesList.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
@@ -397,6 +409,22 @@ function openEditExercise(ex: Exercise) {
 const editingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
 const editWorkoutProcessing = ref(false)
+const showDefaultExercises = ref(false)
+
+const defaultExercises = computed(() => {
+  return exercises.value.filter((e) => !e.userId)
+})
+
+const workoutDefaultExercises = computed(() => {
+  if (!editingWorkout.value || !editingWorkout.value.defaultExercises) return []
+  return (editingWorkout.value.defaultExercises || []).map((d) => ({
+    id: d.exercise.id,
+    userId: d.exercise.userId ?? null,
+    muscleGroupId: d.exercise.muscleGroupId,
+    name: d.exercise.name,
+    exerciseNumber: d.exerciseNumber,
+  }))
+})
 
 const isEditingWorkoutDefault = computed(() => {
   return !editingWorkout.value?.userId
@@ -857,6 +885,34 @@ onMounted(loadData)
   font-size: 0.875rem;
   font-weight: 500;
   padding: var(--trk-space-1) var(--trk-space-2);
+}
+
+/* Section toggle for default exercises */
+.section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--trk-space-3);
+  padding: calc(var(--trk-space-2) - 2px) calc(var(--trk-space-3) - 2px);
+  background: transparent;
+  border-radius: var(--trk-radius-sm);
+  cursor: pointer;
+}
+.section-toggle:focus {
+  outline: 2px solid rgba(0,0,0,0.06);
+}
+.section-title {
+  font-weight: 600;
+  color: var(--trk-text);
+}
+.section-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--trk-text-muted);
+  transition: transform 150ms ease;
+}
+.section-icon.rotated {
+  transform: rotate(180deg);
 }
 
 /* Clickable Item Cards */
