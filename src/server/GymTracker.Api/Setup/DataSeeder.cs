@@ -103,13 +103,6 @@ public static class DataSeeder
 
         context.Exercises.AddRange(exercises);
 
-        // Create system default workouts for each user
-        var pushWorkout = new Workout { Id = Guid.NewGuid(), UserId = testUser.Id, Name = "Push" };
-        var pullWorkout = new Workout { Id = Guid.NewGuid(), UserId = testUser.Id, Name = "Pull" };
-        var legsWorkout = new Workout { Id = Guid.NewGuid(), UserId = testUser.Id, Name = "Legs" };
-
-        context.Workouts.AddRange(pushWorkout, pullWorkout, legsWorkout);
-
         // Save all changes
         await context.SaveChangesAsync();
     }

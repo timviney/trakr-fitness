@@ -37,6 +37,11 @@ namespace GymTracker.Core.Interfaces
         Task<DbResult<Workout>> AddWorkoutAsync(Workout workout, bool saveChanges = true);
         Task<DbResult<Workout>> UpdateWorkoutAsync(Workout workout);
         Task<DbResult<Workout>> DeleteWorkoutAsync(Guid id);
+        Task<DbResult<WorkoutDefaultExercise>> AddWorkoutDefaultExerciseAsync(WorkoutDefaultExercise defaultExercise, bool saveChanges = true);
+        Task<DbResult<WorkoutDefaultExercise>> UpdateWorkoutDefaultExerciseAsync(WorkoutDefaultExercise defaultExercise);
+        Task<DbResult<WorkoutDefaultExercise>> DeleteWorkoutDefaultExerciseAsync(WorkoutDefaultExercise defaultExercise);
+        
+        // Save changes (for batch operations)
         Task<DbResult> SaveChangesAsync();
     }
 }

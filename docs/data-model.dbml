@@ -31,6 +31,13 @@ Table workouts {
   name text
 }
 
+Table workout_default_exercises {
+  id uuid [primary key]
+  workout_id uuid
+  exercise_id uuid
+  exercise_number integer
+}
+
 Table sessions {
   id uuid [primary key]
   workout_id uuid
@@ -64,3 +71,5 @@ Ref: "sessions"."id" < "session_exercises"."session_id"
 Ref: "exercises"."id" < "session_exercises"."exercise_id"
 Ref: "muscle_categories"."id" < "muscle_groups"."category"
 Ref: "users"."id" < "muscle_categories"."user_id"
+Ref: "workouts"."id" < "workout_default_exercises"."workout_id"
+Ref: "exercises"."id" < "workout_default_exercises"."exercises_id"

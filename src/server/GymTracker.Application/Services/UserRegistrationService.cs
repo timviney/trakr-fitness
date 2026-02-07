@@ -9,6 +9,12 @@ public class UserRegistrationService(
     IExerciseLibraryRepository exerciseLibraryRepository) : IUserRegistrationService
 {
     private static readonly string[] DefaultWorkoutNames = ["Push Day", "Pull Day", "Leg Day"];
+    private static readonly Dictionary<string, List<string>> DefaultExercisesByWorkout = new()
+    {
+        ["Push Day"] = ["Bench Press", "Overhead Press", "Tricep Dips"],
+        ["Pull Day"] = ["Pull-Ups", "Barbell Rows", "Bicep Curls"],
+        ["Leg Day"] = ["Squats", "Deadlifts", "Standing Calf Raises"]
+    };
 
     public async Task<DbResult<User>> RegisterUserAsync(User user)
     {
@@ -16,6 +22,8 @@ public class UserRegistrationService(
         var userResult = await userRepository.AddAsync(user, saveChanges: false);
         if (!userResult.IsSuccess)
             return DbResult<User>.FromResult(userResult);
+
+        var workouts = new Dictionary<string, Workout>();
 
         // Add default workouts without saving - use navigation property so EF links them
         foreach (var workoutName in DefaultWorkoutNames)
@@ -27,15 +35,40 @@ public class UserRegistrationService(
             };
 
             var workoutResult = await exerciseLibraryRepository.AddWorkoutAsync(workout, saveChanges: false);
-            if (!workoutResult.IsSuccess)
-                return DbResult<User>.FromResult(workoutResult);
+            if (!workoutResult.IsSuccess) return DbResult<User>.FromResult(workoutResult);
+            
+            workouts.Add(workoutName, workout);
+        }
+        
+        var exercises = (await exerciseLibraryRepository.GetAllExercisesAsync())
+            .Data!
+            .ToDictionary(e => e.Name, e => e);
+
+        foreach (var (workoutName, exerciseNames) in DefaultExercisesByWorkout)
+        {
+            var workout = workouts[workoutName];
+            for (var number = 0; number < exerciseNames.Count; number++)
+            {
+                var exerciseName = exerciseNames[number];
+                if (!exercises.TryGetValue(exerciseName, out var exercise))
+                    return DbResult<User>.DatabaseError($"Exercise '{exerciseName}' not found in library.");
+
+                var defaultExercise = new WorkoutDefaultExercise
+                {
+                    Workout = workout,
+                    Exercise = exercise,
+                    ExerciseNumber = number
+                };
+
+                var exerciseResult = await exerciseLibraryRepository.AddWorkoutDefaultExerciseAsync(defaultExercise, saveChanges: false);
+                if (!exerciseResult.IsSuccess) return DbResult<User>.FromResult(exerciseResult);
+            }
         }
 
         // Save all changes atomically - EF will generate IDs and link FKs
         var saveResult = await userRepository.SaveChangesAsync();
-        if (!saveResult.IsSuccess)
-            return DbResult<User>.FromResult(saveResult);
-
-        return DbResult<User>.Ok(user);
+        return !saveResult.IsSuccess 
+            ? DbResult<User>.FromResult(saveResult) 
+            : DbResult<User>.Ok(user);
     }
 }

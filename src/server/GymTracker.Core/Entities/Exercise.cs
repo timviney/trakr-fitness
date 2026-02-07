@@ -16,5 +16,7 @@ namespace GymTracker.Core.Entities
         public MuscleGroup MuscleGroup { get; set; } = null!;
         [JsonIgnore]
         public ICollection<SessionExercise> SessionExercises { get; set; } = new List<SessionExercise>();
+        [JsonIgnore]
+        public IEnumerable<WorkoutDefaultExercise> WorkoutDefaultExercises { get; set; } = new List<WorkoutDefaultExercise>();
     }
 }

@@ -13,5 +13,8 @@ namespace GymTracker.Core.Entities
         public User User { get; set; } = null!;
         [JsonIgnore]
         public ICollection<Session> Sessions { get; set; } = new List<Session>();
+
+        // We are specifically not ignoring this to save ever having to get exercises in isolation
+        public IEnumerable<WorkoutDefaultExercise> DefaultExercises { get; set; } = new List<WorkoutDefaultExercise>();
     }
 }

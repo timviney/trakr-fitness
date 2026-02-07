@@ -339,6 +339,35 @@ namespace GymTracker.Infrastructure.Repositories
             await db.SaveChangesAsync();
             return DbResult<Workout>.Ok(workout);
         }
+        
+        public async Task<DbResult<WorkoutDefaultExercise>> AddWorkoutDefaultExerciseAsync(WorkoutDefaultExercise defaultExercise, bool saveChanges = true)
+        {
+            await db.WorkoutDefaultExercises.AddAsync(defaultExercise);
+            if (saveChanges) await db.SaveChangesAsync();
+            return DbResult<WorkoutDefaultExercise>.Ok(defaultExercise);
+        }
+        
+        public async Task<DbResult<WorkoutDefaultExercise>> UpdateWorkoutDefaultExerciseAsync(WorkoutDefaultExercise defaultExercise)
+        {
+            var workoutDefaultExercise = await db.WorkoutDefaultExercises.FindAsync(defaultExercise.Id);
+            if (workoutDefaultExercise is null)
+                return DbResult<WorkoutDefaultExercise>.NotFound($"Workout with id '{defaultExercise.Id}' not found.");
+            
+            db.WorkoutDefaultExercises.Update(defaultExercise);
+            await db.SaveChangesAsync();
+            return DbResult<WorkoutDefaultExercise>.Ok(defaultExercise);
+        }
+        
+        public async Task<DbResult<WorkoutDefaultExercise>> DeleteWorkoutDefaultExerciseAsync(WorkoutDefaultExercise defaultExercise)
+        {
+            var workoutDefaultExercise = await db.WorkoutDefaultExercises.FindAsync(defaultExercise.Id);
+            if (workoutDefaultExercise is null)
+                return DbResult<WorkoutDefaultExercise>.NotFound($"Workout with id '{defaultExercise.Id}' not found.");
+            
+            db.WorkoutDefaultExercises.Remove(defaultExercise);
+            await db.SaveChangesAsync();
+            return DbResult<WorkoutDefaultExercise>.Ok(defaultExercise);
+        }
     }
 }
 

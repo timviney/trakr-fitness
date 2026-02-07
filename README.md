@@ -71,6 +71,13 @@ erDiagram
         text name
     }
 
+    WORKOUT_DEFAULT_EXERCISES {
+        uuid id PK
+        uuid workout_id
+        uuid exercise_id
+        integer exercise_number
+    }
+
     SESSIONS {
         uuid id PK
         uuid workout_id
@@ -105,6 +112,9 @@ erDiagram
     SESSIONS ||--o{ SESSION_EXERCISES : has
     EXERCISES ||--o{ SESSION_EXERCISES : performed_as
     SESSION_EXERCISES ||--o{ SETS : has
+
+    WORKOUTS ||--o{ WORKOUT_DEFAULT_EXERCISES : has
+    EXERCISES ||--o{ WORKOUT_DEFAULT_EXERCISES : used_in
 ```
 
 ---

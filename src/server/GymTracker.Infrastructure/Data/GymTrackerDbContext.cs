@@ -10,6 +10,7 @@ namespace GymTracker.Infrastructure.Data
         public DbSet<MuscleGroup> MuscleGroups { get; set; } = null!;
         public DbSet<Exercise> Exercises { get; set; } = null!;
         public DbSet<Workout> Workouts { get; set; } = null!;
+        public DbSet<WorkoutDefaultExercise> WorkoutDefaultExercises { get; set; } = null!;
         public DbSet<Session> Sessions { get; set; } = null!;
         public DbSet<SessionExercise> SessionExercises { get; set; } = null!;
         public DbSet<Set> Sets { get; set; } = null!;
@@ -81,6 +82,21 @@ namespace GymTracker.Infrastructure.Data
                     .WithOne(s => s.Workout)
                     .HasForeignKey(s => s.WorkoutId)
                     .OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(w => w.DefaultExercises)
+                    .WithOne(de => de.Workout)
+                    .HasForeignKey(de => de.WorkoutId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            
+            // Workout Default Exercise configuration
+            modelBuilder.Entity<WorkoutDefaultExercise>(b =>
+            {
+                b.HasKey(de => de.Id);
+                b.Property(de => de.ExerciseNumber).IsRequired();
+                b.HasOne(de => de.Exercise)
+                    .WithMany(e => e.WorkoutDefaultExercises)
+                    .HasForeignKey(de => de.ExerciseId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Session configuration
