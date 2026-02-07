@@ -35,13 +35,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { MuscleCategory, MuscleGroup } from '../api/modules/muscles';
 
-type CategoryLike = { id: string; name: string }
-type GroupLike = { id: string; name: string; categoryId: string }
 
 const props = defineProps<{
-  categories?: CategoryLike[]
-  groups?: GroupLike[]
+  categories?: MuscleCategory[]
+  groups?: MuscleGroup[]
   modelValue?: { categoryId: string; groupId: string }
   disabled?: boolean
 }>()
@@ -86,17 +85,16 @@ const filteredGroupsForSelected = computed(() => {
   return groups
 })
 
-function selectCategory(c: CategoryLike) {
+function selectCategory(c: MuscleCategory) {
   if (disabled) return
   localValue.value.categoryId = c.id
   localValue.value.groupId = ''
 }
-function selectGroup(g: GroupLike) {
+function selectGroup(g: MuscleGroup) {
   if (disabled) return
   localValue.value.groupId = g.id
 }
 
-// keyboard interactions are intentionally minimal now that search is removed
 </script>
 
 <style scoped>

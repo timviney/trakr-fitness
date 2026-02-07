@@ -277,7 +277,7 @@
 
             <div class="form-field">
               <label>Muscle Group</label>
-              <CategoryGroupSelector
+              <MuscleGroupSelector
                 v-model="editSelection"
                 :categories="muscleCategories"
                 :groups="muscleGroups"
@@ -301,7 +301,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Dumbbell, Plus, Loader2, ChevronRight } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
-import CategoryGroupSelector from '../components/CategoryGroupSelector.vue'
+import MuscleGroupSelector from '../components/MuscleGroupSelector.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
