@@ -230,7 +230,7 @@
               </div>
 
               <div v-if="showDefaultExercises" class="form-field">
-                <DefaultExercisesList :exercises="editingWorkout ? workoutDefaultExercises : defaultExercises" :muscleGroups="muscleGroups" />
+                <DefaultExercisesList :exercises="editingWorkout?.defaultExercises" :muscleGroups="muscleGroups" />
               </div>
 
               <div class="modal-actions">
@@ -313,8 +313,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Dumbbell, Plus, Loader2, ChevronRight, ChevronDown } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
 import MuscleGroupSelector from '../components/MuscleGroupSelector.vue'
-import DefaultExercisesList from '../components/DefaultExercisesList.vue'
 import { api } from '../api/api'
+import DefaultExercisesList from '../components/DefaultExercisesList.vue'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
 import type { MuscleCategory, MuscleGroup } from '../api/modules/muscles'
@@ -410,21 +410,6 @@ const editingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
-
-const defaultExercises = computed(() => {
-  return exercises.value.filter((e) => !e.userId)
-})
-
-const workoutDefaultExercises = computed(() => {
-  if (!editingWorkout.value || !editingWorkout.value.defaultExercises) return []
-  return (editingWorkout.value.defaultExercises || []).map((d) => ({
-    id: d.exercise.id,
-    userId: d.exercise.userId ?? null,
-    muscleGroupId: d.exercise.muscleGroupId,
-    name: d.exercise.name,
-    exerciseNumber: d.exerciseNumber,
-  }))
-})
 
 const isEditingWorkoutDefault = computed(() => {
   return !editingWorkout.value?.userId

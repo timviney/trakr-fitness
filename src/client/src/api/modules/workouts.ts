@@ -22,7 +22,7 @@ export type Workout = {
   id: string
   userId: string | null
   name: string
-  defaultExercises?: DefaultExercise[]
+  defaultExercises: DefaultExercise[]
 }
 
 export class WorkoutsApi {
