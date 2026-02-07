@@ -9,17 +9,17 @@
       <div class="segment-toggle">
         <button
           class="segment-btn"
-          :class="{ active: activeTab === 'workouts' }"
-          @click="activeTab = 'workouts'"
-        >
-          Workouts
-        </button>
-        <button
-          class="segment-btn"
           :class="{ active: activeTab === 'exercises' }"
           @click="activeTab = 'exercises'"
         >
           Exercises
+        </button>
+        <button
+          class="segment-btn"
+          :class="{ active: activeTab === 'workouts' }"
+          @click="activeTab = 'workouts'"
+        >
+          Workouts
         </button>
       </div>
 
@@ -307,7 +307,7 @@ import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
 import type { MuscleCategory, MuscleGroup } from '../api/modules/muscles'
 
-const activeTab = ref<'workouts' | 'exercises'>('workouts')
+const activeTab = ref<'workouts' | 'exercises'>('exercises')
 const loading = ref(true)
 const error = ref<string | null>(null)
 const creating = ref(false)
