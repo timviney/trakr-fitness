@@ -8,6 +8,7 @@ const TOKEN_KEY = 'auth_token'
 const USER_ID_KEY = 'auth_user_id'
 const EMAIL_KEY = 'auth_email'
 const EXPIRES_AT_KEY = 'auth_expires_at'
+const LOGOUT_REASON_KEY = 'auth_logout_reason'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -15,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userId = ref<string | null>(null)
   const email = ref<string | null>(null)
   const expiresAt = ref<string | null>(null)
+  const logoutReason = ref<string | null>(null)
 
   // Getters
   const isAuthenticated = computed(() => {
@@ -39,6 +41,9 @@ export const useAuthStore = defineStore('auth', () => {
       userId.value = storedUserId
       email.value = storedEmail
       expiresAt.value = storedExpiresAt
+
+      const storedLogoutReason = localStorage.getItem(LOGOUT_REASON_KEY)
+      if (storedLogoutReason) logoutReason.value = storedLogoutReason
 
       // Clear if expired
       if (isTokenExpired.value) {
@@ -81,6 +86,17 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(USER_ID_KEY)
     localStorage.removeItem(EMAIL_KEY)
     localStorage.removeItem(EXPIRES_AT_KEY)
+    localStorage.removeItem(LOGOUT_REASON_KEY)
+    logoutReason.value = null
+  }
+
+  const forceLogout = (reason?: string) => {
+    // perform normal logout then persist the reason so UI can show a message
+    logout()
+    if (reason) {
+      logoutReason.value = reason
+      localStorage.setItem(LOGOUT_REASON_KEY, reason)
+    }
   }
 
   return {
@@ -95,6 +111,9 @@ export const useAuthStore = defineStore('auth', () => {
     // Actions
     initialize,
     login,
-    logout
+    logout,
+    forceLogout,
+    // Info
+    logoutReason
   }
 })

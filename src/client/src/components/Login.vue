@@ -43,6 +43,8 @@ const password = ref('')
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
+errorMessage.value = authStore.logoutReason === 'expired' ? 'Your session has expired. Please log in again.' : ''
+
 const onSubmit = async () => {
   if (isSubmitting.value) return
   isSubmitting.value = true

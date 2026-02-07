@@ -1,5 +1,6 @@
 export enum ApiError {
     UnknownError = 'UnknownError',
+    Unauthorized = 'Unauthorized',
     InvalidCredentials = 'InvalidCredentials',
     UserNotFound = 'UserNotFound',
     EmailTaken = 'EmailTaken',
@@ -11,6 +12,7 @@ export enum ApiError {
 
 export const ApiErrorMessages: Record<ApiError, string> = {
     [ApiError.UnknownError]: 'An unknown error occurred',
+    [ApiError.Unauthorized]: 'Unauthorized',
     [ApiError.InvalidCredentials]: 'Invalid credentials',
     [ApiError.UserNotFound]: 'User not found',
     [ApiError.EmailTaken]: 'Email is already taken',
