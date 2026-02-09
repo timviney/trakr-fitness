@@ -14,44 +14,19 @@
       <!-- Error State -->
       <Error :message="error" @retry="loadData" />
 
-      <!-- Workouts Tab -->
-      <template v-if="!loading && !error && activeTab === 'workouts'">
-        <div v-if="workouts.length === 0" class="empty-state">
-          <Dumbbell class="empty-icon" />
-          <h2 class="empty-title">No workouts yet</h2>
-          <p class="empty-description">
-            Create your first workout template to organise your exercises.
-          </p>
-          <button class="btn btn-primary" @click="showCreateWorkout = true">
-            <Plus class="btn-icon" />
-            Create Workout
-          </button>
-        </div>
-
-        <ul v-else class="item-list">
-          <li
-            v-for="workout in workouts"
-            :key="workout.id"
-            class="item-card item-card-clickable"
-            @click="openEditWorkout(workout)"
-          >
-            <span class="item-name">{{ workout.name }}</span>
-            <span v-if="!workout.userId" class="item-badge">Default</span>
-          </li>
-        </ul>
-
-        <button
-          v-if="workouts.length > 0"
-          class="fab"
-          @click="showCreateWorkout = true"
-          aria-label="Add workout"
-        >
-          <Plus />
-        </button>
-      </template>
+      <!-- Workouts Tab (extracted to component) -->
+      <WorkoutTab v-if="!loading && !error && activeTab === 'workouts'" 
+        :exercise-collection="exerciseCollection"
+        @created="workout => exerciseCollection.workouts.push(workout)"
+        @updated="updatedWorkout => {
+          const idx = exerciseCollection.workouts.findIndex(w => w.id === updatedWorkout.id)
+          if (idx >= 0) exerciseCollection.workouts[idx] = updatedWorkout
+        }"
+        @deleted="workoutId => exerciseCollection.workouts = exerciseCollection.workouts.filter(w => w.id !== workoutId)"
+      />
 
       <!-- Exercises Tab -->
-      <template v-else-if="!loading && !error && activeTab === 'exercises'">
+      <template v-if="!loading && !error && activeTab === 'exercises'">
         <!-- Breadcrumb Navigation -->
         <nav v-if="selectedCategory || selectedGroup" class="breadcrumb">
           <button class="breadcrumb-link" @click="navigateToCategories">
@@ -75,7 +50,7 @@
 
         <!-- Categories List -->
         <template v-if="!selectedCategory">
-          <div v-if="muscleCategories.length === 0" class="empty-state">
+          <div v-if="exerciseCollection.muscleCategories.length === 0" class="empty-state">
             <Dumbbell class="empty-icon" />
             <h2 class="empty-title">No muscle categories</h2>
             <p class="empty-description">
@@ -85,7 +60,7 @@
 
           <ul v-else class="item-list">
             <li
-              v-for="category in muscleCategories"
+              v-for="category in exerciseCollection.muscleCategories"
               :key="category.id"
               class="item-card item-card-clickable"
               @click="navigateToCategory(category)"
@@ -157,101 +132,6 @@
         </template>
       </template>
 
-      <!-- Create Workout Modal -->
-      <div v-if="showCreateWorkout" class="modal-overlay" @click.self="showCreateWorkout = false">
-        <div class="modal">
-          <h2 class="modal-title">New Workout</h2>
-          <form @submit.prevent="createWorkout">
-            <div class="form-field">
-              <label for="workout-name">Name</label>
-              <input
-                id="workout-name"
-                v-model="newWorkoutName"
-                type="text"
-                placeholder="e.g., Push Day"
-                required
-              />
-            </div>
-            <div class="modal-actions">
-              <button type="button" class="btn btn-secondary" @click="showCreateWorkout = false">
-                Cancel
-              </button>
-              <button type="submit" class="btn btn-primary" :disabled="creating">
-                {{ creating ? 'Creating...' : 'Create' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-        <!-- Edit Workout Modal -->
-        <div v-if="editingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal">
-          <div class="modal">
-            <h2 class="modal-title">Edit Workout</h2>
-            <form @submit.prevent="updateWorkout">
-              <div class="form-field">
-                <label for="edit-workout-name">Name</label>
-                <input
-                  id="edit-workout-name"
-                  v-model="editWorkoutName"
-                  type="text"
-                  placeholder="e.g., Push Day"
-                  required
-                  :disabled="editWorkoutProcessing"
-                />
-              </div>
-
-              <div class="form-field">
-                <div class="section-toggle" role="button" tabindex="0" @click="showDefaultExercises = !showDefaultExercises">
-                  <span class="section-title">Default Exercises</span>
-                  <ChevronDown class="section-icon" :class="{ rotated: showDefaultExercises }" />
-                </div>
-              </div>
-
-              <div v-if="showDefaultExercises" class="form-field">
-                <DefaultExercisesList :exercises="editingWorkout?.defaultExercises" :muscleGroups="muscleGroups" />
-                <div v-if="editingWorkout" class="form-field">
-                  <button type="button" class="btn btn-faded" v-if="!addDefaultVisible" @click="addDefaultVisible = true">
-                    + Add
-                  </button>
-
-                  <div v-if="addDefaultVisible" class="add-candidates-overlay" @click.self="addDefaultVisible = false">
-                    <div class="add-candidates-panel">
-                      <div class="add-candidates-header">
-                        <strong>Select exercise</strong>
-                      </div>
-                      <div class="add-candidates-body">
-                        <MuscleGroupSelector v-model="addDefaultSelection" :categories="muscleCategories" :groups="muscleGroups" />
-                        <div class="add-candidates">
-                          <ul class="item-list">
-                            <li v-for="ex in addCandidates"
-                                :key="ex.id"
-                                class="item-card item-card-clickable add-candidate"
-                                :class="{ selected: selectedNewDefaultExerciseId === ex.id }"
-                                @click="selectCandidate(ex.id)">
-                              <span class="item-name">{{ ex.name }}</span>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                      <div class="add-candidates-footer">
-                        <button type="button" class="btn btn-secondary" @click="cancelAddDefault">Cancel</button>
-                        <button type="button" class="btn btn-primary" @click="addDefaultExercise" :disabled="!canAddDefault">Add</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" @click="closeEditWorkoutModal" :disabled="editWorkoutProcessing">Cancel</button>
-                <button type="button" class="btn btn-danger" @click="deleteWorkout" :disabled="editWorkoutProcessing">Delete</button>
-                <button type="submit" class="btn btn-primary" :disabled="editWorkoutProcessing">Save</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
       <!-- Create Exercise Modal -->
       <div v-if="showCreateExercise" class="modal-overlay" @click.self="closeExerciseModal">
         <div class="modal">
@@ -300,8 +180,8 @@
               <label>Muscle Group</label>
               <MuscleGroupSelector
                 v-model="editSelection"
-                :categories="muscleCategories"
-                :groups="muscleGroups"
+                :categories="exerciseCollection.muscleCategories"
+                :groups="exerciseCollection.muscleGroups"
                 :disabled="editProcessing || isEditingDefault"
               />
             </div>
@@ -320,31 +200,25 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Dumbbell, Plus, ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { Dumbbell, Plus, ChevronRight } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
 import MuscleGroupSelector from '../components/MuscleGroupSelector.vue'
 import { api } from '../api/api'
-import DefaultExercisesList from '../components/DefaultExercisesList.vue'
+import WorkoutTab from '../components/WorkoutTab.vue'
 import SegmentToggle from '../components/SegmentToggle.vue'
 import Loader from '../components/Loader.vue'
 import Error from '../components/Error.vue'
-import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
 import type { MuscleCategory, MuscleGroup } from '../api/modules/muscles'
+import { ExerciseCollection } from '../types/ExerciseCollection'
 
 const activeTab = ref<'workouts' | 'exercises'>('exercises')
 const loading = ref(true)
 const error = ref<string | null>(null)
 const creating = ref(false)
 
-const workouts = ref<Workout[]>([])
-const exercises = ref<Exercise[]>([])
-const muscleCategories = ref<MuscleCategory[]>([])
-const muscleGroups = ref<MuscleGroup[]>([])
-
-const showCreateWorkout = ref(false)
+const exerciseCollection = ref<ExerciseCollection>({workouts: [], exercises: [], muscleCategories: [], muscleGroups: []})
 const showCreateExercise = ref(false)
-const newWorkoutName = ref('')
 const newExerciseName = ref('')
 
 // Drill-down navigation state
@@ -353,16 +227,16 @@ const selectedGroup = ref<MuscleGroup | null>(null)
 
 const currentMuscleGroups = computed(() => {
   if (!selectedCategory.value) return []
-  return muscleGroups.value.filter((g) => g.categoryId === selectedCategory.value!.id)
+  return exerciseCollection.value.muscleGroups.filter((g) => g.categoryId === selectedCategory.value!.id)
 })
 
 const currentExercises = computed(() => {
   if (!selectedGroup.value) return []
-  return exercises.value.filter((e) => e.muscleGroupId === selectedGroup.value!.id)
+  return exerciseCollection.value.exercises.filter((e) => e.muscleGroupId === selectedGroup.value!.id)
 })
 
 function getExerciseCount(groupId: string): number {
-  return exercises.value.filter((e) => e.muscleGroupId === groupId).length
+  return exerciseCollection.value.exercises.filter((e) => e.muscleGroupId === groupId).length
 }
 
 function navigateToCategories() {
@@ -405,7 +279,7 @@ const isEditingDefault = computed(() => {
 function openEditExercise(ex: Exercise) {
   editingExercise.value = ex
   editName.value = ex.name
-  const group = muscleGroups.value.find((g) => g.id === ex.muscleGroupId)
+  const group = exerciseCollection.value.muscleGroups.find((g) => g.id === ex.muscleGroupId)
   editGroupId.value = ex.muscleGroupId
   editCategoryId.value = group ? group.categoryId : ''
   editSelection.value = { categoryId: editCategoryId.value, groupId: editGroupId.value }
@@ -413,120 +287,7 @@ function openEditExercise(ex: Exercise) {
   showCreateExercise.value = false
 }
 
-// Workout editing state
-const editingWorkout = ref<Workout | null>(null)
-const editWorkoutName = ref('')
-const editWorkoutProcessing = ref(false)
-const showDefaultExercises = ref(false)
 
-// Add-default UI state
-const addDefaultVisible = ref(false)
-const addDefaultSelection = ref({ categoryId: '', groupId: '' })
-const selectedNewDefaultExerciseId = ref('')
-
-const addCandidates = computed(() => {
-  if (!addDefaultSelection.value.groupId) return [] as Exercise[]
-  return exercises.value.filter((e) => e.muscleGroupId === addDefaultSelection.value.groupId)
-})
-
-watch(addDefaultSelection, () => {
-  selectedNewDefaultExerciseId.value = ''
-})
-
-const canAddDefault = computed(() => {
-  return !!editingWorkout.value && !!selectedNewDefaultExerciseId.value
-})
-
-function selectCandidate(id: string) {
-  selectedNewDefaultExerciseId.value = id
-}
-
-function cancelAddDefault() {
-  addDefaultVisible.value = false
-  selectedNewDefaultExerciseId.value = ''
-  addDefaultSelection.value = { categoryId: '', groupId: '' }
-}
-
-async function addDefaultExercise() {
-  if (!editingWorkout.value || !selectedNewDefaultExerciseId.value) return
-  const payload = {
-    workoutId: editingWorkout.value.id,
-    exerciseId: selectedNewDefaultExerciseId.value,
-    exerciseNumber: (editingWorkout.value.defaultExercises?.length ?? 0),
-  }
-  try {
-    const res = await api.workouts.createDefaultExercise(payload)
-    if (res.isSuccess && res.data) {
-      // append to local model
-      editingWorkout.value.defaultExercises = editingWorkout.value.defaultExercises || []
-      editingWorkout.value.defaultExercises.push(res.data)
-      editingWorkout.value.defaultExercises = [...editingWorkout.value.defaultExercises]
-    } else {
-      console.error('Failed to add default exercise:', res.error)
-    }
-  } catch (e) {
-    console.error('Failed to add default exercise:', e)
-  } finally {
-    // always close the add overlay and reset selection; keep edit modal open
-    addDefaultVisible.value = false
-    // reset selection
-    selectedNewDefaultExerciseId.value = ''
-    addDefaultSelection.value = { categoryId: '', groupId: '' }
-  }
-}
-
-function openEditWorkout(w: Workout) {
-  editingWorkout.value = w
-  editWorkoutName.value = w.name
-  // ensure create modal is closed
-  showCreateWorkout.value = false
-}
-
-function closeEditWorkoutModal() {
-  editingWorkout.value = null
-  editWorkoutName.value = ''
-}
-
-async function updateWorkout() {
-  if (!editingWorkout.value) return
-  if (!editWorkoutName.value.trim()) return
-
-  editWorkoutProcessing.value = true
-  try {
-    const res = await api.workouts.updateWorkout(editingWorkout.value.id, { name: editWorkoutName.value.trim() })
-    if (res.isSuccess && res.data) {
-      const idx = workouts.value.findIndex((w) => w.id === res.data!.id)
-      if (idx >= 0) workouts.value[idx] = res.data!
-      closeEditWorkoutModal()
-    } else {
-      console.error('Failed to update workout:', res.error)
-    }
-  } catch (e) {
-    console.error('Failed to update workout:', e)
-  } finally {
-    editWorkoutProcessing.value = false
-  }
-}
-
-async function deleteWorkout() {
-  if (!editingWorkout.value) return
-  if (!confirm('Delete this workout?')) return
-
-  editWorkoutProcessing.value = true
-  try {
-    const res = await api.workouts.deleteWorkout(editingWorkout.value.id)
-    if (res.isSuccess) {
-      workouts.value = workouts.value.filter((w) => w.id !== editingWorkout.value!.id)
-      closeEditWorkoutModal()
-    } else {
-      console.error('Failed to delete workout:', res.error)
-    }
-  } catch (e) {
-    console.error('Failed to delete workout:', e)
-  } finally {
-    editWorkoutProcessing.value = false
-  }
-}
 
 function closeEditModal() {
   editingExercise.value = null
@@ -547,11 +308,11 @@ async function updateExercise() {
       muscleGroupId: editSelection.value.groupId,
     })
     if (res.isSuccess && res.data) {
-      const idx = exercises.value.findIndex((e) => e.id === res.data!.id)
-      if (idx >= 0) exercises.value[idx] = res.data!
+      const idx = exerciseCollection.value.exercises.findIndex((e) => e.id === res.data!.id)
+      if (idx >= 0) exerciseCollection.value.exercises[idx] = res.data!
       // if moved group, and current selectedGroup doesn't match, navigate to the new group
       if (selectedGroup.value && selectedGroup.value.id !== res.data!.muscleGroupId) {
-        const newGroup = muscleGroups.value.find((g) => g.id === res.data!.muscleGroupId)
+        const newGroup = exerciseCollection.value.muscleGroups.find((g) => g.id === res.data!.muscleGroupId)
         if (newGroup) selectedGroup.value = newGroup
       }
       closeEditModal()
@@ -574,7 +335,7 @@ async function deleteExercise() {
   try {
     const res = await api.exercises.deleteExercise(editingExercise.value.id)
     if (res.isSuccess) {
-      exercises.value = exercises.value.filter((e) => e.id !== editingExercise.value!.id)
+      exerciseCollection.value.exercises = exerciseCollection.value.exercises.filter((e) => e.id !== editingExercise.value!.id)
       closeEditModal()
     } else {
       console.error('Failed to delete exercise:', res.error)
@@ -591,48 +352,12 @@ async function loadData() {
   error.value = null
 
   try {
-    const [workoutsRes, exercisesRes, categoriesRes, groupsRes] = await Promise.all([
-      api.workouts.getWorkouts(),
-      api.exercises.getExercises(),
-      api.muscles.getMuscleCategories(),
-      api.muscles.getMuscleGroups(),
-    ])
-
-    if (workoutsRes.data) {
-      workouts.value = workoutsRes.data
-    }
-    if (exercisesRes.data) {
-      exercises.value = exercisesRes.data
-    }
-    if (categoriesRes.data) {
-      muscleCategories.value = categoriesRes.data
-    }
-    if (groupsRes.data) {
-      muscleGroups.value = groupsRes.data
-    }
+    exerciseCollection.value = await api.getExerciseCollection()
   } catch (e) {
     error.value = 'Failed to load data. Please try again.'
     console.error(e)
   } finally {
     loading.value = false
-  }
-}
-
-async function createWorkout() {
-  if (!newWorkoutName.value.trim()) return
-
-  creating.value = true
-  try {
-    const res = await api.workouts.createWorkout({ name: newWorkoutName.value.trim() })
-    if (res.data) {
-      workouts.value.push(res.data)
-      newWorkoutName.value = ''
-      showCreateWorkout.value = false
-    }
-  } catch (e) {
-    console.error('Failed to create workout:', e)
-  } finally {
-    creating.value = false
   }
 }
 
@@ -646,7 +371,7 @@ async function createExercise() {
       muscleGroupId: selectedGroup.value.id,
     })
     if (res.data) {
-      exercises.value.push(res.data)
+      exerciseCollection.value.exercises.push(res.data)
       closeExerciseModal()
     }
   } catch (e) {
