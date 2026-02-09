@@ -101,6 +101,11 @@ a {
   background: var(--trk-accent-strong);
 }
 
+.btn-primary:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
 .btn-secondary {
   background: transparent;
   border: 1px solid var(--trk-surface-border);

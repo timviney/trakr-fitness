@@ -18,8 +18,32 @@ public static class WorkoutEndpoints
         group.MapGet("/", GetUserWorkouts);
         group.MapGet("/{id}", GetWorkoutById);
         group.MapPost("/", CreateWorkout);
+        group.MapPost("/{id}/defaultExercises", CreateDefaultExercise);
         group.MapPut("/{id}", UpdateWorkout);
         group.MapDelete("/{id}", DeleteWorkout);
+    }
+
+    private static async Task<IResult> CreateDefaultExercise(
+        Guid id,
+        CreateWorkoutDefaultExerciseRequest req,
+        [FromServices] IAuthContext authContext,
+        [FromServices] IExerciseLibraryRepository repository)
+    {
+        var workoutResult = await repository.GetWorkoutByIdAsync(id);
+        if (!workoutResult.IsSuccess) return Results.NotFound();
+
+        var workout = workoutResult.Data;
+        if (workout.UserId != authContext.UserId) return Results.NotFound();
+
+        var defaultExercise = new WorkoutDefaultExercise
+        {
+            Workout = workout,
+            ExerciseId = req.ExerciseId,
+            ExerciseNumber = req.ExerciseNumber
+        };
+
+        var addResult = await repository.AddWorkoutDefaultExerciseAsync(defaultExercise);
+        return addResult.ToApiResult().ToCreatedResult($"/workouts/{id}/defaultExercises/{defaultExercise.Id}");
     }
 
     private static async Task<IResult> GetUserWorkouts(

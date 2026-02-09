@@ -47,4 +47,8 @@ export class WorkoutsApi {
   async deleteWorkout(id: string): Promise<ApiResponse<Workout>> {
     return await this.client.delete<Workout>(`/workouts/${id}`)
   }
+
+  async createDefaultExercise(payload: { workoutId: string; exerciseId: string; exerciseNumber: number; }): Promise<ApiResponse<DefaultExercise>> {
+    return await this.client.post<DefaultExercise>(`/workouts/${payload.workoutId}/defaultExercises`, payload)
+  }
 }

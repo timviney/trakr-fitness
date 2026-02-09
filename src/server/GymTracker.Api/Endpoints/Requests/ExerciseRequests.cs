@@ -7,6 +7,7 @@ public record UpdateExerciseRequest(string Name, Guid MuscleGroupId);
 // Workout requests
 public record CreateWorkoutRequest(string Name);
 public record UpdateWorkoutRequest(string Name);
+public record CreateWorkoutDefaultExerciseRequest(Guid ExerciseId, int ExerciseNumber);
 
 // Muscle Category requests
 public record CreateMuscleCategoryRequest(string Name);

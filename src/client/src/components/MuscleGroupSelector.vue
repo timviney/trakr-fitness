@@ -6,7 +6,7 @@
           <li
             v-for="(c, idx) in filteredCategories"
             :key="c.id"
-            :class="{ active: c.id === localValue.categoryId }"
+            :class="{ active: c.id === vModel.categoryId }"
             @click="selectCategory(c)"
             :data-idx="idx"
           >
@@ -16,12 +16,12 @@
       </aside>
 
       <section class="right">
-        <div v-if="!localValue.categoryId" class="empty-note">Select a category</div>
+        <div v-if="!vModel.categoryId" class="empty-note">Select a category</div>
         <ul v-else class="list">
           <li
             v-for="(g, idx) in filteredGroupsForSelected"
             :key="g.id"
-            :class="{ active: g.id === localValue.groupId }"
+            :class="{ active: g.id === vModel.groupId }"
             @click="selectGroup(g)"
             :data-idx="idx"
           >
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { MuscleCategory, MuscleGroup } from '../api/modules/muscles';
 
 
@@ -51,25 +51,10 @@ const emit = defineEmits<{
 
 const disabled = !!props.disabled
 
-const localValue = ref({
-  categoryId: props.modelValue?.categoryId ?? '',
-  groupId: props.modelValue?.groupId ?? '',
+const vModel = computed({
+  get: () => props.modelValue ?? { categoryId: '', groupId: '' },
+  set: (v: { categoryId: string; groupId: string }) => emit('update:modelValue', v),
 })
-
-watch(
-  () => props.modelValue,
-  (v) => {
-    if (!v) return
-    localValue.value = { categoryId: v.categoryId ?? '', groupId: v.groupId ?? '' }
-  },
-  { immediate: true, deep: true }
-)
-
-watch(
-  localValue,
-  (v) => emit('update:modelValue', { categoryId: v.categoryId, groupId: v.groupId }),
-  { deep: true }
-)
 
 const filteredCategories = computed(() => {
   if (!props.categories) return []
@@ -79,20 +64,19 @@ const filteredCategories = computed(() => {
 const filteredGroupsForSelected = computed(() => {
   if (!props.groups) return []
   let groups = props.groups
-  if (localValue.value.categoryId) {
-    groups = groups.filter((g) => String(g.categoryId) === String(localValue.value.categoryId))
+  if (vModel.value.categoryId) {
+    groups = groups.filter((g) => String(g.categoryId) === String(vModel.value.categoryId))
   }
   return groups
 })
 
 function selectCategory(c: MuscleCategory) {
   if (disabled) return
-  localValue.value.categoryId = c.id
-  localValue.value.groupId = ''
+  vModel.value = { categoryId: c.id, groupId: '' }
 }
 function selectGroup(g: MuscleGroup) {
   if (disabled) return
-  localValue.value.groupId = g.id
+  vModel.value = { categoryId: vModel.value.categoryId, groupId: g.id }
 }
 
 </script>
@@ -104,6 +88,6 @@ function selectGroup(g: MuscleGroup) {
 .left { min-width: 160px; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .list li { padding: 8px; border-radius: 6px; cursor: pointer; }
-.list li.active { background: var(--trk-accent); color: var(--trk-bg); }
+.list li.active { background: var(--trk-accent); color: var(--trk-text-dark); }
 .empty-note { color: var(--trk-text-muted); padding: 8px; }
 </style>
