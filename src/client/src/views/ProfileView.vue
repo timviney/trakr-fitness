@@ -32,7 +32,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, LogOut } from 'lucide-vue-next'
-import AppShell from '../components/AppShell.vue'
+import AppShell from '../components/general/AppShell.vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()

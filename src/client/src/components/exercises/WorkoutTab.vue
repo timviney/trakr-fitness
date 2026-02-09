@@ -122,10 +122,10 @@ import { ref, computed, watch } from 'vue'
 import { Dumbbell, Plus, ChevronDown } from 'lucide-vue-next'
 import DefaultExercisesList from './DefaultExercisesList.vue'
 import MuscleGroupSelector from './MuscleGroupSelector.vue'
-import { api } from '../api/api'
-import type { Workout } from '../api/modules/workouts'
-import type { Exercise } from '../api/modules/exercises'
-import { ExerciseCollection } from '../types/ExerciseCollection'
+import { api } from '../../api/api'
+import type { Workout } from '../../api/modules/workouts'
+import type { Exercise } from '../../api/modules/exercises'
+import { ExerciseCollection } from '../../types/ExerciseCollection'
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{

@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { MuscleCategory, MuscleGroup } from '../api/modules/muscles';
+import { MuscleCategory, MuscleGroup } from '../../api/modules/muscles';
 
 
 const props = defineProps<{

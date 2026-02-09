@@ -40,9 +40,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '../api/api'
+import { api } from '../../api/api'
 import AuthLayout from './AuthLayout.vue'
-import { ApiErrorMessages } from '../api/api-error'
+import { ApiErrorMessages } from '../../api/api-error'
 
 const router = useRouter()
 

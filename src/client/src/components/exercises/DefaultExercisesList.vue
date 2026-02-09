@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { MuscleGroup } from '../api/modules/muscles'
-import type { DefaultExercise } from '../api/modules/workouts'
+import type { MuscleGroup } from '../../api/modules/muscles'
+import type { DefaultExercise } from '../../api/modules/workouts'
 import { PropType } from 'vue'
 
 const props = defineProps({

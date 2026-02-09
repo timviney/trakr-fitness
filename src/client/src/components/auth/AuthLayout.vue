@@ -36,7 +36,7 @@ defineProps<{
     onSubmit: () => void | Promise<void>
 }>()
 
-const logoUrl = new URL('../assets/logo.svg', import.meta.url).href
+const logoUrl = new URL('../../assets/logo.svg', import.meta.url).href
 </script>
 
 <style scoped>

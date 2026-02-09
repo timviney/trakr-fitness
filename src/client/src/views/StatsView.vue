@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { BarChart2 } from 'lucide-vue-next'
-import AppShell from '../components/AppShell.vue'
+import AppShell from '../components/general/AppShell.vue'
 </script>
 
 <style scoped>
