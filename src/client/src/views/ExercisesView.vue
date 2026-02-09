@@ -6,22 +6,7 @@
       </header>
 
       <!-- Segment Toggle -->
-      <div class="segment-toggle">
-        <button
-          class="segment-btn"
-          :class="{ active: activeTab === 'exercises' }"
-          @click="activeTab = 'exercises'"
-        >
-          Exercises
-        </button>
-        <button
-          class="segment-btn"
-          :class="{ active: activeTab === 'workouts' }"
-          @click="activeTab = 'workouts'"
-        >
-          Workouts
-        </button>
-      </div>
+      <SegmentToggle v-model="activeTab" :optionsLabels="{ workouts: 'Workouts', exercises: 'Exercises' }" />
 
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
@@ -346,6 +331,7 @@ import AppShell from '../components/AppShell.vue'
 import MuscleGroupSelector from '../components/MuscleGroupSelector.vue'
 import { api } from '../api/api'
 import DefaultExercisesList from '../components/DefaultExercisesList.vue'
+import SegmentToggle from '../components/SegmentToggle.vue'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
 import type { MuscleCategory, MuscleGroup } from '../api/modules/muscles'
@@ -695,32 +681,6 @@ onMounted(loadData)
   margin: 0;
 }
 
-/* Segment Toggle */
-.segment-toggle {
-  display: flex;
-  background: var(--trk-surface);
-  border-radius: var(--trk-radius-md);
-  padding: 4px;
-  gap: 4px;
-}
-
-.segment-btn {
-  flex: 1;
-  padding: var(--trk-space-2) var(--trk-space-3);
-  border: none;
-  border-radius: calc(var(--trk-radius-md) - 2px);
-  background: transparent;
-  color: var(--trk-text-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.segment-btn.active {
-  background: var(--trk-accent);
-  color: var(--trk-bg);
-}
 
 /* Loading */
 .loading-state {
