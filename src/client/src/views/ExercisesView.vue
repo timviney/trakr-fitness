@@ -208,8 +208,7 @@
         <!-- Edit Workout Modal -->
         <div v-if="editingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal">
           <div class="modal">
-            <!-- TODO there is no default workout -->
-            <h2 class="modal-title">{{ isEditingWorkoutDefault ? 'Default Workout' : 'Edit Workout' }}</h2>
+            <h2 class="modal-title">Edit Workout</h2>
             <form @submit.prevent="updateWorkout">
               <div class="form-field">
                 <label for="edit-workout-name">Name</label>
@@ -219,7 +218,7 @@
                   type="text"
                   placeholder="e.g., Push Day"
                   required
-                  :disabled="editWorkoutProcessing || isEditingWorkoutDefault"
+                  :disabled="editWorkoutProcessing"
                 />
               </div>
 
@@ -232,7 +231,7 @@
 
               <div v-if="showDefaultExercises" class="form-field">
                 <DefaultExercisesList :exercises="editingWorkout?.defaultExercises" :muscleGroups="muscleGroups" />
-                <div v-if="editingWorkout && !isEditingWorkoutDefault" class="form-field">
+                <div v-if="editingWorkout" class="form-field">
                   <button type="button" class="btn btn-faded" v-if="!addDefaultVisible" @click="addDefaultVisible = true">
                     + Add
                   </button>
@@ -267,8 +266,8 @@
 
               <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" @click="closeEditWorkoutModal" :disabled="editWorkoutProcessing">Cancel</button>
-                <button type="button" class="btn btn-danger" @click="deleteWorkout" v-if="!isEditingWorkoutDefault" :disabled="editWorkoutProcessing">Delete</button>
-                <button type="submit" class="btn btn-primary" v-if="!isEditingWorkoutDefault" :disabled="editWorkoutProcessing">Save</button>
+                <button type="button" class="btn btn-danger" @click="deleteWorkout" :disabled="editWorkoutProcessing">Delete</button>
+                <button type="submit" class="btn btn-primary" :disabled="editWorkoutProcessing">Save</button>
               </div>
             </form>
           </div>
@@ -438,10 +437,6 @@ const editWorkoutName = ref('')
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
 
-const isEditingWorkoutDefault = computed(() => {
-  return !editingWorkout.value?.userId
-})
-
 // Add-default UI state
 const addDefaultVisible = ref(false)
 const addDefaultSelection = ref({ categoryId: '', groupId: '' })
@@ -512,7 +507,6 @@ function closeEditWorkoutModal() {
 
 async function updateWorkout() {
   if (!editingWorkout.value) return
-  if (isEditingWorkoutDefault.value) return
   if (!editWorkoutName.value.trim()) return
 
   editWorkoutProcessing.value = true
@@ -534,7 +528,6 @@ async function updateWorkout() {
 
 async function deleteWorkout() {
   if (!editingWorkout.value) return
-  if (isEditingWorkoutDefault.value) return
   if (!confirm('Delete this workout?')) return
 
   editWorkoutProcessing.value = true
@@ -557,10 +550,6 @@ function closeEditModal() {
   editingExercise.value = null
   editName.value = ''
   editCategoryId.value = ''
-  editGroupId.value = ''
-}
-
-function onEditCategoryChange() {
   editGroupId.value = ''
 }
 
