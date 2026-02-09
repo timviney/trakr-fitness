@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import './styles.css'
+import './styles/shared-components.css'
 import { setAuthTokenGetter, setAuthFailureHandler } from './api/client'
 import { useAuthStore } from './stores/auth'
 

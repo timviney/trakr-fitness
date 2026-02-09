@@ -1,0 +1,45 @@
+/* Shared component styles used across multiple views/components */
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--trk-space-6) var(--trk-space-4);
+}
+.empty-icon { width: 48px; height: 48px; color: var(--trk-text-muted); opacity: 0.5; margin-bottom: var(--trk-space-3); }
+.empty-title { font-family: var(--trk-font-heading); font-size: 1.25rem; color: var(--trk-text); margin: 0 0 var(--trk-space-2); }
+.empty-description { color: var(--trk-text-muted); font-size: 0.875rem; line-height: 1.5; max-width: 260px; margin: 0 0 var(--trk-space-4); }
+
+/* Lists & cards */
+.item-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--trk-space-2); }
+.item-card { display: flex; align-items: center; justify-content: space-between; padding: var(--trk-space-4); background: var(--trk-surface); border-radius: var(--trk-radius-md); border: 1px solid var(--trk-surface-border); }
+.item-name { color: var(--trk-text); font-weight: 500; }
+.item-badge { font-size: 0.75rem; padding: 2px 8px; background: var(--trk-accent-muted); color: var(--trk-bg); border-radius: 999px; font-weight: 500; }
+
+/* Clickable Item Cards */
+.item-card-clickable { cursor: pointer; transition: background 150ms ease, border-color 150ms ease; }
+.item-card-clickable:hover { background: var(--trk-surface-hover); border-color: var(--trk-accent-muted); }
+.item-card-clickable:active { transform: scale(0.98); }
+.item-card-clickable.selected { transform: scale(0.98); background: var(--trk-accent); color: var(--trk-text-dark); }
+.item-card-clickable.selected .item-name { color: var(--trk-text-dark); }
+
+.item-chevron { width: 20px; height: 20px; color: var(--trk-text-muted); flex-shrink: 0; }
+.item-count { font-size: 0.75rem; color: var(--trk-text-muted); margin-left: auto; margin-right: var(--trk-space-2); }
+
+/* Floating action button */
+.fab { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0) + var(--trk-space-4)); right: var(--trk-space-4); width: 56px; height: 56px; border-radius: 50%; background: var(--trk-accent); color: var(--trk-bg); border: none; display: flex; align-items: center; justify-content: center; box-shadow: var(--trk-shadow); cursor: pointer; transition: transform 150ms ease; }
+.fab:active { transform: scale(0.95); }
+.fab svg { width: 24px; height: 24px; }
+@media (max-width: 520px) {
+  .fab { right: var(--trk-space-4); }
+}
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 200; padding: var(--trk-space-4); }
+.modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
+.modal-title { font-family: var(--trk-font-heading); font-size: 1.5rem; color: var(--trk-text); margin: 0 0 var(--trk-space-4); }
+.modal-actions { display: flex; gap: var(--trk-space-3); margin-top: var(--trk-space-4); }
+.modal-actions .btn { flex: 1; }
+.btn-icon { width: 18px; height: 18px; margin-right: 6px; }
