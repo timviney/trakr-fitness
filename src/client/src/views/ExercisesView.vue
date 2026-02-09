@@ -9,19 +9,13 @@
       <SegmentToggle v-model="activeTab" :optionsLabels="{ workouts: 'Workouts', exercises: 'Exercises' }" />
 
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <Loader2 class="loading-spinner" />
-        <span>Loading...</span>
-      </div>
+      <Loader :loading="loading"/>
 
       <!-- Error State -->
-      <div v-else-if="error" class="error-state">
-        <p>{{ error }}</p>
-        <button class="btn btn-primary" @click="loadData">Retry</button>
-      </div>
+      <Error :message="error" @retry="loadData" />
 
       <!-- Workouts Tab -->
-      <template v-else-if="activeTab === 'workouts'">
+      <template v-if="!loading && !error && activeTab === 'workouts'">
         <div v-if="workouts.length === 0" class="empty-state">
           <Dumbbell class="empty-icon" />
           <h2 class="empty-title">No workouts yet</h2>
@@ -57,7 +51,7 @@
       </template>
 
       <!-- Exercises Tab -->
-      <template v-else-if="activeTab === 'exercises'">
+      <template v-else-if="!loading && !error && activeTab === 'exercises'">
         <!-- Breadcrumb Navigation -->
         <nav v-if="selectedCategory || selectedGroup" class="breadcrumb">
           <button class="breadcrumb-link" @click="navigateToCategories">
@@ -326,12 +320,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Dumbbell, Plus, Loader2, ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { Dumbbell, Plus, ChevronRight, ChevronDown } from 'lucide-vue-next'
 import AppShell from '../components/AppShell.vue'
 import MuscleGroupSelector from '../components/MuscleGroupSelector.vue'
 import { api } from '../api/api'
 import DefaultExercisesList from '../components/DefaultExercisesList.vue'
 import SegmentToggle from '../components/SegmentToggle.vue'
+import Loader from '../components/Loader.vue'
+import Error from '../components/Error.vue'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
 import type { MuscleCategory, MuscleGroup } from '../api/modules/muscles'
@@ -679,36 +675,6 @@ onMounted(loadData)
   font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
   color: var(--trk-text);
   margin: 0;
-}
-
-
-/* Loading */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--trk-space-3);
-  padding: var(--trk-space-8);
-  color: var(--trk-text-muted);
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Error */
-.error-state {
-  text-align: center;
-  padding: var(--trk-space-6);
-  color: var(--trk-text-muted);
 }
 
 /* Empty State */
