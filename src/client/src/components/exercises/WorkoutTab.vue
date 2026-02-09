@@ -75,7 +75,7 @@
 
                         <div v-if="addDefaultVisible" class="add-candidates-overlay"
                             @click.self="addDefaultVisible = false">
-                            <div class="add-candidates-panel">
+                            <div class="add-candidates-panel" @click.stop>
                                 <div class="add-candidates-header">
                                     <strong>Select exercise</strong>
                                 </div>
@@ -182,12 +182,9 @@ async function addDefaultExercise() {
     try {
         const res = await api.workouts.createDefaultExercise(payload)
         if (res.isSuccess && res.data) {
-            editingWorkout.value.defaultExercises = editingWorkout.value.defaultExercises || []
+            res.data.exercise = props.exerciseCollection.exercises.find(e => e.id === selectedNewDefaultExerciseId.value)!
             editingWorkout.value.defaultExercises.push(res.data)
-            editingWorkout.value.defaultExercises = [...editingWorkout.value.defaultExercises]
-            let workout = props.exerciseCollection.workouts.find((w) => w.id === editingWorkout.value!.id)
-            workout!.defaultExercises = editingWorkout.value.defaultExercises
-            emit('updated', workout!)
+            emit('updated', editingWorkout.value)
         } else {
             console.error('Failed to add default exercise:', res.error)
         }
@@ -209,6 +206,7 @@ function openEditWorkout(w: Workout) {
 function closeEditWorkoutModal() {
     editingWorkout.value = null
     editWorkoutName.value = ''
+    showDefaultExercises.value = false
 }
 
 async function updateWorkout() {
@@ -282,6 +280,10 @@ async function createWorkout() {
     background: transparent;
     border-radius: var(--trk-radius-sm);
     cursor: pointer;
+}
+
+.modal {
+  position: relative;
 }
 
 .section-toggle:focus { outline: 2px solid rgba(0, 0, 0, 0.06); }

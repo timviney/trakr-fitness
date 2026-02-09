@@ -6,7 +6,7 @@
       </header>
 
       <!-- Segment Toggle -->
-      <SegmentToggle v-model="activeTab" :optionsLabels="{ workouts: 'Workouts', exercises: 'Exercises' }" />
+      <SegmentToggle v-model="activeTab" :optionsLabels="{ exercises: 'Exercises', workouts: 'Workouts' }" />
 
       <!-- Loading State -->
       <Loader :loading="loading"/>
