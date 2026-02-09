@@ -48,6 +48,6 @@ const props = defineProps<{loading: boolean}>()
 @keyframes dots {
   0%, 20% { content: '.'; }
   40% { content: '..'; }
-  80% { content: '...'; }
+  70% { content: '...'; }
 }
 </style>
