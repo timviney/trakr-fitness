@@ -67,47 +67,12 @@
 
                 <div v-if="showDefaultExercises" class="form-field">
                     <DefaultExercisesList
+                            :workout-id="editingWorkout.id"
                             :exercises="editWorkoutDefaultExercises"
-                            :muscle-groups="exerciseCollection.muscleGroups"
+                            :exercise-collection="exerciseCollection"
                             :disabled="editWorkoutProcessing"
                             @reorder="onDefaultExercisesReordered"
                         />
-                    <div v-if="editingWorkout" class="form-field">
-                        <button type="button" class="btn btn-faded" v-if="!addDefaultVisible"
-                            @click="addDefaultVisible = true">
-                            + Add
-                        </button>
-
-                        <div v-if="addDefaultVisible" class="add-candidates-overlay"
-                            @click.self="addDefaultVisible = false">
-                            <div class="add-candidates-panel" @click.stop>
-                                <div class="add-candidates-header">
-                                    <strong>Select exercise</strong>
-                                </div>
-                                <div class="add-candidates-body">
-                                    <MuscleGroupSelector v-model="addDefaultSelection" 
-                                        :categories="exerciseCollection.muscleCategories"
-                                        :groups="exerciseCollection.muscleGroups" />
-                                    <div class="add-candidates">
-                                        <ul class="item-list">
-                                            <li v-for="ex in addCandidates" :key="ex.id"
-                                                class="item-card item-card-clickable add-candidate"
-                                                :class="{ selected: selectedNewDefaultExerciseId === ex.id }"
-                                                @click="selectCandidate(ex.id)">
-                                                <span class="item-name">{{ ex.name }}</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="add-candidates-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        @click="cancelAddDefault">Cancel</button>
-                                    <button type="button" class="btn btn-primary" @click="addDefaultExercise"
-                                        :disabled="!canAddDefault">Add</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -123,15 +88,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Dumbbell, Plus, ChevronDown } from 'lucide-vue-next'
 import DefaultExercisesList from './DefaultExercisesList.vue'
-import MuscleGroupSelector from './MuscleGroupSelector.vue'
 import { api } from '../../api/api'
 import type { DefaultExercise, UpdateWorkoutRequest, Workout } from '../../api/modules/workouts'
-import type { Exercise } from '../../api/modules/exercises'
 import { ExerciseCollection } from '../../types/ExerciseCollection'
-import { emptyGuid } from '../../types/Guid'
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{
@@ -179,48 +141,6 @@ function openEditWorkout(w: Workout) {
 function onDefaultExercisesReordered(reordered: DefaultExercise[]) {
     // accept the reordered list from the child (exerciseNumber already recalculated)
     editWorkoutDefaultExercises.value = reordered
-}
-
-// Add-default UI state
-const addDefaultVisible = ref(false)
-const addDefaultSelection = ref({ categoryId: '', groupId: '' })
-const selectedNewDefaultExerciseId = ref('')
-
-const addCandidates = computed(() => {
-    if (!addDefaultSelection.value.groupId) return [] as Exercise[]
-    return props.exerciseCollection.exercises.filter((e) => e.muscleGroupId === addDefaultSelection.value.groupId)
-})
-
-watch(addDefaultSelection, () => {
-    selectedNewDefaultExerciseId.value = ''
-})
-
-const canAddDefault = computed(() => {
-    return !!editingWorkout.value && !!selectedNewDefaultExerciseId.value
-})
-
-function selectCandidate(id: string) {
-    selectedNewDefaultExerciseId.value = id
-}
-
-function cancelAddDefault() {
-    addDefaultVisible.value = false
-    selectedNewDefaultExerciseId.value = ''
-    addDefaultSelection.value = { categoryId: '', groupId: '' }
-}
-
-async function addDefaultExercise() {
-    if (!editWorkoutDefaultExercises.value || !selectedNewDefaultExerciseId.value) return
-    editWorkoutDefaultExercises.value.push({
-        id: emptyGuid, // will be set by backend
-        exerciseId: selectedNewDefaultExerciseId.value,
-        workoutId: editingWorkout.value!.id,
-        exerciseNumber: editWorkoutDefaultExercises.value.length + 1,
-        exercise: props.exerciseCollection.exercises.find(e => e.id === selectedNewDefaultExerciseId.value)!,
-    })
-    addDefaultVisible.value = false
-    selectedNewDefaultExerciseId.value = ''
-    addDefaultSelection.value = { categoryId: '', groupId: '' }
 }
 
 function closeEditWorkoutModal(saved = false) {
@@ -316,34 +236,4 @@ async function createWorkout() {
 .modal {
   position: relative;
 }
-
-.section-toggle:focus { outline: 2px solid rgba(0, 0, 0, 0.06); }
-.section-title { font-weight: 600; color: var(--trk-text); }
-.section-icon { width: 18px; height: 18px; color: var(--trk-text-muted); transition: transform 150ms ease; }
-.section-icon.rotated { transform: rotate(180deg); }
-
-/* Add-candidates list and overlay (component-specific) */
-.add-candidates { width: 100%; }
-.add-candidates .item-list { max-height: 160px; overflow-y: auto; padding: 0; }
-.add-candidate { padding: 8px 10px; border-radius: 6px; }
-.add-candidate.selected { background: var(--trk-accent); color: var(--trk-bg); border-color: var(--trk-accent); }
-
-.add-candidates-overlay { position: absolute; right: var(--trk-space-4); top: calc(52px); z-index: 300; width: calc(100% - var(--trk-space-8)); max-width: 420px; display: flex; justify-content: center; }
-.add-candidates-panel { width: 100%; background: var(--trk-surface); border: 1px solid var(--trk-surface-border); border-radius: var(--trk-radius-md); box-shadow: var(--trk-shadow); padding: var(--trk-space-3); }
-.add-candidates-header { display: flex; justify-content: space-between; align-items: center; gap: var(--trk-space-2); margin-bottom: var(--trk-space-2); }
-.add-candidates-body { display: flex; flex-direction: column; gap: var(--trk-space-2); }
-.add-candidates-footer { display: flex; gap: var(--trk-space-2); margin-top: var(--trk-space-2); }
-
-/* faded button variant to match list styling */
-.btn-faded { display: inline-flex; align-items: center; justify-content: center; gap: var(--trk-space-2); border-radius: var(--trk-radius-md); border: 1px solid var(--trk-surface-border); background: transparent; color: var(--trk-text); padding: 0.65rem 0.75rem; font-weight: 800; cursor: pointer; transition: background 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 120ms ease; }
-.btn-faded:hover { background: var(--trk-accent); color: var(--trk-text-dark); border-color: var(--trk-accent); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
-.btn-faded:active { transform: translateY(1px) scale(0.995); }
-.btn-faded:disabled { opacity: 0.6; cursor: not-allowed; }
-
-@media (max-width: 520px) {
-    .add-candidates-overlay { position: fixed; inset: 0; padding: calc(var(--trk-space-4) + env(safe-area-inset-top, 0)) var(--trk-space-4) var(--trk-space-4); background: rgba(0, 0, 0, 0.35); display: flex; align-items: flex-end; justify-content: center; }
-    .add-candidates-panel { max-width: 100%; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
-    .add-candidates .item-list { max-height: 220px; }
-}
-
 </style>

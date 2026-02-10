@@ -17,34 +17,40 @@
       </li>
     </template>
   </Draggable>
+  <button type="button" class="btn btn-faded"
+    @click="openAddExerciseModal = true">
+    + Add
+  </button>
+  <ExerciseSelector v-if="openAddExerciseModal" 
+    :exercise-collection="props.exerciseCollection" 
+    @add="exerciseId => addExercise(exerciseId)" 
+    @cancel="openAddExerciseModal = false">
+  </ExerciseSelector>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import Draggable from 'vuedraggable'
-import type { MuscleGroup } from '../../api/modules/muscles'
 import type { DefaultExercise } from '../../api/modules/workouts'
 import { PropType } from 'vue'
+import ExerciseSelector from './ExerciseSelector.vue'
+import { ExerciseCollection } from '../../types/ExerciseCollection'
+import { emptyGuid } from '../../types/Guid'
 
 const props = defineProps({
+  workoutId: { type: String as PropType<string>, required: true },
   exercises: { type: Array as PropType<DefaultExercise[]>, required: true },
-  muscleGroups: { type: Array as PropType<MuscleGroup[]>, required: false, default: () => [] },
+  exerciseCollection: { type: Object as PropType<ExerciseCollection>, required: false, default: () => ({ exercises: [], muscleGroups: [], workouts: [] }) },
   disabled: { type: Boolean as PropType<boolean>, required: false, default: false },
 })
 
 const emit = defineEmits<{
   (e: 'reorder', exercises: DefaultExercise[]): void
+  (e: 'add'): void
 }>()
 
-const localExercises = ref<DefaultExercise[]>([])
-
-watch(
-  () => props.exercises,
-  (val) => {
-    localExercises.value = [...val].sort((a, b) => (a.exerciseNumber ?? 0) - (b.exerciseNumber ?? 0))
-  },
-  { immediate: true }
-)
+const localExercises = ref<DefaultExercise[]>(props.exercises || [])
+const openAddExerciseModal = ref<boolean>(false);
 
 function onDragEnd() {
   const reordered = localExercises.value.map((ex, i) => ({ ...ex, exerciseNumber: i + 1 }))
@@ -52,9 +58,26 @@ function onDragEnd() {
   emit('reorder', reordered)
 }
 
+function addExercise(exerciseId: string) {
+  const exercise = props.exerciseCollection.exercises.find((ex) => ex.id === exerciseId)
+  if (!exercise) return
+
+  let defaultExercise: DefaultExercise = {
+    id: emptyGuid,
+    exerciseId: exercise.id,
+    exerciseNumber: localExercises.value.length + 1,
+    exercise: exercise,
+    workoutId: props.workoutId
+  }
+
+  localExercises.value.push(defaultExercise)
+  emit('reorder', localExercises.value)
+  openAddExerciseModal.value = false
+}
+
 function muscleName(id: string | undefined) {
   if (!id) return ''
-  const g = props.muscleGroups.find((m) => m.id === id)
+  const g = props.exerciseCollection.muscleGroups.find((m) => m.id === id)
   return g ? g.name : ''
 }
 </script>
@@ -80,8 +103,6 @@ function muscleName(id: string | undefined) {
   user-select: none;
   font-weight: 700;
 }
-.exercise-info { display: flex; flex-direction: column; gap: 2px; }
-.item-sub { font-size: 0.85rem; color: var(--trk-text-muted); }
 .drag-ghost { opacity: 0.45; }
 .drag-chosen { background: var(--trk-accent-muted); }
 </style>

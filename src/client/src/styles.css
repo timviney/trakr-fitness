@@ -124,6 +124,11 @@ a {
   background: var(--trk-danger-muted);
 }
 
+.btn-faded { display: inline-flex; align-items: center; justify-content: center; gap: var(--trk-space-2); border-radius: var(--trk-radius-md); border: 1px solid var(--trk-surface-border); background: transparent; color: var(--trk-text); padding: 0.65rem 0.75rem; font-weight: 800; cursor: pointer; transition: background 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 120ms ease; }
+.btn-faded:hover { background: var(--trk-accent); color: var(--trk-text-dark); border-color: var(--trk-accent); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.btn-faded:active { transform: translateY(1px) scale(0.995); }
+.btn-faded:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .form-field {
   display: grid;
   gap: 0.35rem;
