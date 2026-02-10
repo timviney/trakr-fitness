@@ -145,6 +145,20 @@ const editWorkoutName = ref('')
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
 const editWorkoutDefaultExercises = ref<DefaultExercise[]>([])
+const changesMade = computed(() => {
+    if (!editingWorkout.value) return false
+    if (editingWorkout.value.name !== editWorkoutName.value.trim()) return true
+    if (editingWorkout.value.defaultExercises.length !== editWorkoutDefaultExercises.value.length) return true
+    // Check if exercise IDs or order have changed
+    for (let i = 0; i < editingWorkout.value.defaultExercises.length; i++) {
+        const original = editingWorkout.value.defaultExercises[i]
+        const edited = editWorkoutDefaultExercises.value[i]
+        if (original.exerciseId !== edited.exerciseId || original.exerciseNumber !== edited.exerciseNumber) {
+            return true
+        }
+    }
+    return false
+})
 
 // Add-default UI state
 const addDefaultVisible = ref(false)
@@ -195,7 +209,13 @@ function openEditWorkout(w: Workout) {
     showCreateWorkout.value = false
 }
 
-function closeEditWorkoutModal() {
+function closeEditWorkoutModal(saved = false) {
+    if (!saved && changesMade.value) {
+        if (!confirm('You have unsaved changes. Discard them and close?')) {
+            return
+        }
+    }
+
     editingWorkout.value = null
     editWorkoutDefaultExercises.value = []
     editWorkoutName.value = ''
@@ -215,7 +235,7 @@ async function updateWorkout() {
         const res = await api.workouts.updateWorkout(editingWorkout.value.id, payload)
         if (res.isSuccess && res.data) {
             emit('updated', res.data)
-            closeEditWorkoutModal()
+            closeEditWorkoutModal(true)
         } else {
             console.error('Failed to update workout:', res.error)
         }
