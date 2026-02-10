@@ -320,17 +320,25 @@ namespace GymTracker.Infrastructure.Repositories
 
         public async Task<DbResult<Workout>> UpdateWorkoutAsync(Workout workout)
         {
-            var result = await GetWorkoutsByUserIdAsync(workout.UserId);
-            if (!result.IsSuccess)
-                return DbResult<Workout>.DatabaseError(result.Message);
-            
-            var existing = result.Data?.FirstOrDefault(w => w.Name == workout.Name && w.Id != workout.Id);
-            if (existing is not null)
-                return DbResult<Workout>.DuplicateName($"A workout named '{workout.Name}' already exists.");
-            
-            db.Workouts.Update(workout);
-            await db.SaveChangesAsync();
-            return DbResult<Workout>.Ok(workout);
+            try
+            {
+                var result = await GetWorkoutsByUserIdAsync(workout.UserId);
+                if (!result.IsSuccess)
+                    return DbResult<Workout>.DatabaseError(result.Message);
+                
+                var existing = result.Data?.FirstOrDefault(w => w.Name == workout.Name && w.Id != workout.Id);
+                if (existing is not null)
+                    return DbResult<Workout>.DuplicateName($"A workout named '{workout.Name}' already exists.");
+
+                db.Workouts.Update(workout);
+                await db.SaveChangesAsync();
+                return DbResult<Workout>.Ok(workout);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         public async Task<DbResult<Workout>> DeleteWorkoutAsync(Guid id)

@@ -66,7 +66,7 @@
                 </div>
 
                 <div v-if="showDefaultExercises" class="form-field">
-                    <DefaultExercisesList :exercises="editingWorkout?.defaultExercises" :muscle-groups="exerciseCollection.muscleGroups" />
+                    <DefaultExercisesList :exercises="editWorkoutDefaultExercises" :muscle-groups="exerciseCollection.muscleGroups" />
                     <div v-if="editingWorkout" class="form-field">
                         <button type="button" class="btn btn-faded" v-if="!addDefaultVisible"
                             @click="addDefaultVisible = true">
@@ -123,9 +123,10 @@ import { Dumbbell, Plus, ChevronDown } from 'lucide-vue-next'
 import DefaultExercisesList from './DefaultExercisesList.vue'
 import MuscleGroupSelector from './MuscleGroupSelector.vue'
 import { api } from '../../api/api'
-import type { Workout } from '../../api/modules/workouts'
+import type { DefaultExercise, UpdateWorkoutRequest, Workout } from '../../api/modules/workouts'
 import type { Exercise } from '../../api/modules/exercises'
 import { ExerciseCollection } from '../../types/ExerciseCollection'
+import { emptyGuid } from '../../types/Guid'
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{
@@ -143,6 +144,7 @@ const editingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
+const editWorkoutDefaultExercises = ref<DefaultExercise[]>([])
 
 // Add-default UI state
 const addDefaultVisible = ref(false)
@@ -173,38 +175,29 @@ function cancelAddDefault() {
 }
 
 async function addDefaultExercise() {
-    if (!editingWorkout.value || !selectedNewDefaultExerciseId.value) return
-    const payload = {
-        workoutId: editingWorkout.value.id,
+    if (!editWorkoutDefaultExercises.value || !selectedNewDefaultExerciseId.value) return
+    editWorkoutDefaultExercises.value.push({
+        id: emptyGuid, // will be set by backend
         exerciseId: selectedNewDefaultExerciseId.value,
-        exerciseNumber: (editingWorkout.value.defaultExercises?.length ?? 0),
-    }
-    try {
-        const res = await api.workouts.createDefaultExercise(payload)
-        if (res.isSuccess && res.data) {
-            res.data.exercise = props.exerciseCollection.exercises.find(e => e.id === selectedNewDefaultExerciseId.value)!
-            editingWorkout.value.defaultExercises.push(res.data)
-            emit('updated', editingWorkout.value)
-        } else {
-            console.error('Failed to add default exercise:', res.error)
-        }
-    } catch (e) {
-        console.error('Failed to add default exercise:', e)
-    } finally {
-        addDefaultVisible.value = false
-        selectedNewDefaultExerciseId.value = ''
-        addDefaultSelection.value = { categoryId: '', groupId: '' }
-    }
+        workoutId: editingWorkout.value!.id,
+        exerciseNumber: editWorkoutDefaultExercises.value.length + 1,
+        exercise: props.exerciseCollection.exercises.find(e => e.id === selectedNewDefaultExerciseId.value)!,
+    })
+    addDefaultVisible.value = false
+    selectedNewDefaultExerciseId.value = ''
+    addDefaultSelection.value = { categoryId: '', groupId: '' }
 }
 
 function openEditWorkout(w: Workout) {
     editingWorkout.value = w
     editWorkoutName.value = w.name
+    editWorkoutDefaultExercises.value = [...w.defaultExercises]
     showCreateWorkout.value = false
 }
 
 function closeEditWorkoutModal() {
     editingWorkout.value = null
+    editWorkoutDefaultExercises.value = []
     editWorkoutName.value = ''
     showDefaultExercises.value = false
 }
@@ -215,7 +208,11 @@ async function updateWorkout() {
 
     editWorkoutProcessing.value = true
     try {
-        const res = await api.workouts.updateWorkout(editingWorkout.value.id, { name: editWorkoutName.value.trim() })
+        const payload : UpdateWorkoutRequest = { 
+            name: editWorkoutName.value.trim(), 
+            defaultExercises: editWorkoutDefaultExercises.value
+        }
+        const res = await api.workouts.updateWorkout(editingWorkout.value.id, payload)
         if (res.isSuccess && res.data) {
             emit('updated', res.data)
             closeEditWorkoutModal()

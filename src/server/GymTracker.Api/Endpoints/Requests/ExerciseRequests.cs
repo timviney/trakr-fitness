@@ -1,4 +1,6 @@
-﻿namespace GymTracker.Api.Endpoints.Requests;
+﻿using GymTracker.Core.Entities;
+
+namespace GymTracker.Api.Endpoints.Requests;
 
 // Exercise requests
 public record CreateExerciseRequest(string Name, Guid MuscleGroupId);
@@ -6,8 +8,7 @@ public record UpdateExerciseRequest(string Name, Guid MuscleGroupId);
 
 // Workout requests
 public record CreateWorkoutRequest(string Name);
-public record UpdateWorkoutRequest(string Name);
-public record CreateWorkoutDefaultExerciseRequest(Guid ExerciseId, int ExerciseNumber);
+public record UpdateWorkoutRequest(string Name, WorkoutDefaultExercise[] DefaultExercises);
 
 // Muscle Category requests
 public record CreateMuscleCategoryRequest(string Name);

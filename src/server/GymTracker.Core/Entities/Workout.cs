@@ -15,6 +15,6 @@ namespace GymTracker.Core.Entities
         public ICollection<Session> Sessions { get; set; } = new List<Session>();
 
         // We are specifically not ignoring this to save ever having to get exercises in isolation
-        public IEnumerable<WorkoutDefaultExercise> DefaultExercises { get; set; } = new List<WorkoutDefaultExercise>();
+        public ICollection<WorkoutDefaultExercise> DefaultExercises { get; set; } = new List<WorkoutDefaultExercise>();
     }
 }

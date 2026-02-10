@@ -19,8 +19,12 @@
         :exercise-collection="exerciseCollection"
         @created="workout => exerciseCollection.workouts.push(workout)"
         @updated="updatedWorkout => {
+            console.log('Updating workout in parent collection:', updatedWorkout)
           const idx = exerciseCollection.workouts.findIndex(w => w.id === updatedWorkout.id)
-          if (idx >= 0) exerciseCollection.workouts[idx] = updatedWorkout
+          if (idx >= 0){
+            exerciseCollection.workouts[idx] = updatedWorkout
+            console.log('Updated workout collection:', exerciseCollection.workouts)
+          }
         }"
         @deleted="workoutId => exerciseCollection.workouts = exerciseCollection.workouts.filter(w => w.id !== workoutId)"
       />

@@ -5,7 +5,7 @@ namespace GymTracker.Core.Entities;
 public class WorkoutDefaultExercise
 {
     public Guid Id { get; set; }
-    public Guid? WorkoutId { get; set; }
+    public Guid WorkoutId { get; set; }
     public Guid ExerciseId { get; set; }
     public int ExerciseNumber { get; set; } 
 

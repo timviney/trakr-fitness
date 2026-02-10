@@ -18,32 +18,8 @@ public static class WorkoutEndpoints
         group.MapGet("/", GetUserWorkouts);
         group.MapGet("/{id}", GetWorkoutById);
         group.MapPost("/", CreateWorkout);
-        group.MapPost("/{id}/defaultExercises", CreateDefaultExercise);
         group.MapPut("/{id}", UpdateWorkout);
         group.MapDelete("/{id}", DeleteWorkout);
-    }
-
-    private static async Task<IResult> CreateDefaultExercise(
-        Guid id,
-        CreateWorkoutDefaultExerciseRequest req,
-        [FromServices] IAuthContext authContext,
-        [FromServices] IExerciseLibraryRepository repository)
-    {
-        var workoutResult = await repository.GetWorkoutByIdAsync(id);
-        if (!workoutResult.IsSuccess) return Results.NotFound();
-
-        var workout = workoutResult.Data;
-        if (workout.UserId != authContext.UserId) return Results.NotFound();
-
-        var defaultExercise = new WorkoutDefaultExercise
-        {
-            Workout = workout,
-            ExerciseId = req.ExerciseId,
-            ExerciseNumber = req.ExerciseNumber
-        };
-
-        var addResult = await repository.AddWorkoutDefaultExerciseAsync(defaultExercise);
-        return addResult.ToApiResult().ToCreatedResult($"/workouts/{id}/defaultExercises/{defaultExercise.Id}");
     }
 
     private static async Task<IResult> GetUserWorkouts(
@@ -103,6 +79,38 @@ public static class WorkoutEndpoints
             return Results.NotFound();
 
         workout.Name = req.Name;
+
+        // New default exercises will have Id == Guid.Empty, existing ones will have their Id set
+        var updatedDefaultExercises = req.DefaultExercises
+            .Where(x => x.Id != Guid.Empty)
+            .ToDictionary(x => x.Id, x => x);
+        var newDefaultExercises = req.DefaultExercises
+            .Where(x => x.Id == Guid.Empty)
+            .ToList();
+        
+        foreach (var exercise in workout.DefaultExercises.ToList())
+        {
+            if (updatedDefaultExercises.TryGetValue(exercise.Id, out var newExercise))
+            {
+                exercise.ExerciseNumber = newExercise.ExerciseNumber;
+                exercise.ExerciseId = newExercise.ExerciseId;
+            }
+            else
+            {
+                workout.DefaultExercises.Remove(exercise);
+            }
+        }
+
+        foreach (var defaultExercise in newDefaultExercises)
+        {
+            workout.DefaultExercises.Add(new WorkoutDefaultExercise
+            {
+                WorkoutId = workout.Id,
+                ExerciseId = defaultExercise.ExerciseId,
+                ExerciseNumber = defaultExercise.ExerciseNumber
+            });
+        }
+
         var updateResult = await repository.UpdateWorkoutAsync(workout);
         return updateResult.ToApiResult().ToOkResult();
     }
