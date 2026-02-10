@@ -47,7 +47,7 @@
     </div>
 
     <!-- Edit Workout Modal -->
-    <div v-if="editingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal">
+    <div v-if="editingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal()">
         <div class="modal">
             <h2 class="modal-title">Edit Workout</h2>
             <form @submit.prevent="updateWorkout">
@@ -106,7 +106,7 @@
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" @click="closeEditWorkoutModal"
+                    <button type="button" class="btn btn-secondary" @click="closeEditWorkoutModal()"
                         :disabled="editWorkoutProcessing">Cancel</button>
                     <button type="button" class="btn btn-danger" @click="deleteWorkout"
                         :disabled="editWorkoutProcessing">Delete</button>
