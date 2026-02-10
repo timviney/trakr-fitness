@@ -1,4 +1,12 @@
 <template>
+  <div
+    v-if="isDragging"
+    ref="deleteZone"
+    class="delete-zone"
+    :class="{ active: isOverDeleteZone }"
+  >
+    🗑 Drop here to delete
+  </div>
   <Draggable
     :list="localExercises"
     item-key="id"
@@ -18,13 +26,6 @@
       </li>
     </template>
   </Draggable>
-  <div
-    ref="deleteZone"
-    class="delete-zone"
-    :class="{ active: isDragging }"
-  >
-    🗑 Drop here to delete
-  </div>
   <button type="button" class="btn btn-faded"
     @click="openAddExerciseModal = true">
     + Add
@@ -59,15 +60,22 @@ const emit = defineEmits<{
 const localExercises = ref<DefaultExercise[]>(props.exercises || [])
 const deleteZone = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
+const isOverDeleteZone = ref(false)
 let draggedExercise: DefaultExercise | null = null
 const openAddExerciseModal = ref<boolean>(false);
 
 function onDragStart(evt: any) {
   isDragging.value = true
   draggedExercise = localExercises.value[evt.oldIndex]
+
+  document.addEventListener('dragover', onPointerMove)
+  document.addEventListener('touchmove', onPointerMove, { passive: false })
 }
 
 function onDragEnd(evt: any) {
+  document.removeEventListener('dragover', onPointerMove)
+  document.removeEventListener('touchmove', onPointerMove)
+
   isDragging.value = false
 
   if (draggedExercise === null || !deleteZone.value) {
@@ -75,9 +83,7 @@ function onDragEnd(evt: any) {
     return
   }
 
-  const droppedInDeleteZone = isInDeleteZone(evt)
-
-  if (droppedInDeleteZone) {
+  if (isOverDeleteZone.value) {
     localExercises.value = localExercises.value.filter((ex) => ex.id !== draggedExercise?.id)
   }
   
@@ -89,6 +95,8 @@ function onDragEnd(evt: any) {
   emit('reorder', localExercises.value)
 
   draggedExercise = null
+  isOverDeleteZone.value = false
+
 }
 
 function getEventCoordinates(evt: any) {
@@ -123,6 +131,10 @@ function isInDeleteZone(evt: any) {
     coords.y >= rect.top &&
     coords.y <= rect.bottom
   )
+}
+
+function onPointerMove(e: MouseEvent | TouchEvent) {
+  isOverDeleteZone.value = isInDeleteZone({ originalEvent: e })
 }
 
 function addExercise(exerciseId: string) {
