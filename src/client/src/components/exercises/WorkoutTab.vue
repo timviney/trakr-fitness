@@ -66,7 +66,12 @@
                 </div>
 
                 <div v-if="showDefaultExercises" class="form-field">
-                    <DefaultExercisesList :exercises="editWorkoutDefaultExercises" :muscle-groups="exerciseCollection.muscleGroups" />
+                    <DefaultExercisesList
+                            :exercises="editWorkoutDefaultExercises"
+                            :muscle-groups="exerciseCollection.muscleGroups"
+                            :disabled="editWorkoutProcessing"
+                            @reorder="onDefaultExercisesReordered"
+                        />
                     <div v-if="editingWorkout" class="form-field">
                         <button type="button" class="btn btn-faded" v-if="!addDefaultVisible"
                             @click="addDefaultVisible = true">
@@ -148,17 +153,33 @@ const editWorkoutDefaultExercises = ref<DefaultExercise[]>([])
 const changesMade = computed(() => {
     if (!editingWorkout.value) return false
     if (editingWorkout.value.name !== editWorkoutName.value.trim()) return true
-    if (editingWorkout.value.defaultExercises.length !== editWorkoutDefaultExercises.value.length) return true
-    // Check if exercise IDs or order have changed
-    for (let i = 0; i < editingWorkout.value.defaultExercises.length; i++) {
-        const original = editingWorkout.value.defaultExercises[i]
+    if ((editingWorkout.value.defaultExercises ?? []).length !== editWorkoutDefaultExercises.value.length) return true
+
+    const originalSorted = [...(editingWorkout.value.defaultExercises ?? [])].sort((a, b) => (a.exerciseNumber ?? 0) - (b.exerciseNumber ?? 0))
+
+    for (let i = 0; i < originalSorted.length; i++) {
+        const original = originalSorted[i]
         const edited = editWorkoutDefaultExercises.value[i]
+        if (!edited) return true
         if (original.exerciseId !== edited.exerciseId || original.exerciseNumber !== edited.exerciseNumber) {
             return true
         }
     }
     return false
 })
+
+// --- ensure we open edit state in a deterministic order
+function openEditWorkout(w: Workout) {
+    editingWorkout.value = w
+    editWorkoutName.value = w.name
+    editWorkoutDefaultExercises.value = [...w.defaultExercises].sort((a, b) => (a.exerciseNumber ?? 0) - (b.exerciseNumber ?? 0))
+    showCreateWorkout.value = false
+}
+
+function onDefaultExercisesReordered(reordered: DefaultExercise[]) {
+    // accept the reordered list from the child (exerciseNumber already recalculated)
+    editWorkoutDefaultExercises.value = reordered
+}
 
 // Add-default UI state
 const addDefaultVisible = ref(false)
@@ -200,13 +221,6 @@ async function addDefaultExercise() {
     addDefaultVisible.value = false
     selectedNewDefaultExerciseId.value = ''
     addDefaultSelection.value = { categoryId: '', groupId: '' }
-}
-
-function openEditWorkout(w: Workout) {
-    editingWorkout.value = w
-    editWorkoutName.value = w.name
-    editWorkoutDefaultExercises.value = [...w.defaultExercises]
-    showCreateWorkout.value = false
 }
 
 function closeEditWorkoutModal(saved = false) {
