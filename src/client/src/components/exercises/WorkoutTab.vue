@@ -29,28 +29,28 @@
         <div class="modal">
             <h2 class="modal-title">{{ updatingWorkout ? 'Edit' : 'Create' }} Workout</h2>
             <form @submit.prevent="saveWorkout">
-                <div class="form-field">
-                    <label for="edit-workout-name">Name</label>
-                    <input id="edit-workout-name" v-model="editWorkoutName" type="text" placeholder="e.g., Push Day"
-                        required :disabled="editWorkoutProcessing" />
-                </div>
-
-                <div class="form-field">
-                    <div class="section-toggle" role="button" tabindex="0"
-                        @click="showDefaultExercises = !showDefaultExercises">
-                        <span class="section-title">Default Exercises</span>
-                        <ChevronDown class="section-icon" :class="{ rotated: showDefaultExercises }" />
+                <div class="modal-content">
+                    <div class="form-field">
+                        <label for="edit-workout-name">Name</label>
+                        <input id="edit-workout-name" v-model="editWorkoutName" type="text" placeholder="e.g., Push Day"
+                            required :disabled="editWorkoutProcessing" />
                     </div>
-                </div>
 
-                <div v-if="showDefaultExercises" class="form-field">
-                    <DefaultExercisesList
-                            :workout-id="updatingWorkout?.id || emptyGuid"
-                            :default-exercises="editWorkoutDefaultExercises"
-                            :exercise-collection="exerciseCollection"
-                            :disabled="editWorkoutProcessing"
-                            @reorder="onDefaultExercisesReordered"
-                        />
+                    <div class="form-field">
+                        <SectionToggle v-model="showDefaultExercises">
+                            Default Exercises
+                        </SectionToggle>
+                    </div>
+
+                    <div v-if="showDefaultExercises" class="form-field">
+                        <DefaultExercisesList
+                                :workout-id="updatingWorkout?.id || emptyGuid"
+                                :default-exercises="editWorkoutDefaultExercises"
+                                :exercise-collection="exerciseCollection"
+                                :disabled="editWorkoutProcessing"
+                                @reorder="onDefaultExercisesReordered"
+                            />
+                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -67,12 +67,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Dumbbell, Plus, ChevronDown } from 'lucide-vue-next'
+import { Dumbbell, Plus } from 'lucide-vue-next'
 import DefaultExercisesList from './DefaultExercisesList.vue'
 import { api } from '../../api/api'
 import type { DefaultExercise, UpdateWorkoutRequest, Workout } from '../../api/modules/workouts'
 import { ExerciseCollection } from '../../types/ExerciseCollection'
 import { emptyGuid } from '../../types/Guid'
+import SectionToggle from './SectionToggle.vue'
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{
@@ -197,5 +198,35 @@ async function deleteWorkout() {
 
 .modal {
   position: relative;
+}
+
+/* Make the edit-workout modal content scrollable when it grows too tall. */
+.modal form {
+  display: flex;
+  flex-direction: column;
+  /* ensure modal never exceeds viewport (account for overlay padding + modal chrome) */
+  max-height: calc(100vh - 120px);
+}
+
+.modal-content {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  /* leave room for title + actions + modal padding */
+  max-height: calc(100vh - 260px);
+  padding-right: 6px; /* prevents content from being obscured by scrollbar */
+  margin-bottom: var(--trk-space-4);
+}
+
+/* Keep action buttons visible while the content scrolls */
+.modal-actions {
+  flex: 0 0 auto;
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--trk-space-3);
+  padding-top: var(--trk-space-4);
+  background: linear-gradient(var(--trk-surface), rgba(255,255,255,0));
+  /* ensure buttons remain tappable above safe-area */
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 </style>

@@ -90,7 +90,7 @@ function onDragEnd(evt: any) {
   }
 
   if (isOverDeleteZone.value) {
-    localExercises.value = localExercises.value.filter(([de]) => de.id !== (draggedExercise![0].id))
+    localExercises.value = localExercises.value.filter(([de]) => de.exerciseNumber !== (draggedExercise![0].exerciseNumber))
   }
   
   localExercises.value = localExercises.value.map(([de, ex], i) => {
