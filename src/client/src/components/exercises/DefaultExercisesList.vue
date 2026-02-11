@@ -19,10 +19,10 @@
     @end="onDragEnd"
   >
     <template #item="{ element }">
-      <li class="item-card default-exercise-item" :data-id="element.id">
+      <li class="item-card default-exercise-item" :data-id="element[0].id">
         <span class="drag-handle" role="button" aria-label="Reorder exercise" tabindex="0">⋮⋮</span>
-        <span class="item-name">{{ element.exercise.name }}</span>
-        <span v-if="muscleName(element.exercise.muscleGroupId)" class="item-count">{{ muscleName(element.exercise.muscleGroupId) }}</span>
+        <span class="item-name">{{ element[1].name }}</span>
+        <span v-if="muscleName(element[1].muscleGroupId)" class="item-count">{{ muscleName(element[1].muscleGroupId) }}</span>
       </li>
     </template>
   </Draggable>
@@ -45,10 +45,11 @@ import { PropType } from 'vue'
 import ExerciseSelector from './ExerciseSelector.vue'
 import { ExerciseCollection } from '../../types/ExerciseCollection'
 import { emptyGuid } from '../../types/Guid'
+import { Exercise } from '../../api/modules/exercises'
 
 const props = defineProps({
   workoutId: { type: String as PropType<string>, required: true },
-  exercises: { type: Array as PropType<DefaultExercise[]>, required: true },
+  defaultExercises: { type: Array as PropType<DefaultExercise[]>, required: true },
   exerciseCollection: { type: Object as PropType<ExerciseCollection>, required: false, default: () => ({ exercises: [], muscleGroups: [], workouts: [] }) },
   disabled: { type: Boolean as PropType<boolean>, required: false, default: false },
 })
@@ -57,11 +58,16 @@ const emit = defineEmits<{
   (e: 'reorder', exercises: DefaultExercise[]): void
 }>()
 
-const localExercises = ref<DefaultExercise[]>(props.exercises || [])
+const localExercises = ref<[DefaultExercise, Exercise][]>(
+  props.defaultExercises.map((de) => {
+    const exercise = props.exerciseCollection.exercises.find((ex) => ex.id === de.exerciseId)!
+    return [de, exercise]
+  })
+)
 const deleteZone = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
 const isOverDeleteZone = ref(false)
-let draggedExercise: DefaultExercise | null = null
+let draggedExercise: [DefaultExercise, Exercise] | null = null
 const openAddExerciseModal = ref<boolean>(false);
 
 function onDragStart(evt: any) {
@@ -84,19 +90,17 @@ function onDragEnd(evt: any) {
   }
 
   if (isOverDeleteZone.value) {
-    localExercises.value = localExercises.value.filter((ex) => ex.id !== draggedExercise?.id)
+    localExercises.value = localExercises.value.filter(([de]) => de.id !== (draggedExercise![0].id))
   }
   
-  localExercises.value = localExercises.value.map((ex, i) => ({
-      ...ex,
-      exerciseNumber: i
-    }))
+  localExercises.value = localExercises.value.map(([de, ex], i) => {
+    return [{...de, exerciseNumber: i}, ex]
+  })
 
-  emit('reorder', localExercises.value)
+  emit('reorder', localExercises.value.map(([de]) => de))
 
   draggedExercise = null
   isOverDeleteZone.value = false
-
 }
 
 function getEventCoordinates(evt: any) {
@@ -144,13 +148,12 @@ function addExercise(exerciseId: string) {
   let defaultExercise: DefaultExercise = {
     id: emptyGuid,
     exerciseId: exercise.id,
-    exerciseNumber: localExercises.value.length + 1,
-    exercise: exercise,
+    exerciseNumber: localExercises.value.length,
     workoutId: props.workoutId
   }
 
-  localExercises.value.push(defaultExercise)
-  emit('reorder', localExercises.value)
+  localExercises.value.push([defaultExercise, exercise])
+  emit('reorder', localExercises.value.map(([de]) => de))
   openAddExerciseModal.value = false
 }
 

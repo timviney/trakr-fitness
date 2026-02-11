@@ -6,7 +6,7 @@
         <p class="empty-description">
             Create your first workout template to organise your exercises.
         </p>
-        <button class="btn btn-primary" @click="showCreateWorkout = true">
+        <button class="btn btn-primary" @click="showEditingWorkout = true">
             <Plus class="btn-icon" />
             Create Workout
         </button>
@@ -14,43 +14,21 @@
 
     <ul v-else class="item-list">
         <li v-for="workout in exerciseCollection.workouts" :key="workout.id" class="item-card item-card-clickable"
-            @click="openEditWorkout(workout)">
+            @click="openUpdateWorkout(workout)">
             <span class="item-name">{{ workout.name }}</span>
             <span v-if="!workout.userId" class="item-badge">Default</span>
         </li>
     </ul>
 
-    <button v-if="exerciseCollection.workouts.length > 0" class="fab" @click="showCreateWorkout = true" aria-label="Add workout">
+    <button v-if="exerciseCollection.workouts.length > 0" class="fab" @click="showEditingWorkout = true" aria-label="Add workout">
         <Plus />
     </button>
 
-    <!-- Create Workout Modal -->
-    <div v-if="showCreateWorkout" class="modal-overlay" @click.self="showCreateWorkout = false">
-        <div class="modal">
-            <h2 class="modal-title">New Workout</h2>
-            <form @submit.prevent="createWorkout">
-                <div class="form-field">
-                    <label for="workout-name">Name</label>
-                    <input id="workout-name" v-model="newWorkoutName" type="text" placeholder="e.g., Push Day"
-                        required />
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" @click="showCreateWorkout = false">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" :disabled="creating">
-                        {{ creating ? 'Creating...' : 'Create' }}
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Edit Workout Modal -->
-    <div v-if="editingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal()">
+    <div v-if="showEditingWorkout" class="modal-overlay" @click.self="closeEditWorkoutModal()">
         <div class="modal">
-            <h2 class="modal-title">Edit Workout</h2>
-            <form @submit.prevent="updateWorkout">
+            <h2 class="modal-title">{{ updatingWorkout ? 'Edit' : 'Create' }} Workout</h2>
+            <form @submit.prevent="saveWorkout">
                 <div class="form-field">
                     <label for="edit-workout-name">Name</label>
                     <input id="edit-workout-name" v-model="editWorkoutName" type="text" placeholder="e.g., Push Day"
@@ -67,8 +45,8 @@
 
                 <div v-if="showDefaultExercises" class="form-field">
                     <DefaultExercisesList
-                            :workout-id="editingWorkout.id"
-                            :exercises="editWorkoutDefaultExercises"
+                            :workout-id="updatingWorkout?.id || emptyGuid"
+                            :default-exercises="editWorkoutDefaultExercises"
                             :exercise-collection="exerciseCollection"
                             :disabled="editWorkoutProcessing"
                             @reorder="onDefaultExercisesReordered"
@@ -94,6 +72,7 @@ import DefaultExercisesList from './DefaultExercisesList.vue'
 import { api } from '../../api/api'
 import type { DefaultExercise, UpdateWorkoutRequest, Workout } from '../../api/modules/workouts'
 import { ExerciseCollection } from '../../types/ExerciseCollection'
+import { emptyGuid } from '../../types/Guid'
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{
@@ -102,22 +81,19 @@ const emit = defineEmits<{
     (e: 'deleted', workoutId: string): void
 }>()
 
-const creating = ref(false)
-const showCreateWorkout = ref(false)
-const newWorkoutName = ref('')
-
 // Editing state
-const editingWorkout = ref<Workout | null>(null)
+const showEditingWorkout = ref<boolean>(false)
+const updatingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
 const editWorkoutDefaultExercises = ref<DefaultExercise[]>([])
 const changesMade = computed(() => {
-    if (!editingWorkout.value) return false
-    if (editingWorkout.value.name !== editWorkoutName.value.trim()) return true
-    if ((editingWorkout.value.defaultExercises ?? []).length !== editWorkoutDefaultExercises.value.length) return true
+    if (!showEditingWorkout.value) return false
+    if (updatingWorkout.value?.name !== editWorkoutName.value.trim()) return true
+    if ((updatingWorkout.value?.defaultExercises ?? []).length !== editWorkoutDefaultExercises.value.length) return true
 
-    const originalSorted = [...(editingWorkout.value.defaultExercises ?? [])].sort((a, b) => (a.exerciseNumber ?? 0) - (b.exerciseNumber ?? 0))
+    const originalSorted = [...(updatingWorkout.value?.defaultExercises ?? [])].sort((a, b) => (a.exerciseNumber ?? 0) - (b.exerciseNumber ?? 0))
 
     for (let i = 0; i < originalSorted.length; i++) {
         const original = originalSorted[i]
@@ -131,11 +107,11 @@ const changesMade = computed(() => {
 })
 
 // --- ensure we open edit state in a deterministic order
-function openEditWorkout(w: Workout) {
-    editingWorkout.value = w
+function openUpdateWorkout(w: Workout) {
+    updatingWorkout.value = w
     editWorkoutName.value = w.name
     editWorkoutDefaultExercises.value = [...w.defaultExercises].sort((a, b) => (a.exerciseNumber ?? 0) - (b.exerciseNumber ?? 0))
-    showCreateWorkout.value = false
+    showEditingWorkout.value = true
 }
 
 function onDefaultExercisesReordered(reordered: DefaultExercise[]) {
@@ -150,45 +126,49 @@ function closeEditWorkoutModal(saved = false) {
         }
     }
 
-    editingWorkout.value = null
+    updatingWorkout.value = null
     editWorkoutDefaultExercises.value = []
     editWorkoutName.value = ''
     showDefaultExercises.value = false
+    showEditingWorkout.value = false
 }
 
-async function updateWorkout() {
-    if (!editingWorkout.value) return
-    if (!editWorkoutName.value.trim()) return
-
+async function saveWorkout() {
     editWorkoutProcessing.value = true
     try {
         const payload : UpdateWorkoutRequest = { 
             name: editWorkoutName.value.trim(), 
             defaultExercises: editWorkoutDefaultExercises.value
         }
-        const res = await api.workouts.updateWorkout(editingWorkout.value.id, payload)
+        const res = updatingWorkout.value
+         ? await api.workouts.updateWorkout(updatingWorkout.value.id, payload)
+         : await api.workouts.createWorkout(payload)
         if (res.isSuccess && res.data) {
-            emit('updated', res.data)
+            updatingWorkout.value
+                ? emit('updated', res.data)
+                : emit('created', res.data)
+
             closeEditWorkoutModal(true)
         } else {
-            console.error('Failed to update workout:', res.error)
+            console.error('Failed to update/create workout:', res.error)
         }
+        
     } catch (e) {
-        console.error('Failed to update workout:', e)
+        console.error('Failed to update/create workout:', e)
     } finally {
         editWorkoutProcessing.value = false
     }
 }
 
 async function deleteWorkout() {
-    if (!editingWorkout.value) return
+    if (!updatingWorkout.value) return
     if (!confirm('Delete this workout?')) return
 
     editWorkoutProcessing.value = true
     try {
-        const res = await api.workouts.deleteWorkout(editingWorkout.value.id)
+        const res = await api.workouts.deleteWorkout(updatingWorkout.value.id)
         if (res.isSuccess) {
-            emit('deleted', editingWorkout.value.id)
+            emit('deleted', updatingWorkout.value.id)
             closeEditWorkoutModal()
         } else {
             console.error('Failed to delete workout:', res.error)
@@ -197,24 +177,6 @@ async function deleteWorkout() {
         console.error('Failed to delete workout:', e)
     } finally {
         editWorkoutProcessing.value = false
-    }
-}
-
-async function createWorkout() {
-    if (!newWorkoutName.value.trim()) return
-
-    creating.value = true
-    try {
-        const res = await api.workouts.createWorkout({ name: newWorkoutName.value.trim() })
-        if (res.data) {
-            emit('created', res.data)
-            newWorkoutName.value = ''
-            showCreateWorkout.value = false
-        }
-    } catch (e) {
-        console.error('Failed to create workout:', e)
-    } finally {
-        creating.value = false
     }
 }
 

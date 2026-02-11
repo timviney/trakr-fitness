@@ -54,9 +54,9 @@ public static class WorkoutEndpoints
     {
         var workout = new Workout
         {
-            Id = Guid.NewGuid(),
             Name = req.Name,
-            UserId = authContext.UserId
+            UserId = authContext.UserId,
+            DefaultExercises = req.DefaultExercises
         };
 
         var result = await repository.AddWorkoutAsync(workout);

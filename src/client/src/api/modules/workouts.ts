@@ -2,10 +2,6 @@ import { ApiResponse } from '../api-response'
 import { ApiClient } from '../client'
 import { Exercise } from './exercises'
 
-export type CreateWorkoutRequest = {
-  name: string
-}
-
 export type UpdateWorkoutRequest = {
   name: string
   defaultExercises: DefaultExercise[]
@@ -16,7 +12,6 @@ export type DefaultExercise = {
   workoutId: string
   exerciseId: string
   exerciseNumber: number
-  exercise: Exercise
 }
 
 export type Workout = {
@@ -33,7 +28,7 @@ export class WorkoutsApi {
     return await this.client.get<Workout[]>('/workouts/')
   }
 
-  async createWorkout(payload: CreateWorkoutRequest): Promise<ApiResponse<Workout>> {
+  async createWorkout(payload: UpdateWorkoutRequest): Promise<ApiResponse<Workout>> {
     return await this.client.post<Workout>('/workouts/', payload)
   }
 
