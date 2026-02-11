@@ -30,7 +30,7 @@ public static class DbSetup
 
         if (!string.IsNullOrWhiteSpace(connectionString))
             return connectionString;
-        
+
         // Build connection string from PostgresSettings
         var host = configuration["PostgresSettings:Host"];
         var port = configuration["PostgresSettings:Port"];
@@ -53,22 +53,10 @@ public static class DbSetup
     public static async Task SeedDataAsync(WebApplication app)
     {
         // Apply pending migrations only in development (not in Lambda/production)
-        if (app.Environment.IsDevelopment())
-        {
-            using var scope = app.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
-            await context.Database.MigrateAsync();
-        }
-        
-        var seedDefaultData = app.Configuration.GetValue<bool>("SeedDefaultData");
-        
-        if (!seedDefaultData)
-            return;
+        if (!app.Environment.IsDevelopment()) return;
 
-        using var seedScope = app.Services.CreateScope();
-        var seedContext = seedScope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
-            
-        // Seed the data
-        await DataSeeder.SeedDefaultDataAsync(seedContext);
+        using var scope = app.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<GymTrackerDbContext>();
+        await context.Database.MigrateAsync();
     }
 }

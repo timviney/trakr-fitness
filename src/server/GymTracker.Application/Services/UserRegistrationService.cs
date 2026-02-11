@@ -11,9 +11,9 @@ public class UserRegistrationService(
     private static readonly string[] DefaultWorkoutNames = ["Push Day", "Pull Day", "Leg Day"];
     private static readonly Dictionary<string, List<string>> DefaultExercisesByWorkout = new()
     {
-        ["Push Day"] = ["Bench Press", "Overhead Press", "Tricep Dips"],
-        ["Pull Day"] = ["Pull Ups", "Barbell Rows", "Dumbbell Curls"],
-        ["Leg Day"] = ["Squats", "Deadlifts", "Standing Calf Raises"]
+        ["Push Day"] = ["Bench Press", "Dumbbell Fly", "Overhead Press", "Lateral Dumbbell Raise", "Cable Tricep Extension"],
+        ["Pull Day"] = ["Pull Ups", "Barbell Row", "Face Pulls", "Dumbbell Curl", "Hammer Curl"],
+        ["Leg Day"] = ["Squat", "Stiff-Leg Deadlift", "Standing Calf Raise"]
     };
 
     public async Task<DbResult<User>> RegisterUserAsync(User user)
