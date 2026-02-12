@@ -59,20 +59,25 @@
             <div class="exercise-header">
               <div class="exercise-title-group">
                 <h3 class="exercise-title">{{ exData.exercise.name }}</h3>
-                <span class="status-pill" :class="getStatusClass(exData)">
-                  {{ getStatusText(exData) }}
-                </span>
               </div>
 
-
+              <div class="muscle-name">{{ muscleName(exData.exercise.muscleGroupId) }}</div>
             </div>
 
-            <div class="exercise-meta">{{ exData.sets.length }} {{ exData.sets.length === 1 ? 'set' : 'sets' }}</div>
+            <div class="exercise-footer">
+              <div class="status-area">
+                <span class="status-pill" :class="getStatusClass(exData)">{{ getStatusText(exData) }}</span>
+              </div>
+
+              <div class="sets-area">
+                <div class="exercise-meta">{{ exData.sets.length }} {{ exData.sets.length === 1 ? 'set' : 'sets' }}</div>
+              </div>
+            </div>
 
           </div>
         </div>
 
-        <div class="add-exercise-action" style="padding: 0 var(--trk-space-4);">
+        <div class="add-exercise-action" style="padding: 0;">
           <button
             type="button"
             class="btn btn-faded"
@@ -460,6 +465,12 @@ function getStatusClass(exData: SessionExerciseData): string {
   return 'status-in-progress'
 }
 
+function muscleName(muscleGroupId?: string | null) {
+  if (!muscleGroupId || !exerciseCollection.value) return ''
+  const g = exerciseCollection.value.muscleGroups?.find(m => m.id === muscleGroupId)
+  return g ? g.name : ''
+}
+
 
 async function loadWorkouts() {
   loading.value = true
@@ -562,7 +573,7 @@ const allExercisesSaved = computed(() => {
 .exercise-card {
   background: var(--trk-surface);
   border-radius: var(--trk-radius-md);
-  padding: 14px;
+  padding: 8px; /* reduced for slimmer cards */
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -572,20 +583,41 @@ const allExercisesSaved = computed(() => {
   transition: transform 0.1s ease, background 0.1s ease;
 } 
 
-.exercise-meta { font-size: 0.85rem; font-weight: 500; color: var(--trk-text-muted); opacity: 0.95; }
+.exercise-meta { font-size: 0.9rem; font-weight: 600; color: var(--trk-text-muted); opacity: 0.95; }
+.sets-area .exercise-meta { color: var(--trk-accent); font-weight: 700; }
 .exercise-card:active {
   transform: scale(0.99);
   background: var(--trk-surface-hover);
 }
-/* saved state: subtle left border only (no green background) */
 .exercise-card.exercise-saved { border-left: 4px solid var(--trk-success); background: var(--trk-surface); }
 
 .exercise-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
+
+.muscle-name {
+  font-size: 0.85rem;
+  color: var(--trk-text-muted);
+  opacity: 0.95;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 50%;
+  text-align: right;
+}
+
+.exercise-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.status-area { flex: 1; display:flex; align-items:center; justify-content:flex-start; }
+.sets-area { flex: 0 0 auto; display:flex; align-items:center; justify-content:flex-end; }
 
 .exercise-title-group {
   display: flex;
@@ -595,7 +627,7 @@ const allExercisesSaved = computed(() => {
   min-width: 0;
 }
 
-.exercise-title { font-size: 1.08rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--trk-text); }
+.exercise-title { font-size: 1.12rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--trk-text); }
 
 /* Icon button system */
 .icon-btn {
@@ -623,25 +655,16 @@ const allExercisesSaved = computed(() => {
 .exercise-actions { display: flex; gap: 12px; }
 
 /* Status pill styles */
-.status-pill { font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+.status-pill { font-size: 0.9rem; padding: 0px 0px;  font-weight: 500;  display: inline-flex;  align-items: center;  justify-content: center; margin: 0; }
 .status-saved { background: var(--trk-success-bg); color: var(--trk-success-text); }
-.status-in-progress { background: var(--trk-warning-bg); color: var(--trk-warning-text); }
+.status-in-progress { background: var(--trk-accent-muted); color: var(--trk-text-dark); }
 .status-not-started { background: var(--trk-surface-alt); color: var(--trk-text-muted); }
 
 /* Teleported overflow menu (high z-index + debug background) */
 .overflow-backdrop { position: fixed; inset: 0; z-index: 9999; }
 .overflow-menu { position: fixed; width: 180px; background: var(--trk-surface); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); border: 1px solid var(--trk-surface-border); padding: 6px; display: flex; flex-direction: column; animation: menuFadeIn 120ms ease; z-index: 10000; }
 
-@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-/* keep chevron styling available but hidden on cards to reduce clutter */
-.item-chevron { display: none; }
-
-
-.save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); }
-
-.add-exercise-action .btn-faded { margin-top: 20px; width: 100%; }
-
+@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); } .add-exercise-action .btn-faded { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
 .session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; }
 .btn-finish { width: 100%; max-width: 400px; margin: 0 auto; display: flex; }
 </style>
