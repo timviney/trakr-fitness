@@ -39,6 +39,27 @@
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 200; padding: var(--trk-space-4); }
 .modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
+.modal.modal-fullscreen {
+  /* full-screen / large modal variant used for exercise details */
+  max-width: 920px;
+  width: calc(100% - 48px);
+  height: calc(100vh - 48px);
+  border-radius: 12px;
+  padding: var(--trk-space-6);
+  align-self: center; /* override bottom-sheet placement */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ensure modal content inside fullscreen modal can grow and scroll */
+.modal.modal-fullscreen .modal-content {
+  flex: 1 1 auto;
+  max-height: none;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .modal-title { font-family: var(--trk-font-heading); font-size: 1.5rem; color: var(--trk-text); margin: 0 0 var(--trk-space-4); }
 .modal-actions { display: flex; gap: var(--trk-space-3); margin-top: var(--trk-space-4); }
 .modal-actions .btn { flex: 1; }

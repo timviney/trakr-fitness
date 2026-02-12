@@ -8,63 +8,65 @@
       <div class="col-actions"></div>
     </div>
 
-    <div v-if="sets.length === 0" class="sets-empty">
-      <p>No sets yet. Add your first set below.</p>
-    </div>
-
-    <div v-for="(set, idx) in sets" :key="set.tempId" class="set-row">
-      <div class="col-warmup">
-        <button
-          type="button"
-          class="warmup-toggle"
-          :class="{ active: set.warmUp }"
-          @click="toggleWarmup(idx)"
-          :aria-pressed="set.warmUp"
-          aria-label="Toggle warmup"
-        >
-          {{ set.warmUp ? 'W' : '' }}
-        </button>
+    <div class="sets-body">
+      <div v-if="sets.length === 0" class="sets-empty">
+        <p>No sets yet. Add your first set below.</p>
       </div>
 
-      <div class="col-weight">
-        <input
-          type="number"
-          v-model.number="set.weight"
-          min="0"
-          step="0.5"
-          @input="updateSets"
-          class="number-input"
-          placeholder="0"
-        />
-      </div>
+      <div v-for="(set, idx) in sets" :key="set.tempId" class="set-row">
+        <div class="col-warmup">
+          <button
+            type="button"
+            class="warmup-toggle"
+            :class="{ active: set.warmUp }"
+            @click="toggleWarmup(idx)"
+            :aria-pressed="set.warmUp"
+            aria-label="Toggle warmup"
+          >
+            {{ set.warmUp ? 'W' : '' }}
+          </button>
+        </div>
 
-      <div class="col-reps">
-        <input
-          type="number"
-          v-model.number="set.reps"
-          min="0"
-          @input="updateSets"
-          class="number-input"
-          placeholder="0"
-        />
-      </div>
+        <div class="col-weight">
+          <input
+            type="number"
+            v-model.number="set.weight"
+            min="0"
+            step="0.5"
+            @input="updateSets"
+            class="number-input"
+            placeholder="0"
+          />
+        </div>
 
-      <div class="col-done">
-        <button
-          type="button"
-          class="done-toggle"
-          :class="{ active: set.completed }"
-          @click="toggleCompleted(idx)"
-          aria-label="Toggle completed"
-        >
-          <Check v-if="set.completed" :size="16" />
-        </button>
-      </div>
+        <div class="col-reps">
+          <input
+            type="number"
+            v-model.number="set.reps"
+            min="0"
+            @input="updateSets"
+            class="number-input"
+            placeholder="0"
+          />
+        </div>
 
-      <div class="col-actions">
-        <button type="button" class="btn-icon-sm btn-danger-icon" @click="emit('remove-set', idx)" aria-label="Remove set">
-          <X :size="16" />
-        </button>
+        <div class="col-done">
+          <button
+            type="button"
+            class="done-toggle"
+            :class="{ active: set.completed }"
+            @click="toggleCompleted(idx)"
+            aria-label="Toggle completed"
+          >
+            <Check v-if="set.completed" :size="16" />
+          </button>
+        </div>
+
+        <div class="col-actions">
+          <button type="button" class="btn-icon-sm btn-danger-icon" @click="emit('remove-set', idx)" aria-label="Remove set">
+            <X :size="16" />
+          </button>
+        </div>
       </div>
     </div>
 
@@ -105,7 +107,10 @@ function toggleCompleted(index: number) {
 </script>
 
 <style scoped>
-.sets-table { display: flex; flex-direction: column; gap: var(--trk-space-2); }
+.sets-table { display: flex; flex-direction: column; gap: var(--trk-space-2); /* make table fill parent when possible */ height: 100%; min-height: 220px; }
+
+/* Body area becomes scrollable so header + add button stay visible */
+.sets-body { flex: 1 1 auto; overflow: auto; -webkit-overflow-scrolling: touch; padding-right: 6px; display: flex; flex-direction: column; gap: var(--trk-space-2); }
 
 .sets-header {
   display: grid;

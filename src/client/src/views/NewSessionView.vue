@@ -118,7 +118,8 @@
 
         <!-- Exercise detail modal -->
         <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay">
-          <div class="modal">
+          <!-- use the fullscreen modal variant so the sets table can expand -->
+          <div class="modal modal-fullscreen">
             <h2 class="modal-title">{{ sessionExercises[selectedExerciseIndex].exercise.name }}</h2>
 
             <div class="modal-content">
