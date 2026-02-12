@@ -53,24 +53,21 @@
                :key="exData.sessionExerciseId ?? `local-${exData.exerciseNumber}`" 
                class="exercise-card"
                :class="{ 'exercise-saved': exData.isSaved }"
-               @click="openExercise(idx)">
+               :ref="el => setOverflowButtonRef(el as HTMLElement | null, idx)"
+               @click="openCardMenu(idx)">
 
             <div class="exercise-header">
-              <h3 class="exercise-title">{{ exData.exercise.name }}</h3>
-              <Check v-if="exData.isSaved" class="saved-icon" :size="18" />
+              <div class="exercise-title-group">
+                <h3 class="exercise-title">{{ exData.exercise.name }}</h3>
+                <span class="status-pill" :class="getStatusClass(exData)">
+                  {{ getStatusText(exData) }}
+                </span>
+              </div>
+
+
             </div>
 
-            <div class="exercise-meta">{{ exData.sets.length }} {{ exData.sets.length === 1 ? 'set' : 'sets' }} • <span :class="getStatusClass(exData)">{{ getStatusText(exData) }}</span></div>
-
-            <div class="exercise-actions" @click.stop>
-              <button class="icon-btn" @click="promptReplace(idx)" aria-label="Swap exercise">
-                <Repeat :size="18" />
-              </button>
-
-              <button class="icon-btn danger" @click="deleteExercise(idx)" aria-label="Delete exercise">
-                <Trash2 :size="18" />
-              </button>
-            </div>
+            <div class="exercise-meta">{{ exData.sets.length }} {{ exData.sets.length === 1 ? 'set' : 'sets' }}</div>
 
           </div>
         </div>
@@ -83,6 +80,28 @@
             + Add
           </button>
         </div>
+
+        <!-- Floating overflow menu (teleported) -->
+        <Teleport to="body">
+          <div v-if="openMenuIndex !== null" class="overflow-backdrop" @click="closeOverflowMenu">
+            <div class="overflow-menu" :style="overflowMenuStyle" @click.stop>
+              <button class="overflow-item" @click="handleStart">
+                <Play :size="18" />
+                <span>Start exercise</span>
+              </button>
+
+              <button class="overflow-item" @click="handleSwap">
+                <Repeat :size="18" />
+                <span>Swap exercise</span>
+              </button>
+
+              <button class="overflow-item danger" @click="handleDelete">
+                <Trash2 :size="18" />
+                <span>Delete exercise</span>
+              </button>
+            </div>
+          </div>
+        </Teleport>
 
         <!-- Exercise detail modal -->
         <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay" @click.self="closeExerciseModal()">
@@ -121,9 +140,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
-import { Dumbbell, ChevronRight, Check, Repeat, Trash2 } from 'lucide-vue-next' 
+import { Dumbbell, ChevronRight, Repeat, Trash2, MoreVertical, Play } from 'lucide-vue-next' 
 
 import AppShell from '../components/general/AppShell.vue'
 import Loader from '../components/general/Loader.vue'
@@ -137,6 +156,7 @@ import type { Exercise } from '../api/modules/exercises'
 import type { Session } from '../api/modules/sessions'
 import type { SetData, SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
+import { get } from 'node:http'
 
 const router = useRouter()
 
@@ -161,6 +181,19 @@ const exerciseCollection = ref<ExerciseCollection | null>(null)
 const showExerciseSelector = ref(false)
 const exerciseSelectorMode = ref<'add' | 'replace'>('add')
 const replaceTargetIndex = ref<number | null>(null)
+
+// contextual menu state (overflow)
+const openMenuIndex = ref<number | null>(null)
+const overflowMenuStyle = ref<Record<string, string>>({})
+const overflowButtonRefs = ref<Record<number, HTMLElement>>({})
+
+function setOverflowButtonRef(el: HTMLElement | null, idx: number) {
+  if (el) {
+    overflowButtonRefs.value[idx] = el
+  } else {
+    delete overflowButtonRefs.value[idx]
+  }
+}
 
 // exercise modal
 const selectedExerciseIndex = ref<number | null>(null)
@@ -235,6 +268,8 @@ async function startSession() {
 
 // --- Exercise modal handlers
 function openExercise(index: number) {
+  // close any open overflow menu when opening modal
+  openMenuIndex.value = null
   selectedExerciseIndex.value = index
   showExerciseModal.value = true
 }
@@ -269,6 +304,8 @@ function closeExerciseSelector() {
 }
 
 function promptReplace(index: number) {
+  // close menu and open selector in replace mode
+  openMenuIndex.value = null
   exerciseSelectorMode.value = 'replace'
   replaceTargetIndex.value = index
   showExerciseSelector.value = true
@@ -319,6 +356,9 @@ async function replaceExercise(index: number, newExercise: Exercise) {
 }
 
 async function deleteExercise(index: number) {
+  // close any open menu immediately
+  openMenuIndex.value = null
+
   const exData = sessionExercises.value[index]
 
   const confirmed = confirm(
@@ -350,6 +390,63 @@ async function deleteExercise(index: number) {
   })
 }
 
+// Overflow (floating) menu controls
+function openOverflow(index: number) {
+  const button = overflowButtonRefs.value[index]
+
+  openMenuIndex.value = index
+
+  nextTick(() => {
+    // fallback: fixed position in top-left area so menu is always visible
+    if (!button) {
+      overflowMenuStyle.value = {
+        position: 'fixed',
+        top: '120px',
+        left: '16px'
+      }
+      return
+    }
+
+    const rect = button.getBoundingClientRect()
+
+    overflowMenuStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 8}px`,
+      left: `${Math.min(window.innerWidth - 188, rect.left)}px`
+    }
+  })
+}
+
+function closeOverflowMenu() {
+  openMenuIndex.value = null
+}
+
+function handleSwap() {
+  if (openMenuIndex.value !== null) {
+    promptReplace(openMenuIndex.value)
+    closeOverflowMenu()
+  }
+}
+
+function handleDelete() {
+  if (openMenuIndex.value !== null) {
+    deleteExercise(openMenuIndex.value)
+    closeOverflowMenu()
+  }
+}
+
+function handleStart() {
+  if (openMenuIndex.value !== null) {
+    openExercise(openMenuIndex.value)
+    closeOverflowMenu()
+  }
+}
+
+function openCardMenu(index: number) {
+  // primary action changed: clicking card now opens contextual popup
+  openOverflow(index)
+}
+
 // UI helpers for exercise card status
 function getStatusText(exData: SessionExerciseData): string {
   if (exData.isSaved) return 'Saved'
@@ -362,6 +459,7 @@ function getStatusClass(exData: SessionExerciseData): string {
   if (exData.sets.length === 0) return 'status-not-started'
   return 'status-in-progress'
 }
+
 
 async function loadWorkouts() {
   loading.value = true
@@ -454,7 +552,7 @@ const allExercisesSaved = computed(() => {
 })
 </script>
 
-<style scoped>
+<style>
 .session-view { display: flex; flex-direction: column; gap: var(--trk-space-4); padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); }
 .view-header, .session-header { text-align: center; margin-bottom: var(--trk-space-4); }
  .view-title, .session-title { font-family: var(--trk-font-heading); font-size: clamp(1.75rem, 1.5rem + 1.25vw, 2.25rem); color: var(--trk-text); margin: 0; }
@@ -464,25 +562,40 @@ const allExercisesSaved = computed(() => {
 .exercise-card {
   background: var(--trk-surface);
   border-radius: var(--trk-radius-md);
-  padding: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: var(--trk-shadow-sm);
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   border: 1px solid var(--trk-surface-border);
   cursor: pointer;
   transition: transform 0.1s ease, background 0.1s ease;
-}
+} 
+
+.exercise-meta { font-size: 0.85rem; font-weight: 500; color: var(--trk-text-muted); opacity: 0.95; }
 .exercise-card:active {
   transform: scale(0.99);
   background: var(--trk-surface-hover);
 }
-.exercise-card.exercise-saved { border-color: var(--trk-success-border); background: var(--trk-success-bg); }
+/* saved state: subtle left border only (no green background) */
+.exercise-card.exercise-saved { border-left: 4px solid var(--trk-success); background: var(--trk-surface); }
 
-.exercise-header { display: flex; justify-content: space-between; align-items: center; }
-.exercise-title { font-size: 1rem; font-weight: 600; margin: 0; color: var(--trk-text); }
+.exercise-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-.exercise-meta { font-size: 0.85rem; color: var(--trk-text-muted); }
+.exercise-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-title { font-size: 1.08rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--trk-text); }
 
 /* Icon button system */
 .icon-btn {
@@ -503,13 +616,23 @@ const allExercisesSaved = computed(() => {
 .icon-btn:hover { color: var(--trk-text); }
 .icon-btn.danger:hover, .icon-btn.danger:active { background: var(--trk-danger-bg); color: var(--trk-danger-text); }
 
+/* ghost variant for header overflow button */
+.icon-btn.ghost { background: transparent; padding: 6px; color: var(--trk-text-muted); border-radius: 10px; }
+.icon-btn.ghost:hover { background: var(--trk-surface-hover); }
+
 .exercise-actions { display: flex; gap: 12px; }
 
-/* Saved check — subtle and not competing with actions */
-.saved-icon { color: var(--trk-success); display: inline-flex; align-items: center; justify-content: center; }
+/* Status pill styles */
+.status-pill { font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+.status-saved { background: var(--trk-success-bg); color: var(--trk-success-text); }
+.status-in-progress { background: var(--trk-warning-bg); color: var(--trk-warning-text); }
+.status-not-started { background: var(--trk-surface-alt); color: var(--trk-text-muted); }
 
-/* Slight stacking margin for visual separation */
-.exercise-card + .exercise-card { margin-top: 12px; }
+/* Teleported overflow menu (high z-index + debug background) */
+.overflow-backdrop { position: fixed; inset: 0; z-index: 9999; }
+.overflow-menu { position: fixed; width: 180px; background: var(--trk-surface); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); border: 1px solid var(--trk-surface-border); padding: 6px; display: flex; flex-direction: column; animation: menuFadeIn 120ms ease; z-index: 10000; }
+
+@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 /* keep chevron styling available but hidden on cards to reduce clutter */
 .item-chevron { display: none; }
