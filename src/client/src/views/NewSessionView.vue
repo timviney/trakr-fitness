@@ -80,7 +80,7 @@
         <div class="add-exercise-action" style="padding: 0;">
           <button
             type="button"
-            class="btn btn-faded"
+            class="btn btn-secondary"
             @click="openAddExerciseSelector">
             + Add
           </button>
@@ -587,13 +587,14 @@ const allExercisesSaved = computed(() => {
   border: 1px solid var(--trk-surface-border);
   cursor: pointer;
   transition: transform 0.1s ease, background 0.1s ease;
+  -webkit-tap-highlight-color: transparent; 
 } 
 
 .exercise-meta { font-size: 0.9rem; font-weight: 600; color: var(--trk-text-muted); opacity: 0.95; }
 .sets-area .exercise-meta { color: var(--trk-accent); font-weight: 700; }
-.exercise-card:active {
+.exercise-card:hover {
   transform: scale(0.99);
-  background: var(--trk-surface-hover);
+  background: var(--trk-accent-muted); 
 }
 .exercise-card.exercise-saved { border-left: 4px solid var(--trk-success); background: var(--trk-surface); }
 
@@ -688,7 +689,7 @@ const allExercisesSaved = computed(() => {
 .overflow-action span { flex:1; text-align:center; margin-right:18px; }
 .overflow-action.icon { justify-content:center; padding:12px; }
 
-@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); } .add-exercise-action .btn-faded { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
+@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); } .add-exercise-action .btn-secondary { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
 .session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; }
 .btn-finish { width: 100%; max-width: 400px; margin: 0 auto; display: flex; }
 </style>

@@ -26,7 +26,7 @@
       </li>
     </template>
   </Draggable>
-  <button type="button" class="btn btn-faded"
+  <button type="button" class="btn btn-secondary"
     @click="openAddExerciseModal = true">
     + Add
   </button>
