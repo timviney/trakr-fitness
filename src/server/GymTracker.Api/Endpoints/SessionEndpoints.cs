@@ -214,8 +214,21 @@ public static class SessionEndpoints
             Id = Guid.NewGuid(),
             SessionId = sessionId,
             ExerciseId = req.ExerciseId,
-            ExerciseNumber = req.ExerciseNumber
+            ExerciseNumber = req.ExerciseNumber,
+            Sets = new List<Set>()
         };
+
+        if (req.Sets != null)
+        {
+            foreach (var set in req.Sets) sessionExercise.Sets.Add(new Set
+            {
+                SessionExerciseId =  sessionExercise.Id,
+                SetNumber = set.SetNumber,
+                Weight = set.Weight,
+                Reps = set.Reps,
+                WarmUp = set.WarmUp
+            });
+        }
 
         var result = await sessionRepository.AddSessionExerciseAsync(sessionExercise);
         return result.ToApiResult().ToCreatedResult($"/session-exercises/{sessionExercise.Id}");

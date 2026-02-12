@@ -28,10 +28,12 @@ export type Set = {
 export type CreateSessionExerciseRequest = {
   exerciseId: string
   exerciseNumber: number
+  sets: CreateSetRequest[]
 }
 
 export type UpdateSessionExerciseRequest = {
-  exerciseNumber: number
+  exerciseNumber?: number
+  exerciseId?: string
 }
 
 export type CreateSetRequest = {
@@ -57,7 +59,8 @@ export class SessionsApi {
   }
 
   async createSession(workoutId: string): Promise<ApiResponse<Session>> {
-    return await this.client.post<Session>(`/sessions/${workoutId}`, {})
+    // server expects POST /workouts/{workoutId}/sessions
+    return await this.client.post<Session>(`/workouts/${workoutId}/sessions`, {})
   }
 
   async getSessionById(sessionId: string): Promise<ApiResponse<Session>> {
