@@ -86,30 +86,38 @@
           </button>
         </div>
 
-        <!-- Floating overflow menu (teleported) -->
+        <!-- Floating overflow menu (full-screen popup) -->
         <Teleport to="body">
           <div v-if="openMenuIndex !== null" class="overflow-backdrop" @click="closeOverflowMenu">
-            <div class="overflow-menu" :style="overflowMenuStyle" @click.stop>
-              <button class="overflow-item" @click="handleStart">
-                <Play :size="18" />
-                <span>Start exercise</span>
-              </button>
+            <div class="overflow-menu" @click.stop>
+              <div class="overflow-panel">
+                <header class="overflow-header">
+                  <h3 class="overflow-title">{{ sessionExercises[openMenuIndex!].exercise.name }}</h3>
+                </header>
 
-              <button class="overflow-item" @click="handleSwap">
-                <Repeat :size="18" />
-                <span>Swap exercise</span>
-              </button>
+                <div class="overflow-actions">
+                  <button class="btn btn-primary overflow-action" @click="handleStart">
+                    <Play class="icon"/>
+                    <span>Start exercise</span>
+                  </button>
 
-              <button class="overflow-item danger" @click="handleDelete">
-                <Trash2 :size="18" />
-                <span>Delete exercise</span>
-              </button>
+                  <button class="btn btn-secondary overflow-action" @click="handleSwap">
+                    <Repeat class="icon"/>
+                    <span>Swap exercise</span>
+                  </button>
+
+                  <button class="btn btn-danger overflow-action" @click="handleDelete">
+                    <Trash2 class="icon"/>
+                    <span>Delete exercise</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </Teleport>
 
         <!-- Exercise detail modal -->
-        <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay" @click.self="closeExerciseModal()">
+        <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay">
           <div class="modal">
             <h2 class="modal-title">{{ sessionExercises[selectedExerciseIndex].exercise.name }}</h2>
 
@@ -147,7 +155,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
-import { Dumbbell, ChevronRight, Repeat, Trash2, MoreVertical, Play } from 'lucide-vue-next' 
+import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next' 
 
 import AppShell from '../components/general/AppShell.vue'
 import Loader from '../components/general/Loader.vue'
@@ -161,7 +169,6 @@ import type { Exercise } from '../api/modules/exercises'
 import type { Session } from '../api/modules/sessions'
 import type { SetData, SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
-import { get } from 'node:http'
 
 const router = useRouter()
 
@@ -290,6 +297,7 @@ function closeExerciseModal() {
   // warn if there are unsaved sets
   if (ex.sets.length > 0 && !ex.isSaved) {
     if (!confirm('You have unsaved changes for this exercise. Discard and close?')) return
+    ex.sets = []
   }
 
   selectedExerciseIndex.value = null
@@ -455,14 +463,12 @@ function openCardMenu(index: number) {
 // UI helpers for exercise card status
 function getStatusText(exData: SessionExerciseData): string {
   if (exData.isSaved) return 'Saved'
-  if (exData.sets.length === 0) return 'Not started'
-  return 'In progress'
+  return 'Not started'
 }
 
 function getStatusClass(exData: SessionExerciseData): string {
   if (exData.isSaved) return 'status-saved'
-  if (exData.sets.length === 0) return 'status-not-started'
-  return 'status-in-progress'
+  return 'status-not-started'
 }
 
 function muscleName(muscleGroupId?: string | null) {
@@ -470,7 +476,6 @@ function muscleName(muscleGroupId?: string | null) {
   const g = exerciseCollection.value.muscleGroups?.find(m => m.id === muscleGroupId)
   return g ? g.name : ''
 }
-
 
 async function loadWorkouts() {
   loading.value = true
@@ -629,40 +634,58 @@ const allExercisesSaved = computed(() => {
 
 .exercise-title { font-size: 1.12rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--trk-text); }
 
-/* Icon button system */
-.icon-btn {
-  background: var(--trk-surface-alt);
-  border: none;
-  padding: 8px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--trk-text-muted);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-  min-width: 40px;
-  min-height: 40px;
-}
-.icon-btn:active { background: var(--trk-surface-hover); }
-.icon-btn:hover { color: var(--trk-text); }
-.icon-btn.danger:hover, .icon-btn.danger:active { background: var(--trk-danger-bg); color: var(--trk-danger-text); }
-
-/* ghost variant for header overflow button */
-.icon-btn.ghost { background: transparent; padding: 6px; color: var(--trk-text-muted); border-radius: 10px; }
-.icon-btn.ghost:hover { background: var(--trk-surface-hover); }
-
 .exercise-actions { display: flex; gap: 12px; }
 
 /* Status pill styles */
 .status-pill { font-size: 0.9rem; padding: 0px 0px;  font-weight: 500;  display: inline-flex;  align-items: center;  justify-content: center; margin: 0; }
-.status-saved { background: var(--trk-success-bg); color: var(--trk-success-text); }
-.status-in-progress { background: var(--trk-accent-muted); color: var(--trk-text-dark); }
-.status-not-started { background: var(--trk-surface-alt); color: var(--trk-text-muted); }
+.status-saved { color: var(--trk-accent); }
+.status-not-started { color: var(--trk-text-muted); }
 
-/* Teleported overflow menu (high z-index + debug background) */
-.overflow-backdrop { position: fixed; inset: 0; z-index: 9999; }
-.overflow-menu { position: fixed; width: 180px; background: var(--trk-surface); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); border: 1px solid var(--trk-surface-border); padding: 6px; display: flex; flex-direction: column; animation: menuFadeIn 120ms ease; z-index: 10000; }
+/* Teleported overflow menu (full-screen popup, app-themed) */
+.overflow-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.36); /* subtle dim */
+  display: flex;
+  align-items: flex-end; /* slide-up feel on mobile */
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+
+.overflow-menu {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: menuFadeIn 160ms cubic-bezier(.2,.9,.2,1);
+}
+
+.overflow-panel {
+  pointer-events: auto;
+  width: 100%;
+  background: var(--trk-surface);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 28px 60px rgba(2,6,23,0.45);
+  border: 1px solid var(--trk-surface-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.overflow-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.overflow-title { margin:0; font-size:1.1rem; font-weight:800; color:var(--trk-text); }
+
+.overflow-actions { display:flex; flex-direction:column; gap:12px; margin-top:6px;}
+.overflow-action { display:flex; text-align:right; align-items: center; gap:12px; padding:12px 14px; font-weight:800; font-size:1rem; border-radius:12px; justify-content:flex-start; }
+.overflow-action svg { flex-shrink:0; }
+.overflow-action span { flex:1; text-align:center; margin-right:18px; }
+.overflow-action.icon { justify-content:center; padding:12px; }
 
 @keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); } .add-exercise-action .btn-faded { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
 .session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; }
