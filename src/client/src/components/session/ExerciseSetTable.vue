@@ -2,7 +2,8 @@
   <div class="tracker-view">
     <div class="sets-grid sets-header">
       <div class="col-warmup">Warmup</div>
-      <div class="col-main">Details</div>
+      <div class="col-kg">kg</div>
+      <div class="col-reps">reps</div>
       <div class="col-done">Done</div>
     </div>
 
@@ -27,18 +28,18 @@
           </button>
         </div>
 
-        <div class="col-main">
+        <div class="col-kg">
           <div class="input-pill">
             <button class="pill-btn" @click="openPicker(idx, 'weight')">
               <span class="pill-value">{{ set.weight }}</span>
-              <span class="pill-unit">kg</span>
             </button>
-            
-            <div class="pill-divider"></div>
+          </div>
+        </div>
 
+        <div class="col-reps">
+          <div class="input-pill">
             <button class="pill-btn" @click="openPicker(idx, 'reps')">
               <span class="pill-value">{{ set.reps }}</span>
-              <span class="pill-unit">reps</span>
             </button>
           </div>
         </div>
@@ -60,7 +61,7 @@
 
       <button class="sets-grid add-set-row" @click="emit('add-set')">
         <div class="col-warmup"><Plus :size="18" /></div>
-        <div class="col-main">Add New Set</div>
+        <div class="col-kg col-reps" style="grid-column: span 2;">Add New Set</div>
         <div class="col-done"></div>
       </button>
     </div>
@@ -217,7 +218,7 @@ function closePicker() {
 /* Grid Layout shared by Header, Row, and Add Button */
 .sets-grid {
   display: grid;
-  grid-template-columns: 70px 1fr 70px; /* Fixed side columns, fluid center */
+  grid-template-columns: 70px 1fr 1fr 70px; /* Fixed side columns, fluid center */
   align-items: center;
 }
 
@@ -249,6 +250,9 @@ function closePicker() {
   background: rgba(26, 58, 46, 0.1);
 }
 
+.col-kg { text-align: center; align-items: center; }
+.col-reps { text-align: center; align-items: center; }
+
 /* 1. Ghost Warmup Styles */
 .warmup-btn {
   width: 40px;
@@ -272,13 +276,14 @@ function closePicker() {
 
 /* 2. Horizontal Pill */
 .input-pill {
-  display: flex;
+  display: inline-flex; 
+  justify-content: center;
   align-items: center;
   background: var(--trk-surface-inner);
   border: 1px solid var(--trk-surface-border);
   border-radius: var(--trk-radius-md);
-  padding: 4px 8px;
-  width: fit-content;
+  padding: 2px 2px;
+  width: 40px;
 }
 
 .pill-btn {
