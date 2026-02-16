@@ -28,14 +28,9 @@ export const useSessionStore = defineStore('session', () => {
   const draftExists = computed(() => Object.keys(drafts.value).length > 0)
   const draftList = computed(() => Object.keys(drafts.value).map(id => ({ id, ...drafts.value[id] })))
 
-  const hasUnsavedData = computed(() =>
-    sessionExercises.value.some(ex => ex.sets.length > 0 && !ex.isSaved)
+  const hasUncompletedExercises = computed(() =>
+    sessionExercises.value.some(ex => !ex.isCompleted)
   )
-
-  const allExercisesSaved = computed(() => {
-    const exercisesWithSets = sessionExercises.value.filter(ex => ex.sets.length > 0)
-    return exercisesWithSets.length > 0 && exercisesWithSets.every(ex => ex.isSaved)
-  })
 
   const activeSessionId = computed(() => activeSession.value?.id ?? null)
   const exerciseCount = computed(() => sessionExercises.value.length)
@@ -138,7 +133,7 @@ export const useSessionStore = defineStore('session', () => {
       exercise,
       exerciseNumber: sessionExercises.value.length,
       sets: [],
-      isSaved: false
+      isCompleted: false
     }
     sessionExercises.value.push(newEx)
     persistActiveDraft()
@@ -192,20 +187,11 @@ export const useSessionStore = defineStore('session', () => {
     persistActiveDraft()
   }
 
-  function discardUnsavedSets(exerciseIndex: number) {
+  // Mark as completed (server-synced)
+  function markExerciseCompleted(exerciseIndex: number, sessionExerciseId?: string, sets?: SetData[]) {
     const ex = sessionExercises.value[exerciseIndex]
     if (!ex) return
-    if (!ex.isSaved) {
-      ex.sets = []
-    }
-    persistActiveDraft()
-  }
-
-  // Mark as saved (server-synced)
-  function markExerciseSaved(exerciseIndex: number, sessionExerciseId?: string, sets?: SetData[]) {
-    const ex = sessionExercises.value[exerciseIndex]
-    if (!ex) return
-    ex.isSaved = true
+    ex.isCompleted = true
     if (sessionExerciseId) ex.sessionExerciseId = sessionExerciseId
     if (sets) ex.sets = sets
     persistActiveDraft()
@@ -221,8 +207,7 @@ export const useSessionStore = defineStore('session', () => {
     // getters
     draftExists,
     draftList,
-    hasUnsavedData,
-    allExercisesSaved,
+    hasUncompletedExercises,
     activeSessionId,
     exerciseCount,
     // actions
@@ -242,7 +227,6 @@ export const useSessionStore = defineStore('session', () => {
     addSet,
     removeSet,
     updateSet,
-    discardUnsavedSets,
-    markExerciseSaved
+    markExerciseCompleted
   }
 })

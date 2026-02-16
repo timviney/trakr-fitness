@@ -63,11 +63,11 @@
 
                 <div class="overflow-actions">
                   <button class="btn btn-primary overflow-action" @click="() => { if (selectedDraftId) resumeDraft(selectedDraftId); }">
-                    Continue
+                    Continue Editing
                   </button>
 
                   <button class="btn btn-danger overflow-action" @click="() => { if (selectedDraftId) deleteDraft(selectedDraftId); }">
-                    Delete
+                    Delete Changes
                   </button>
 
                   <button class="btn btn-secondary overflow-action" @click="closeDraftModal()">Cancel</button>
@@ -91,7 +91,7 @@
           <div v-for="(exData, idx) in sessionStore.sessionExercises" 
                :key="exData.sessionExerciseId ?? `local-${exData.exerciseNumber}`" 
                class="exercise-card"
-               :class="{ 'exercise-saved': exData.isSaved }"
+               :class="{ 'exercise-completed': exData.isCompleted }"
                :ref="el => setOverflowButtonRef(el as HTMLElement | null, idx)"
                @click="openCardMenu(idx)">
 
@@ -109,7 +109,7 @@
               </div>
 
               <div class="sets-area">
-                <div class="exercise-meta">{{ exData.sets.length }} {{ exData.sets.length === 1 ? 'set' : 'sets' }}</div>
+                <div class="exercise-meta">{{ exData.sets.filter(s => s.completed).length }} {{ exData.sets.filter(s => s.completed).length === 1 ? 'set' : 'sets' }}</div>
               </div>
             </div>
 
@@ -135,9 +135,9 @@
                 </header>
 
                 <div class="overflow-actions">
-                  <button class="btn btn-primary overflow-action" @click="handleStart">
+                  <button class="btn btn-primary overflow-action" @click="handleOpenExercise">
                     <Play class="icon"/>
-                    <span>{{ sessionStore.sessionExercises[openMenuIndex!].isSaved ? 'Edit sets' : 'Start exercise' }}</span>
+                    <span>{{ getOpenExerciseSetsText(sessionStore.sessionExercises[openMenuIndex!]) }}</span>
                   </button>
 
                   <button class="btn btn-secondary overflow-action" @click="handleSwap">
@@ -171,13 +171,13 @@
 
             <div class="modal-actions">
               <button type="button" class="btn btn-secondary" @click="closeExerciseModal()">Close</button>
-              <button type="button" class="btn btn-primary" @click="(async () => { await saveExerciseWithSetsRequired(selectedExerciseIndex!); if (sessionStore.sessionExercises[selectedExerciseIndex!].isSaved) closeExerciseModal() })()">Save Exercise</button>
+              <button type="button" class="btn btn-primary" @click="(async () => { sessionStore.sessionExercises[selectedExerciseIndex!].isCompleted = true; closeExerciseModal() })()">Complete Exercise</button>
             </div>
           </div>
         </div>
 
         <div class="session-footer">
-          <button class="btn btn-primary btn-finish" @click="finishSession" :disabled="!allExercisesSaved">Finish Session</button>
+          <button class="btn btn-primary btn-finish" @click="finishSession()" :disabled="sessionStore.hasUncompletedExercises">Finish Session</button>
         </div>
 
         <ExerciseSelector
@@ -206,10 +206,8 @@ import ExerciseSelector from '../components/exercises/ExerciseSelector.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
-import type { Session, SessionExercise } from '../api/modules/sessions'
-import type { SetData, SessionExerciseData } from '../types/Session'
+import { getStatus, SessionStatus, type SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
-import { emptyGuid } from '../types/Guid'
 import { useSessionStore } from '../stores/session'
 
 const router = useRouter()
@@ -219,7 +217,6 @@ const sessionStore = useSessionStore()
 const viewState = ref<'selection' | 'session'>('selection')
 const loading = ref(false)
 const error = ref<string | null>(null)
-const savingExercise = ref<number | null>(null)
 
 // selection / start modal state
 const workouts = ref<Workout[]>([])
@@ -267,18 +264,6 @@ onMounted(async () => {
   const sessionId = route.params.id as string | undefined
   if (sessionId && sessionId !== 'new') {
     await loadSession(sessionId)
-  }
-})
-
-onBeforeRouteLeave((to, from, next) => {
-  if (viewState.value === 'session' && hasUnsavedData.value) {
-    if (confirm('You have unsaved data. Are you sure you want to leave?')) {
-      next()
-    } else {
-      next(false)
-    }
-  } else {
-    next()
   }
 })
 
@@ -348,7 +333,7 @@ async function startSession() {
           exercise: exercise || { id: defEx.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
           exerciseNumber: defEx.exerciseNumber,
           sets: [],
-          isSaved: false
+          isCompleted: false
         } as SessionExerciseData
       })
 
@@ -373,23 +358,11 @@ function openExercise(index: number) {
   // close any open overflow menu when opening modal
   openMenuIndex.value = null
   selectedExerciseIndex.value = index
+  sessionStore.sessionExercises[index].isCompleted = false
   showExerciseModal.value = true
 }
 
 function closeExerciseModal() {
-  const idx = selectedExerciseIndex.value
-  if (idx === null) {
-    showExerciseModal.value = false
-    return
-  }
-
-  const ex = sessionStore.sessionExercises[idx]
-  // warn if there are unsaved sets
-  if (ex.sets.length > 0 && !ex.isSaved) {
-    if (!confirm('You have unsaved changes for this exercise. Discard and close?')) return
-    sessionStore.discardUnsavedSets(idx)
-  }
-
   selectedExerciseIndex.value = null
   showExerciseModal.value = false
 }
@@ -433,8 +406,6 @@ function handleExerciseSelected(exerciseId: string) {
 
 async function replaceExercise(index: number, newExercise: Exercise) {
   sessionStore.replaceExercise(index, newExercise)
-  const exData = sessionStore.sessionExercises[index]
-  if (exData.isSaved) await saveExercise(index)
 }
 
 async function deleteExercise(index: number) {
@@ -451,21 +422,6 @@ async function deleteExercise(index: number) {
 
   if (!confirmed) return
 
-  if (
-    exData.isSaved &&
-    exData.sessionExerciseId &&
-    sessionStore.activeSession
-  ) {
-    try {
-      await api.sessions.deleteSessionExercise(exData.sessionExerciseId)
-    } catch (e) {
-      console.error('deleteExercise error:', e)
-      error.value = 'Failed to delete exercise. Please try again.'
-      return
-    }
-  }
-
-  // ALWAYS delete locally after API (or immediately if unsaved)
   sessionStore.deleteExercise(index)
 }
 
@@ -514,7 +470,7 @@ function handleDelete() {
   }
 }
 
-function handleStart() {
+function handleOpenExercise() {
   if (openMenuIndex.value !== null) {
     openExercise(openMenuIndex.value)
 
@@ -529,13 +485,34 @@ function openCardMenu(index: number) {
 
 // UI helpers for exercise card status
 function getStatusText(exData: SessionExerciseData): string {
-  if (exData.isSaved) return 'Saved'
-  return 'Not started'
+  const status = getStatus(exData)
+  switch (status) {
+    case SessionStatus.NotStarted: return 'Not started'
+    case SessionStatus.InProgress: return 'In progress'
+    case SessionStatus.Completed: return 'Completed'
+    default: return ''
+  }
+}
+
+// UI helpers for exercise card status
+function getOpenExerciseSetsText(exData: SessionExerciseData): string {
+  const status = getStatus(exData)
+  switch (status) {
+    case SessionStatus.NotStarted: return 'Start exercise'
+    case SessionStatus.InProgress: return 'Continue exercise'
+    case SessionStatus.Completed: return 'Edit sets'
+    default: return ''
+  }
 }
 
 function getStatusClass(exData: SessionExerciseData): string {
-  if (exData.isSaved) return 'status-saved'
-  return 'status-not-started'
+  const status = getStatus(exData)
+  switch (status) {
+    case SessionStatus.NotStarted: return 'status-not-started'
+    case SessionStatus.InProgress: return 'status-in-progress'
+    case SessionStatus.Completed: return 'status-completed'
+    default: return ''
+  }
 }
 
 function muscleName(muscleGroupId?: string | null) {
@@ -567,6 +544,17 @@ async function loadSession(sessionId: string) {
   error.value = null
 
   try {
+    if (sessionStore.draftList.some(d => d.session.id === sessionId)) {
+      // if a local draft exists for this session id, load from the draft instead of API
+      const ok = sessionStore.loadDraft(sessionId)
+      if (!ok) {
+        error.value = 'Failed to load local draft.'
+        return
+      }
+      viewState.value = 'session'
+      return
+    }
+
     const sessionRes = await api.sessions.getSessionById(sessionId)
     if (!sessionRes.isSuccess || !sessionRes.data) throw new Error('Failed to load session')
 
@@ -582,14 +570,14 @@ async function loadSession(sessionId: string) {
         exercise: exerciseLookup.value.get(se.exerciseId) || { id: se.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
         exerciseNumber: se.exerciseNumber,
         sets: [],
-        isSaved: true,
+        isCompleted: true,
         sessionExerciseId: se.id
       } as SessionExerciseData))
 
     // populate store first (sets fetched below)
     sessionStore.setActiveSession(sessionRes.data, workoutRes.data, mapped)
 
-    // fetch sets for each saved exercise in parallel and update store
+    // fetch sets for each exercise in parallel and update store
     await Promise.all(sessionStore.sessionExercises.map(async (exData, i) => {
       const seId = exData.sessionExerciseId!
       const setsRes = await api.sessions.getSets(seId)
@@ -603,7 +591,7 @@ async function loadSession(sessionId: string) {
           warmUp: s.warmUp,
           completed: true
         }))
-        sessionStore.markExerciseSaved(i, seId, mappedSets)
+        sessionStore.markExerciseCompleted(i, seId, mappedSets)
       }
     }))
 
@@ -625,98 +613,56 @@ function removeSet(exerciseIndex: number, setIndex: number) {
   sessionStore.removeSet(exerciseIndex, setIndex)
 }
 
-async function saveExercise(exerciseIndex: number) {
-  const exData = sessionStore.sessionExercises[exerciseIndex]
-  if (!sessionStore.activeSession) {
-    error.value = 'No active session'
+async function finishSession() {
+  loading.value = true
+  error.value = null
+
+  const active = sessionStore.activeSession
+  if (!active) {
+    error.value = 'No active session to finish.'
+    loading.value = false
     return
   }
 
-  savingExercise.value = exerciseIndex
   try {
-    const payload = {
-      exerciseId: exData.exercise.id,
-      exerciseNumber: exData.exerciseNumber,
-      sets: exData.sets.filter(s => s.completed).map(s => ({ id: s.id || emptyGuid, setNumber: s.setNumber, weight: s.weight, reps: s.reps, warmUp: s.warmUp }))
-    }
+    const sessionId = active.id
 
-    if (exData.isSaved && exData.sessionExerciseId) {
-      const res = await api.sessions.updateSessionExercise(exData.sessionExerciseId, payload)      
-      if (res.isSuccess) {
-        // fetch sets and update store
-        await updateExerciseData(exerciseIndex, res.data!)
-        console.log('Exercise updated')
+    // persist each session exercise (create or update). server may return sets as part of the response — prefer that.
+    await Promise.all(sessionStore.sessionExercises.map(async (exData, exIndex) => {
+      const payload = {
+        exerciseId: exData.exercise.id,
+        exerciseNumber: exData.exerciseNumber,
+        sets: (exData.sets || []).map(s => ({
+          id: s.id,
+          setNumber: s.setNumber,
+          weight: s.weight,
+          reps: s.reps,
+          warmUp: s.warmUp
+        }))
       }
-    } else {
-      const res = await api.sessions.createSessionExercise(sessionStore.activeSession.id, payload)
-      if (!res.isSuccess || !res.data) throw new Error('Failed to save exercise')
-      await updateExerciseData(exerciseIndex, res.data)
-      console.log('Exercise created')
-    }
 
-    // mark saved through store API
-    const updated = sessionStore.sessionExercises[exerciseIndex]
-    sessionStore.markExerciseSaved(exerciseIndex, updated.sessionExerciseId, updated.sets)
+      if (exData.sessionExerciseId) {
+        const upd = await api.sessions.updateSessionExercise(exData.sessionExerciseId, payload)
+        if (!upd.isSuccess || !upd.data) throw new Error('Failed to update session exercise')
+      } else {
+        const created = await api.sessions.createSessionExercise(sessionId, payload)
+        if (!created.isSuccess || !created.data) throw new Error('Failed to create session exercise')
+      }
+    }))
+
+    // clear persisted draft for the active session only after successful API save
+    const activeId = sessionStore.activeSessionId
+    if (activeId) sessionStore.clearDraft(activeId)
+
+    router.push('/stats')
   } catch (e) {
-    error.value = 'Failed to save exercise. Please try again.'
-    console.error('saveExercise error:', e)
+    error.value = 'Failed to save session. Please try again.'
+    console.error('finishSession error:', e)
   } finally {
-    savingExercise.value = null
+    loading.value = false
   }
 }
 
-async function updateExerciseData(exerciseIndex: number,data: SessionExercise) {
-  const mappedSets = (await api.sessions.getSets(data.id)).data!.map(s => ({
-    id: s.id,
-    tempId: s.id,
-    setNumber: s.setNumber,
-    weight: s.weight,
-    reps: s.reps,
-    warmUp: s.warmUp,
-    completed: true
-  }))
-
-  // update exercise info via store so it persists
-  const lookupExercise = exerciseLookup.value.get(data.exerciseId)
-  const updatedEx: SessionExerciseData = {
-    exercise: lookupExercise || { id: data.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
-    exerciseNumber: data.exerciseNumber,
-    sets: mappedSets,
-    isSaved: true,
-    sessionExerciseId: data.id
-  }
-
-  // replace the exercise entry in the store
-  sessionStore.setExercises(
-    sessionStore.sessionExercises.map((e, i) => (i === exerciseIndex ? updatedEx : e))
-  )
-}
-
-async function saveExerciseWithSetsRequired(exerciseIndex: number) {
-  const exData = sessionStore.sessionExercises[exerciseIndex]
-  if (exData.sets.length === 0) {
-    alert('Please add at least one set before saving.')
-    return
-  }
-  
-  await saveExercise(exerciseIndex)
-}
-
-function finishSession() {
-  if (!allExercisesSaved.value) {
-    alert('Please save all exercises before finishing the session.')
-    return
-  }
-
-  // clear persisted draft for the active session only
-  const activeId = sessionStore.activeSessionId
-  if (activeId) sessionStore.clearDraft(activeId)
-
-  router.push('/stats')
-}
-
-const hasUnsavedData = computed(() => sessionStore.hasUnsavedData)
-const allExercisesSaved = computed(() => sessionStore.allExercisesSaved)
 </script>
 
 <style>
@@ -746,7 +692,7 @@ const allExercisesSaved = computed(() => sessionStore.allExercisesSaved)
   transform: scale(0.99);
   background: var(--trk-accent-muted); 
 }
-.exercise-card.exercise-saved { border-left: 4px solid var(--trk-success); background: var(--trk-surface); }
+.exercise-card.exercise-completed { border-left: 4px solid var(--trk-success-bg); background: var(--trk-surface); }
 
 .exercise-header {
   display: flex;
@@ -790,7 +736,14 @@ const allExercisesSaved = computed(() => sessionStore.allExercisesSaved)
 
 /* Status pill styles */
 .status-pill { font-size: 0.9rem; padding: 0px 0px;  font-weight: 500;  display: inline-flex;  align-items: center;  justify-content: center; margin: 0; }
-.status-saved { color: var(--trk-accent); }
+.status-completed { 
+  background-color: var(--trk-success-bg);
+  border: 1px solid var(--trk-success-border);
+  color: var(--trk-success-text);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--trk-radius-md);
+ }
+.status-in-progress { color: var(--trk-accent); }
 .status-not-started { color: var(--trk-text-muted); }
 
 /* Teleported overflow menu (full-screen popup, app-themed) */
@@ -839,9 +792,9 @@ const allExercisesSaved = computed(() => sessionStore.allExercisesSaved)
 .overflow-action span { flex:1; text-align:center; margin-right:18px; }
 .overflow-action.icon { justify-content:center; padding:12px; }
 
-@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); } .add-exercise-action .btn-secondary { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
-.session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; }
-.btn-finish { width: 100%; max-width: 400px; margin: 0 auto; display: flex; }
+@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .add-exercise-action .btn-secondary { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
+.session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; align-items: center; justify-content: center; display: flex; }
+.btn-finish { width: 100%; max-width: 400px; margin: 0 auto; display: flex; align-items: center; justify-content: center;}
 
 .item-sub {
   font-size: 0.85rem;
