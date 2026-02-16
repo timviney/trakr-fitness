@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRouter, onBeforeRouteLeave } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router' 
 import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next' 
 
 import AppShell from '../components/general/AppShell.vue'
@@ -173,6 +173,7 @@ import { ExerciseCollection } from '../types/ExerciseCollection'
 import { emptyGuid } from '../types/Guid'
 
 const router = useRouter()
+const route = useRoute()
 
 const viewState = ref<'selection' | 'session'>('selection')
 const loading = ref(false)
@@ -215,6 +216,11 @@ const showExerciseModal = ref(false)
 
 onMounted(async () => {
   await loadWorkouts()
+
+  const sessionId = route.params.id as string | undefined
+  if (sessionId && sessionId !== 'new') {
+    await loadSession(sessionId)
+  }
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -271,6 +277,9 @@ async function startSession() {
       })
 
     viewState.value = 'session'
+
+    // update URL from /session/new --> /session/{id}
+    router.replace(`/session/${currentSession.value!.id}`)
   } catch (e) {
     error.value = 'Failed to start session. Please try again.'
     console.error('startSession error:', e)
@@ -476,6 +485,60 @@ async function loadWorkouts() {
   } catch (e) {
     error.value = 'Failed to load workouts. Please try again.'
     console.error('loadWorkouts error:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Load an existing session by id (deep-link support for /session/:id)
+async function loadSession(sessionId: string) {
+  loading.value = true
+  error.value = null
+
+  try {
+    const sessionRes = await api.sessions.getSessionById(sessionId)
+    if (!sessionRes.isSuccess || !sessionRes.data) throw new Error('Failed to load session')
+    currentSession.value = sessionRes.data
+
+    const workoutRes = await api.workouts.getWorkoutById(currentSession.value!.workoutId)
+    if (!workoutRes.isSuccess || !workoutRes.data) throw new Error('Failed to load workout details')
+    currentWorkout.value = workoutRes.data
+
+    const sessExRes = await api.sessions.getSessionExercises(sessionId)
+    if (!sessExRes.isSuccess || !sessExRes.data) throw new Error('Failed to load session exercises')
+
+    sessionExercises.value = sessExRes.data
+      .sort((a, b) => a.exerciseNumber - b.exerciseNumber)
+      .map(se => ({
+        exercise: exerciseLookup.value.get(se.exerciseId) || { id: se.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
+        exerciseNumber: se.exerciseNumber,
+        sets: [],
+        isSaved: true,
+        sessionExerciseId: se.id
+      } as SessionExerciseData))
+
+    // fetch sets for each saved exercise in parallel
+    await Promise.all(sessionExercises.value.map(async (exData) => {
+      const seId = exData.sessionExerciseId!
+      const setsRes = await api.sessions.getSets(seId)
+      if (setsRes.isSuccess && setsRes.data) {
+        exData.sets = setsRes.data.map(s => ({
+          id: s.id,
+          tempId: s.id,
+          setNumber: s.setNumber,
+          weight: s.weight,
+          reps: s.reps,
+          warmUp: s.warmUp,
+          completed: true
+        }))
+      }
+    }))
+
+    viewState.value = 'session'
+  } catch (e) {
+    error.value = 'Failed to load session. Please try again.'
+    console.error('loadSession error:', e)
+    router.replace('/session/new')
   } finally {
     loading.value = false
   }

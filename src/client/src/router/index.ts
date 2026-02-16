@@ -46,6 +46,12 @@ const router = createRouter({
       path: '/session/new',
       name: 'NewSession',
       component: NewSessionView
+    },
+    {
+      path: '/session/:id',
+      name: 'Session',
+      component: NewSessionView,
+      props: true
     }
   ]
 })
