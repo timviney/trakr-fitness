@@ -98,7 +98,7 @@
                 <div class="overflow-actions">
                   <button class="btn btn-primary overflow-action" @click="handleStart">
                     <Play class="icon"/>
-                    <span>Start exercise</span>
+                    <span>{{ sessionExercises[openMenuIndex!].isSaved ? 'Edit sets' : 'Start exercise' }}</span>
                   </button>
 
                   <button class="btn btn-secondary overflow-action" @click="handleSwap">
@@ -513,7 +513,7 @@ async function saveExercise(exerciseIndex: number) {
     const payload = {
       exerciseId: exData.exercise.id,
       exerciseNumber: exData.exerciseNumber,
-      sets: exData.sets.map(s => ({ id: s.id || emptyGuid, setNumber: s.setNumber, weight: s.weight, reps: s.reps, warmUp: s.warmUp }))
+      sets: exData.sets.filter(s => s.completed).map(s => ({ id: s.id || emptyGuid, setNumber: s.setNumber, weight: s.weight, reps: s.reps, warmUp: s.warmUp }))
     }
 
     if (exData.isSaved && exData.sessionExerciseId) {
