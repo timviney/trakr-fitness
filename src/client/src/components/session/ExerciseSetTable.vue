@@ -66,64 +66,20 @@
       </button>
     </div>
 
-    <Transition name="slide-up">
-      <div v-if="picker.isOpen" class="picker-overlay" @click.self="closePicker">
-        <div class="picker-sheet">
-          <div class="picker-header">
-            <span class="picker-title">Set {{ picker.mode }}</span>
-            <button class="btn-done" @click="closePicker">Done</button>
-          </div>
-          <div class="picker-wheels">
-            
-            <div class="wheel-col">
-              <div class="wheel-scroll" ref="integerScroll">
-                <div class="wheel-spacer"></div>
-                <button 
-                  v-for="i in picker.integers" 
-                  :key="i"
-                  class="wheel-item"
-                  :class="{ 'is-selected': picker.tempInt === i }"
-                  @click="setPickerInt(i)"
-                >
-                  {{ i }}
-                </button>
-                <div class="wheel-spacer"></div>
-              </div>
-            </div>
-
-            <div class="wheel-col" v-if="picker.mode === 'weight'">
-              <div class="wheel-scroll">
-                <div class="wheel-spacer"></div>
-                <button 
-                  class="wheel-item" 
-                  :class="{ 'is-selected': picker.tempDec === 0 }"
-                  @click="setPickerDec(0)"
-                >
-                  .0
-                </button>
-                <button 
-                  class="wheel-item" 
-                  :class="{ 'is-selected': picker.tempDec === 0.5 }"
-                  @click="setPickerDec(0.5)"
-                >
-                  .5
-                </button>
-                <div class="wheel-spacer"></div>
-              </div>
-            </div>
-
-            <div class="wheel-highlight"></div>
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <WeightRepPicker
+      ref="pickerRef"
+      @weight="onWeightChange"
+      @reps="onRepsChange"
+      @close="onPickerClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick } from 'vue'
-import { Plus, X, Check } from 'lucide-vue-next'
-import type { SetData } from '../../types/Session' // Keep your type import
+import { ref } from 'vue'
+import WeightRepPicker from './WeightRepPicker.vue'
+import { Plus, X, Check } from 'lucide-vue-next' 
+import type { SetData } from '../../types/Session'
 
 const props = defineProps<{
   sets: SetData[]
@@ -151,66 +107,36 @@ function toggleCompleted(index: number) {
   updateSets()
 }
 
-// --- Picker Logic ---
+// --- Picker ---
 
-const picker = reactive({
-  isOpen: false,
-  mode: 'weight' as 'weight' | 'reps',
-  targetIndex: -1,
-  integers: [] as number[],
-  tempInt: 0,
-  tempDec: 0
-})
+const pickerRef = ref<any>(null)
+const selectedIndex = ref(-1)
 
 function openPicker(index: number, mode: 'weight' | 'reps') {
-  picker.mode = mode
-  picker.targetIndex = index
-  
-  // Setup logic for weight vs reps
-  const currentVal = mode === 'weight' ? props.sets[index].weight : props.sets[index].reps
-  picker.tempInt = Math.floor(currentVal || 0)
-  picker.tempDec = (currentVal || 0) % 1
-  
-  // Generate ranges
-  if (mode === 'weight') {
-    picker.integers = Array.from({ length: 300 }, (_, i) => i) // 0 to 299kg
-  } else {
-    picker.integers = Array.from({ length: 100 }, (_, i) => i) // 0 to 99 reps
-  }
+  selectedIndex.value = index
+  const initial = mode === 'weight'
+    ? props.sets[index].weight ?? 0
+    : props.sets[index].reps ?? 0
 
-  picker.isOpen = true
-  
-  // Auto-scroll to current value (simple implementation)
-  nextTick(() => {
-    const el = document.querySelector('.wheel-item.is-selected')
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  })
+  // delegate open + initial value to the child picker
+  pickerRef.value?.open(mode, initial)
 }
 
-function setPickerInt(val: number) {
-  picker.tempInt = val
-  saveValue()
-}
-
-function setPickerDec(val: number) {
-  picker.tempDec = val
-  saveValue()
-}
-
-function saveValue() {
-  if (picker.targetIndex === -1) return
-  const finalVal = picker.tempInt + (picker.mode === 'weight' ? picker.tempDec : 0)
-  
-  if (picker.mode === 'weight') {
-    props.sets[picker.targetIndex].weight = finalVal
-  } else {
-    props.sets[picker.targetIndex].reps = finalVal
-  }
+function onWeightChange(val: number) {
+  if (selectedIndex.value === -1) return
+  props.sets[selectedIndex.value].weight = val
   updateSets()
 }
 
-function closePicker() {
-  picker.isOpen = false
+function onRepsChange(val: number) {
+  if (selectedIndex.value === -1) return
+  props.sets[selectedIndex.value].reps = val
+  updateSets()
+}
+
+function onPickerClose() {
+  // reset selection when picker closes
+  selectedIndex.value = -1
 }
 </script>
 
@@ -371,98 +297,6 @@ function closePicker() {
 .add-set-row:active {
   background: var(--trk-surface-inner);
   color: var(--trk-accent);
-}
-
-/* --- Picker Overlay (Bottom Sheet) --- */
-.picker-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(2px);
-  z-index: 999;
-  display: flex;
-  align-items: flex-end;
-}
-
-.picker-sheet {
-  width: 100%;
-  background: var(--trk-surface);
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -4px 30px rgba(0,0,0,0.5);
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid var(--trk-surface-border);
-}
-
-.picker-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--trk-surface-border);
-}
-
-.picker-title { font-weight: 600; color: var(--trk-text); }
-.btn-done, .btn-text { background: none; border: none; color: var(--trk-accent); font-weight: 700; font-size: 1rem; cursor: pointer; }
-
-/* The Wheel Area */
-.picker-wheels {
-  position: relative;
-  height: 220px;
-  display: flex;
-  justify-content: center;
-  overflow: hidden;
-}
-
-/* The Highlight Bar (Visual Only) */
-.wheel-highlight {
-  position: absolute;
-  top: 50%;
-  left: 16px;
-  right: 16px;
-  height: 48px;
-  transform: translateY(-50%);
-  background: var(--trk-surface-hover);
-  border-radius: 8px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.wheel-col {
-  flex: 1;
-  max-width: 100px;
-  height: 100%;
-  z-index: 1; /* Above highlight */
-}
-
-.wheel-scroll {
-  height: 100%;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none; /* Firefox */
-}
-.wheel-scroll::-webkit-scrollbar { display: none; }
-
-.wheel-spacer { height: 86px; /* (220 - 48)/2 */ }
-
-.wheel-item {
-  height: 48px;
-  width: 100%;
-  scroll-snap-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: var(--trk-text-muted);
-  background: transparent;
-  border: none;
-  font-weight: 500;
-  transition: color 0.2s, transform 0.2s;
-  cursor: pointer;
-}
-
-.wheel-item.is-selected {
-  color: var(--trk-text);
-  font-weight: 700;
-  font-size: 1.5rem;
 }
 
 /* Transitions */
