@@ -27,7 +27,7 @@ public static class WorkoutEndpoints
         [FromServices] IExerciseLibraryRepository repository)
     {
         var result = await repository.GetWorkoutsByUserIdAsync(authContext.UserId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetWorkoutById(
@@ -44,7 +44,7 @@ public static class WorkoutEndpoints
         if (workout.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateWorkout(
@@ -60,7 +60,7 @@ public static class WorkoutEndpoints
         };
 
         var result = await repository.AddWorkoutAsync(workout);
-        return result.ToApiResult().ToCreatedResult($"/workouts/{workout.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/workouts/{workout.Id}");
     }
 
     private static async Task<IResult> UpdateWorkout(
@@ -112,7 +112,7 @@ public static class WorkoutEndpoints
         }
 
         var updateResult = await repository.UpdateWorkoutAsync(workout);
-        return updateResult.ToApiResult().ToOkResult();
+        return updateResult.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> DeleteWorkout(
@@ -130,6 +130,6 @@ public static class WorkoutEndpoints
             return Results.NotFound();
 
         var deleteResult = await repository.DeleteWorkoutAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 }

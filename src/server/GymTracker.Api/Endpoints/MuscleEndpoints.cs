@@ -37,7 +37,7 @@ public static class MuscleEndpoints
         [FromServices] IExerciseLibraryRepository repository)
     {
         var result = await repository.GetMuscleCategoriesByUserIdAsync(authContext.UserId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetMuscleCategoryById(
@@ -54,7 +54,7 @@ public static class MuscleEndpoints
         if (category.UserId != null && category.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateMuscleCategory(
@@ -70,7 +70,7 @@ public static class MuscleEndpoints
         };
 
         var result = await repository.AddMuscleCategoryAsync(category);
-        return result.ToApiResult().ToCreatedResult($"/muscle/categories/{category.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/muscle/categories/{category.Id}");
     }
 
     private static async Task<IResult> UpdateMuscleCategory(
@@ -91,7 +91,7 @@ public static class MuscleEndpoints
         category.Name = req.Name;
 
         var updateResult = await repository.UpdateMuscleCategoryAsync(category);
-        return updateResult.ToApiResult().ToOkResult();
+        return updateResult.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> DeleteMuscleCategory(
@@ -109,7 +109,7 @@ public static class MuscleEndpoints
             return Results.NotFound();
 
         var deleteResult = await repository.DeleteMuscleCategoryAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 
     // ===== Muscle Groups =====
@@ -119,7 +119,7 @@ public static class MuscleEndpoints
         [FromServices] IExerciseLibraryRepository repository)
     {
         var result = await repository.GetMuscleGroupsByUserIdAsync(authContext.UserId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetMuscleGroupById(
@@ -136,7 +136,7 @@ public static class MuscleEndpoints
         if (muscleGroup.UserId != null && muscleGroup.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateMuscleGroup(
@@ -153,7 +153,7 @@ public static class MuscleEndpoints
         };
 
         var result = await repository.AddMuscleGroupAsync(group);
-        return result.ToApiResult().ToCreatedResult($"/muscle/groups/{group.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/muscle/groups/{group.Id}");
     }
 
     private static async Task<IResult> UpdateMuscleGroup(
@@ -175,7 +175,7 @@ public static class MuscleEndpoints
         muscleGroup.CategoryId = req.CategoryId;
 
         var updateResult = await repository.UpdateMuscleGroupAsync(muscleGroup);
-        return updateResult.ToApiResult().ToOkResult();
+        return updateResult.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> DeleteMuscleGroup(
@@ -193,6 +193,6 @@ public static class MuscleEndpoints
             return Results.NotFound();
 
         var deleteResult = await repository.DeleteMuscleGroupAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 }

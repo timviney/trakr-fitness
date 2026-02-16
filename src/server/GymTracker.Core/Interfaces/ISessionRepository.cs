@@ -16,7 +16,7 @@ namespace GymTracker.Core.Interfaces
         Task<DbResult<SessionExercise>> GetSessionExerciseByIdAsync(Guid id);
         Task<DbResult<IEnumerable<SessionExercise>>> GetSessionExercisesBySessionIdAsync(Guid sessionId);
         Task<DbResult<SessionExercise>> AddSessionExerciseAsync(SessionExercise sessionExercise);
-        Task<DbResult<SessionExercise>> UpdateSessionExerciseAsync(SessionExercise sessionExercise);
+        Task<DbResult<SessionExercise>> UpdateSessionExerciseAsync(SessionExercise sessionExercise, bool saveChanges = true);
         Task<DbResult<SessionExercise>> DeleteSessionExerciseAsync(Guid id);
 
         // Sets
@@ -24,7 +24,11 @@ namespace GymTracker.Core.Interfaces
         Task<DbResult<IEnumerable<Set>>> GetSetsBySessionExerciseIdAsync(Guid sessionExerciseId);
         Task<DbResult<Set>> AddSetAsync(Set set);
         Task<DbResult<Set>> UpdateSetAsync(Set set);
-        Task<DbResult<Set>> DeleteSetAsync(Guid id);
+        Task<DbResult<Set>> DeleteSetAsync(Guid id, bool saveChanges = true);
+        
+        
+        // Save changes (for batch operations)
+        Task<DbResult> SaveChangesAsync();
     }
 
 }

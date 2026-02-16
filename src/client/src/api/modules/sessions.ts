@@ -25,15 +25,10 @@ export type Set = {
 }
 
 // Request types
-export type CreateSessionExerciseRequest = {
+export type SessionExerciseRequest = {
   exerciseId: string
   exerciseNumber: number
   sets: CreateSetRequest[]
-}
-
-export type UpdateSessionExerciseRequest = {
-  exerciseNumber?: number
-  exerciseId?: string
 }
 
 export type CreateSetRequest = {
@@ -54,8 +49,8 @@ export class SessionsApi {
   constructor(private client: ApiClient) {}
 
   // Session endpoints
-  async getSessions(): Promise<ApiResponse<Session[]>> {
-    return await this.client.get<Session[]>('/sessions/')
+  async getSessions(workoutId: string): Promise<ApiResponse<Session[]>> {
+    return await this.client.get<Session[]>(`/workouts/${workoutId}/sessions/`)
   }
 
   async createSession(workoutId: string): Promise<ApiResponse<Session>> {
@@ -76,40 +71,40 @@ export class SessionsApi {
     return await this.client.get<SessionExercise[]>(`/sessions/${sessionId}/exercises/`)
   }
 
-  async createSessionExercise(sessionId: string, payload: CreateSessionExerciseRequest): Promise<ApiResponse<SessionExercise>> {
+  async createSessionExercise(sessionId: string, payload: SessionExerciseRequest): Promise<ApiResponse<SessionExercise>> {
     return await this.client.post<SessionExercise>(`/sessions/${sessionId}/exercises/`, payload)
   }
 
-  async getSessionExerciseById(sessionId: string, sessionExerciseId: string): Promise<ApiResponse<SessionExercise>> {
-    return await this.client.get<SessionExercise>(`/sessions/${sessionId}/exercises/${sessionExerciseId}`)
+  async getSessionExerciseById(id: string): Promise<ApiResponse<SessionExercise>> {
+    return await this.client.get<SessionExercise>(`/session-exercises/${id}`)
   }
 
-  async updateSessionExercise(sessionId: string, sessionExerciseId: string, payload: UpdateSessionExerciseRequest): Promise<ApiResponse<SessionExercise>> {
-    return await this.client.put<SessionExercise>(`/sessions/${sessionId}/exercises/${sessionExerciseId}`, payload)
+  async updateSessionExercise(id: string, payload: SessionExerciseRequest): Promise<ApiResponse<SessionExercise>> {
+    return await this.client.put<SessionExercise>(`/session-exercises/${id}`, payload)
   }
 
-  async deleteSessionExercise(sessionId: string, sessionExerciseId: string): Promise<ApiResponse<SessionExercise>> {
-    return await this.client.delete<SessionExercise>(`/sessions/${sessionId}/exercises/${sessionExerciseId}`)
+  async deleteSessionExercise(id: string): Promise<ApiResponse<SessionExercise>> {
+    return await this.client.delete<SessionExercise>(`/session-exercises/${id}`)
   }
 
   // Set endpoints
-  async getSets(sessionId: string, sessionExerciseId: string): Promise<ApiResponse<Set[]>> {
-    return await this.client.get<Set[]>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/`)
+  async getSets(sessionExerciseId: string): Promise<ApiResponse<Set[]>> {
+    return await this.client.get<Set[]>(`/session-exercises/${sessionExerciseId}/sets/`)
   }
 
-  async createSet(sessionId: string, sessionExerciseId: string, payload: CreateSetRequest): Promise<ApiResponse<Set>> {
-    return await this.client.post<Set>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/`, payload)
+  async createSet(sessionExerciseId: string, payload: CreateSetRequest): Promise<ApiResponse<Set>> {
+    return await this.client.post<Set>(`/session-exercises/${sessionExerciseId}/sets/`, payload)
   }
 
-  async getSetById(sessionId: string, sessionExerciseId: string, setId: string): Promise<ApiResponse<Set>> {
-    return await this.client.get<Set>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`)
+  async getSetById(id: string): Promise<ApiResponse<Set>> {
+    return await this.client.get<Set>(`/sets/${id}`)
   }
 
-  async updateSet(sessionId: string, sessionExerciseId: string, setId: string, payload: UpdateSetRequest): Promise<ApiResponse<Set>> {
-    return await this.client.put<Set>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`, payload)
+  async updateSet(id: string, payload: UpdateSetRequest): Promise<ApiResponse<Set>> {
+    return await this.client.put<Set>(`/sets/${id}`, payload)
   }
 
-  async deleteSet(sessionId: string, sessionExerciseId: string, setId: string): Promise<ApiResponse<Set>> {
-    return await this.client.delete<Set>(`/sessions/${sessionId}/exercises/${sessionExerciseId}/sets/${setId}`)
+  async deleteSet(id: string): Promise<ApiResponse<Set>> {
+    return await this.client.delete<Set>(`/sets/${id}`)
   }
 }

@@ -8,7 +8,7 @@ public static class DbResultExtensions
 {
     extension(DbResult result)
     {
-        public ApiResponse ToApiResult()
+        public ApiResponse ToApiResponse()
         {
             return result.Status == DbResultStatus.Success
                 ? ApiResponse.Success()
@@ -24,7 +24,7 @@ public static class DbResultExtensions
 
     extension<TData>(DbResult<TData> result) where TData : class
     {
-        public ApiResponse<TData> ToApiResult()
+        public ApiResponse<TData> ToApiResponse()
         {
             return result.Status == DbResultStatus.Success
                 ? ApiResponse<TData>.Success(result.Data!)

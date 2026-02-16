@@ -15,7 +15,7 @@ public static class ApiResponseExtensions
             ? Created(location, resp)
             : resp.ToErrorResult();
 
-        private IResult ToErrorResult()
+        public IResult ToErrorResult()
         {
             return resp.Error switch
             {

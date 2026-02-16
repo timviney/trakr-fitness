@@ -19,9 +19,7 @@ public record CreateMuscleGroupRequest(string Name, Guid CategoryId);
 public record UpdateMuscleGroupRequest(string Name, Guid CategoryId);
 
 // Session Exercise requests
-public record CreateSessionExerciseRequest(Guid ExerciseId, int ExerciseNumber, CreateSetRequest[]? Sets);
-public record UpdateSessionExerciseRequest(int ExerciseNumber);
+public record SessionExerciseRequest(Guid ExerciseId, int ExerciseNumber, SetRequest[] Sets);
 
 // Set requests
-public record CreateSetRequest(int SetNumber, double Weight, int Reps, bool WarmUp);
-public record UpdateSetRequest(int SetNumber, double Weight, int Reps, bool WarmUp);
+public record SetRequest(Guid? Id, int SetNumber, double Weight, int Reps, bool WarmUp);

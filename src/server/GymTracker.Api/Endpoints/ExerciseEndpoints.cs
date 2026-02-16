@@ -27,7 +27,7 @@ public static class ExerciseEndpoints
         [FromServices] IExerciseLibraryRepository repository)
     {
         var result = await repository.GetExercisesByUserIdAsync(authContext.UserId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetExerciseById(
@@ -44,7 +44,7 @@ public static class ExerciseEndpoints
         if (exercise.UserId != null && exercise.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateExercise(
@@ -61,7 +61,7 @@ public static class ExerciseEndpoints
         };
 
         var result = await repository.AddExerciseAsync(exercise);
-        return result.ToApiResult().ToCreatedResult($"/exercises/{exercise.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/exercises/{exercise.Id}");
     }
 
     private static async Task<IResult> UpdateExercise(
@@ -83,7 +83,7 @@ public static class ExerciseEndpoints
         exercise.MuscleGroupId = req.MuscleGroupId;
 
         var updateResult = await repository.UpdateExerciseAsync(exercise);
-        return updateResult.ToApiResult().ToOkResult();
+        return updateResult.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> DeleteExercise(
@@ -101,6 +101,6 @@ public static class ExerciseEndpoints
             return Results.NotFound();
 
         var deleteResult = await repository.DeleteExerciseAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 }

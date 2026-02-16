@@ -99,10 +99,10 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<SessionExercise>.Ok(sessionExercise);
         }
 
-        public async Task<DbResult<SessionExercise>> UpdateSessionExerciseAsync(SessionExercise sessionExercise)
+        public async Task<DbResult<SessionExercise>> UpdateSessionExerciseAsync(SessionExercise sessionExercise, bool saveChanges = true)
         {
             db.SessionExercises.Update(sessionExercise);
-            await db.SaveChangesAsync();
+            if (saveChanges) await db.SaveChangesAsync();
             return DbResult<SessionExercise>.Ok(sessionExercise);
         }
 
@@ -155,15 +155,22 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<Set>.Ok(set);
         }
 
-        public async Task<DbResult<Set>> DeleteSetAsync(Guid id)
+        public async Task<DbResult<Set>> DeleteSetAsync(Guid id, bool saveChanges = true)
         {
             var set = await db.Sets.FindAsync(id);
             if (set is null)
                 return DbResult<Set>.NotFound($"Set with id '{id}' not found.");
             
             db.Sets.Remove(set);
-            await db.SaveChangesAsync();
+            if (saveChanges) await db.SaveChangesAsync();
             return DbResult<Set>.Ok(set);
+        }
+        
+        
+        public async Task<DbResult> SaveChangesAsync()
+        {
+            await db.SaveChangesAsync();
+            return DbResult.Ok();
         }
     }
 }

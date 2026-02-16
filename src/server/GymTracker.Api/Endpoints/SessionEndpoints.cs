@@ -79,7 +79,7 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var result = await sessionRepository.GetSessionsByWorkoutIdAsync(workoutId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetSessionById(
@@ -99,7 +99,7 @@ public static class SessionEndpoints
         if (!workoutResult.IsSuccess || workoutResult.Data!.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateSession(
@@ -124,7 +124,7 @@ public static class SessionEndpoints
         };
 
         var result = await sessionRepository.AddSessionAsync(session);
-        return result.ToApiResult().ToCreatedResult($"/sessions/{session.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/sessions/{session.Id}");
     }
 
     private static async Task<IResult> DeleteSession(
@@ -145,7 +145,7 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var deleteResult = await sessionRepository.DeleteSessionAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 
     // ===== Session Exercises =====
@@ -166,7 +166,7 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var result = await sessionRepository.GetSessionExercisesBySessionIdAsync(sessionId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetSessionExerciseById(
@@ -190,12 +190,12 @@ public static class SessionEndpoints
         if (!workoutResult.IsSuccess || workoutResult.Data!.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateSessionExercise(
         Guid sessionId,
-        CreateSessionExerciseRequest req,
+        SessionExerciseRequest req,
         [FromServices] IAuthContext authContext,
         [FromServices] IExerciseLibraryRepository exerciseLibraryRepository,
         [FromServices] ISessionRepository sessionRepository)
@@ -218,25 +218,22 @@ public static class SessionEndpoints
             Sets = new List<Set>()
         };
 
-        if (req.Sets != null)
+        foreach (var set in req.Sets) sessionExercise.Sets.Add(new Set
         {
-            foreach (var set in req.Sets) sessionExercise.Sets.Add(new Set
-            {
-                SessionExerciseId =  sessionExercise.Id,
-                SetNumber = set.SetNumber,
-                Weight = set.Weight,
-                Reps = set.Reps,
-                WarmUp = set.WarmUp
-            });
-        }
+            SessionExerciseId =  sessionExercise.Id,
+            SetNumber = set.SetNumber,
+            Weight = set.Weight,
+            Reps = set.Reps,
+            WarmUp = set.WarmUp
+        });
 
         var result = await sessionRepository.AddSessionExerciseAsync(sessionExercise);
-        return result.ToApiResult().ToCreatedResult($"/session-exercises/{sessionExercise.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/session-exercises/{sessionExercise.Id}");
     }
 
     private static async Task<IResult> UpdateSessionExercise(
         Guid id,
-        UpdateSessionExerciseRequest req,
+        SessionExerciseRequest req,
         [FromServices] IAuthContext authContext,
         [FromServices] IExerciseLibraryRepository exerciseLibraryRepository,
         [FromServices] ISessionRepository sessionRepository)
@@ -257,9 +254,51 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         sessionExercise.ExerciseNumber = req.ExerciseNumber;
+        sessionExercise.ExerciseId = req.ExerciseId;
 
-        var updateResult = await sessionRepository.UpdateSessionExerciseAsync(sessionExercise);
-        return updateResult.ToApiResult().ToOkResult();
+        var updateResult = await sessionRepository.UpdateSessionExerciseAsync(sessionExercise, saveChanges: false);
+        if (!updateResult.IsSuccess)
+            return updateResult.ToApiResponse().ToErrorResult();
+
+        var existingSets = sessionExercise.Sets.ToDictionary(s => s.Id);
+        var updatedSets = req.Sets.Where(s => s.Id != null && s.Id != Guid.Empty).ToDictionary(s => (Guid)s.Id!);
+        var newSets = req.Sets.Where(s => s.Id == null || s.Id == Guid.Empty).ToList();
+        var deletedSetIds = existingSets.Keys.Except(updatedSets.Keys).ToList();
+
+        foreach (var setId in deletedSetIds)
+        {
+            var deleteResult = await sessionRepository.DeleteSetAsync(setId, saveChanges: false);
+            if (!deleteResult.IsSuccess) return deleteResult.ToApiResponse().ToErrorResult();
+        }
+
+        foreach (var updatedSet in updatedSets)
+        {
+            var set = existingSets[updatedSet.Key];
+            set.SetNumber = updatedSet.Value.SetNumber;
+            set.Weight = updatedSet.Value.Weight;
+            set.Reps = updatedSet.Value.Reps;
+            set.WarmUp = updatedSet.Value.WarmUp;
+
+            // No need to save as this is a tracked entity, changes will be saved at the end
+        }
+
+        foreach (var setRequest in newSets)
+        {
+            var set = new Set
+            {
+                SessionExerciseId = sessionExercise.Id,
+                SetNumber = setRequest.SetNumber,
+                Weight = setRequest.Weight,
+                Reps = setRequest.Reps,
+                WarmUp = setRequest.WarmUp
+            };
+            var addResult = await sessionRepository.AddSetAsync(set);
+            if (!addResult.IsSuccess) return addResult.ToApiResponse().ToErrorResult();
+        }
+
+        await sessionRepository.SaveChangesAsync();
+
+        return updateResult.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> DeleteSessionExercise(
@@ -284,7 +323,7 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var deleteResult = await sessionRepository.DeleteSessionExerciseAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 
     // ===== Sets =====
@@ -309,7 +348,7 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var result = await sessionRepository.GetSetsBySessionExerciseIdAsync(sessionExerciseId);
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> GetSetById(
@@ -337,12 +376,12 @@ public static class SessionEndpoints
         if (!workoutResult.IsSuccess || workoutResult.Data!.UserId != authContext.UserId)
             return Results.NotFound();
 
-        return result.ToApiResult().ToOkResult();
+        return result.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> CreateSet(
         Guid sessionExerciseId,
-        CreateSetRequest req,
+        SetRequest req,
         [FromServices] IAuthContext authContext,
         [FromServices] IExerciseLibraryRepository exerciseLibraryRepository,
         [FromServices] ISessionRepository sessionRepository)
@@ -371,12 +410,12 @@ public static class SessionEndpoints
         };
 
         var result = await sessionRepository.AddSetAsync(set);
-        return result.ToApiResult().ToCreatedResult($"/sets/{set.Id}");
+        return result.ToApiResponse().ToCreatedResult($"/sets/{set.Id}");
     }
 
     private static async Task<IResult> UpdateSet(
         Guid id,
-        UpdateSetRequest req,
+        SetRequest req,
         [FromServices] IAuthContext authContext,
         [FromServices] IExerciseLibraryRepository exerciseLibraryRepository,
         [FromServices] ISessionRepository sessionRepository)
@@ -406,7 +445,7 @@ public static class SessionEndpoints
         set.WarmUp = req.WarmUp;
 
         var updateResult = await sessionRepository.UpdateSetAsync(set);
-        return updateResult.ToApiResult().ToOkResult();
+        return updateResult.ToApiResponse().ToOkResult();
     }
 
     private static async Task<IResult> DeleteSet(
@@ -435,6 +474,6 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var deleteResult = await sessionRepository.DeleteSetAsync(id);
-        return deleteResult.ToApiResult().ToOkResult();
+        return deleteResult.ToApiResponse().ToOkResult();
     }
 }

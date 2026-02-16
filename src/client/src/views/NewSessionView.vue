@@ -132,7 +132,7 @@
 
             <div class="modal-actions">
               <button type="button" class="btn btn-secondary" @click="closeExerciseModal()">Close</button>
-              <button type="button" class="btn btn-primary" @click="(async () => { await saveExercise(selectedExerciseIndex!); if (sessionExercises[selectedExerciseIndex!].isSaved) closeExerciseModal() })()">Save Exercise</button>
+              <button type="button" class="btn btn-primary" @click="(async () => { await saveExerciseWithSetsRequired(selectedExerciseIndex!); if (sessionExercises[selectedExerciseIndex!].isSaved) closeExerciseModal() })()">Save Exercise</button>
             </div>
           </div>
         </div>
@@ -167,9 +167,10 @@ import ExerciseSelector from '../components/exercises/ExerciseSelector.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
-import type { Session } from '../api/modules/sessions'
+import type { Session, SessionExercise } from '../api/modules/sessions'
 import type { SetData, SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
+import { emptyGuid } from '../types/Guid'
 
 const router = useRouter()
 
@@ -350,23 +351,7 @@ function handleExerciseSelected(exerciseId: string) {
 async function replaceExercise(index: number, newExercise: Exercise) {
   const exData = sessionExercises.value[index]
   exData.exercise = newExercise
-
-  if (
-    exData.isSaved &&
-    exData.sessionExerciseId &&
-    currentSession.value
-  ) {
-    try {
-      await api.sessions.updateSessionExercise(
-        currentSession.value.id,
-        exData.sessionExerciseId,
-        { exerciseId: newExercise.id }
-      )
-    } catch (e) {
-      console.error('replaceExercise error:', e)
-      error.value = 'Failed to replace exercise. Please try again.'
-    }
-  }
+  if (exData.isSaved) await saveExercise(index)
 }
 
 async function deleteExercise(index: number) {
@@ -389,7 +374,7 @@ async function deleteExercise(index: number) {
     currentSession.value
   ) {
     try {
-      await api.sessions.deleteSessionExercise(currentSession.value.id, exData.sessionExerciseId)
+      await api.sessions.deleteSessionExercise(exData.sessionExerciseId)
     } catch (e) {
       console.error('deleteExercise error:', e)
       error.value = 'Failed to delete exercise. Please try again.'
@@ -452,6 +437,7 @@ function handleDelete() {
 function handleStart() {
   if (openMenuIndex.value !== null) {
     openExercise(openMenuIndex.value)
+
     closeOverflowMenu()
   }
 }
@@ -517,10 +503,6 @@ function removeSet(exerciseIndex: number, setIndex: number) {
 
 async function saveExercise(exerciseIndex: number) {
   const exData = sessionExercises.value[exerciseIndex]
-  if (exData.sets.length === 0) {
-    alert('Please add at least one set before saving.')
-    return
-  }
   if (!currentSession.value) {
     error.value = 'No active session'
     return
@@ -531,18 +513,20 @@ async function saveExercise(exerciseIndex: number) {
     const payload = {
       exerciseId: exData.exercise.id,
       exerciseNumber: exData.exerciseNumber,
-      sets: exData.sets.map(s => ({ setNumber: s.setNumber, weight: s.weight, reps: s.reps, warmUp: s.warmUp }))
+      sets: exData.sets.map(s => ({ id: s.id || emptyGuid, setNumber: s.setNumber, weight: s.weight, reps: s.reps, warmUp: s.warmUp }))
     }
 
     if (exData.isSaved && exData.sessionExerciseId) {
-      const res = await api.sessions.updateSessionExercise(currentSession.value.id, exData.sessionExerciseId, { exerciseNumber: exData.exerciseNumber })
+      const res = await api.sessions.updateSessionExercise(exData.sessionExerciseId, payload)      
       if (res.isSuccess) {
+        await updateExerciseData(exerciseIndex, res.data!)
         console.log('Exercise updated')
       }
     } else {
       const res = await api.sessions.createSessionExercise(currentSession.value.id, payload)
       if (!res.isSuccess || !res.data) throw new Error('Failed to save exercise')
-      exData.sessionExerciseId = res.data.id
+      await updateExerciseData(exerciseIndex, res.data)
+      console.log('Exercise created')
     }
 
     exData.isSaved = true
@@ -552,6 +536,35 @@ async function saveExercise(exerciseIndex: number) {
   } finally {
     savingExercise.value = null
   }
+}
+
+async function updateExerciseData(exerciseIndex: number,data: SessionExercise) {
+  const exData = sessionExercises.value[exerciseIndex]
+  exData.exercise = exerciseLookup.value.get(data.exerciseId) || exData.exercise
+  exData.exerciseNumber = data.exerciseNumber
+  exData.sessionExerciseId = data.id
+
+  const sets = await api.sessions.getSets(data.id)
+
+  exData.sets = sets.data!.map(s => ({
+    id: s.id,
+    tempId: s.id,
+    setNumber: s.setNumber,
+    weight: s.weight,
+    reps: s.reps,
+    warmUp: s.warmUp,
+    completed: true
+  }))
+}
+
+async function saveExerciseWithSetsRequired(exerciseIndex: number) {
+  const exData = sessionExercises.value[exerciseIndex]
+  if (exData.sets.length === 0) {
+    alert('Please add at least one set before saving.')
+    return
+  }
+  
+  await saveExercise(exerciseIndex)
 }
 
 function finishSession() {
