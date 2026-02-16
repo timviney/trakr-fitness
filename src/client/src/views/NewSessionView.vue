@@ -11,12 +11,26 @@
         <Loader :loading="loading" />
         <AppError :message="error" @retry="loadWorkouts" />
 
+        <!-- Unfinished local drafts -->
+        <div v-if="!loading && !error && sessionStore.draftList.length > 0" class="drafts-section">
+          <h3 class="section-subtitle">Unfinished sessions</h3>
+          <ul class="item-list">
+            <li v-for="d in sessionStore.draftList" :key="d.session.id" class="item-card item-card-clickable" @click="openDraftModal(d.session.id)">
+              <div class="item-left">
+                <span class="item-name">{{ d.workout?.name ?? d.session.workoutId }}</span>
+                <div class="item-sub">{{ new Date(d.persistedAt).toLocaleString() }}</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
         <div v-if="!loading && !error && workouts.length === 0" class="empty-state">
           <Dumbbell class="empty-icon" />
           <h2 class="empty-title">No workouts yet</h2>
           <p class="empty-description">Create a workout first in the Exercises tab.</p>
         </div>
 
+<h3 class="section-subtitle">New session:</h3>
         <ul v-if="!loading && !error && workouts.length > 0" class="item-list">
           <li v-for="workout in workouts" :key="workout.id" class="item-card item-card-clickable" @click="promptStartWorkout(workout)">
             <span class="item-name">{{ workout.name }}</span>
@@ -37,19 +51,44 @@
             </div>
           </div>
         </div>
+
+        <!-- Draft actions modal (teleported, same style as overflow) -->
+        <Teleport to="body">
+          <div v-if="showDraftModal" class="overflow-backdrop" @click.self="closeDraftModal()">
+            <div class="overflow-menu" @click.stop>
+              <div class="overflow-panel">
+                <header class="overflow-header">
+                  <h3 class="overflow-title">{{ selectedDraft?.workout?.name ?? (selectedDraft?.session?.workoutId ?? 'Unfinished session') }}</h3>
+                </header>
+
+                <div class="overflow-actions">
+                  <button class="btn btn-primary overflow-action" @click="() => { if (selectedDraftId) resumeDraft(selectedDraftId); }">
+                    Continue
+                  </button>
+
+                  <button class="btn btn-danger overflow-action" @click="() => { if (selectedDraftId) deleteDraft(selectedDraftId); }">
+                    Delete
+                  </button>
+
+                  <button class="btn btn-secondary overflow-action" @click="closeDraftModal()">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Teleport>
       </div>
 
       <!-- SESSION -->
       <div v-if="viewState === 'session'" class="session-active">
         <header class="session-header">
-          <h1 class="session-title">{{ currentWorkout?.name }}</h1>
+          <h1 class="session-title">{{ sessionStore.currentWorkout?.name }}</h1>
         </header>
 
         <Loader :loading="loading" />
         <AppError :message="error" @retry="() => {}" />
 
         <div v-if="!loading && !error" class="exercise-list">
-          <div v-for="(exData, idx) in sessionExercises" 
+          <div v-for="(exData, idx) in sessionStore.sessionExercises" 
                :key="exData.sessionExerciseId ?? `local-${exData.exerciseNumber}`" 
                class="exercise-card"
                :class="{ 'exercise-saved': exData.isSaved }"
@@ -92,13 +131,13 @@
             <div class="overflow-menu" @click.stop>
               <div class="overflow-panel">
                 <header class="overflow-header">
-                  <h3 class="overflow-title">{{ sessionExercises[openMenuIndex!].exercise.name }}</h3>
+                  <h3 class="overflow-title">{{ sessionStore.sessionExercises[openMenuIndex!].exercise.name }}</h3>
                 </header>
 
                 <div class="overflow-actions">
                   <button class="btn btn-primary overflow-action" @click="handleStart">
                     <Play class="icon"/>
-                    <span>{{ sessionExercises[openMenuIndex!].isSaved ? 'Edit sets' : 'Start exercise' }}</span>
+                    <span>{{ sessionStore.sessionExercises[openMenuIndex!].isSaved ? 'Edit sets' : 'Start exercise' }}</span>
                   </button>
 
                   <button class="btn btn-secondary overflow-action" @click="handleSwap">
@@ -120,11 +159,11 @@
         <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay">
           <!-- use the fullscreen modal variant so the sets table can expand -->
           <div class="modal modal-fullscreen">
-            <h2 class="modal-title">{{ sessionExercises[selectedExerciseIndex].exercise.name }}</h2>
+            <h2 class="modal-title">{{ sessionStore.sessionExercises[selectedExerciseIndex].exercise.name }}</h2>
 
             <div class="modal-content">
               <ExerciseSetTable
-                v-model:sets="sessionExercises[selectedExerciseIndex].sets"
+                v-model:sets="sessionStore.sessionExercises[selectedExerciseIndex].sets"
                 @add-set="() => addSet(selectedExerciseIndex!)"
                 @remove-set="(setIdx) => removeSet(selectedExerciseIndex!, setIdx)"
               />
@@ -132,7 +171,7 @@
 
             <div class="modal-actions">
               <button type="button" class="btn btn-secondary" @click="closeExerciseModal()">Close</button>
-              <button type="button" class="btn btn-primary" @click="(async () => { await saveExerciseWithSetsRequired(selectedExerciseIndex!); if (sessionExercises[selectedExerciseIndex!].isSaved) closeExerciseModal() })()">Save Exercise</button>
+              <button type="button" class="btn btn-primary" @click="(async () => { await saveExerciseWithSetsRequired(selectedExerciseIndex!); if (sessionStore.sessionExercises[selectedExerciseIndex!].isSaved) closeExerciseModal() })()">Save Exercise</button>
             </div>
           </div>
         </div>
@@ -171,9 +210,11 @@ import type { Session, SessionExercise } from '../api/modules/sessions'
 import type { SetData, SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
 import { emptyGuid } from '../types/Guid'
+import { useSessionStore } from '../stores/session'
 
 const router = useRouter()
 const route = useRoute()
+const sessionStore = useSessionStore()
 
 const viewState = ref<'selection' | 'session'>('selection')
 const loading = ref(false)
@@ -185,10 +226,13 @@ const workouts = ref<Workout[]>([])
 const pendingWorkout = ref<Workout | null>(null)
 const showStartModal = ref(false)
 
-// active session state
-const currentSession = ref<Session | null>(null)
-const currentWorkout = ref<Workout | null>(null)
-const sessionExercises = ref<SessionExerciseData[]>([])
+// draft modal state (unfinished sessions)
+const showDraftModal = ref(false)
+const selectedDraftId = ref<string | null>(null)
+const selectedDraft = computed(() => selectedDraftId.value ? sessionStore.getDraft(selectedDraftId.value) : null)
+
+// active session state (moved to session store)
+// use `sessionStore.activeSession`, `sessionStore.currentWorkout`, `sessionStore.sessionExercises`
 const exerciseLookup = ref<Map<string, Exercise>>(new Map())
 const exerciseCollection = ref<ExerciseCollection | null>(null)
 
@@ -216,6 +260,9 @@ const showExerciseModal = ref(false)
 
 onMounted(async () => {
   await loadWorkouts()
+
+  // initialize session store (do not auto-restore drafts)
+  sessionStore.initialize()
 
   const sessionId = route.params.id as string | undefined
   if (sessionId && sessionId !== 'new') {
@@ -246,6 +293,36 @@ function cancelStartSession() {
   showStartModal.value = false
 }
 
+function openDraftModal(sessionId: string) {
+  selectedDraftId.value = sessionId
+  showDraftModal.value = true
+}
+
+function closeDraftModal() {
+  showDraftModal.value = false
+  selectedDraftId.value = null
+}
+
+function resumeDraft(sessionId: string) {
+  if (!sessionId) return
+  const ok = sessionStore.loadDraft(sessionId)
+  if (!ok) {
+    error.value = 'Failed to load local draft.'
+    return
+  }
+  showDraftModal.value = false
+  selectedDraftId.value = null
+  viewState.value = 'session'
+  router.replace(`/session/${sessionId}`)
+}
+
+function deleteDraft(sessionId: string) {
+  if (!confirm('Delete this unfinished session draft?')) return
+  sessionStore.clearDraft(sessionId)
+  // if the draft modal was open for this id, close it
+  if (selectedDraftId.value === sessionId) closeDraftModal()
+}
+
 // move previous selectWorkout logic here (starts session and builds exercises)
 async function startSession() {
   const workout = pendingWorkout.value
@@ -258,13 +335,12 @@ async function startSession() {
   try {
     const sessionRes = await api.sessions.createSession(workout.id)
     if (!sessionRes.isSuccess || !sessionRes.data) throw new Error('Failed to create session')
-    currentSession.value = sessionRes.data
+    const newSession = sessionRes.data
 
     const workoutRes = await api.workouts.getWorkoutById(workout.id)
     if (!workoutRes.isSuccess || !workoutRes.data) throw new Error('Failed to load workout details')
-    currentWorkout.value = workoutRes.data
 
-    sessionExercises.value = (workoutRes.data.defaultExercises || [])
+    const mapped = (workoutRes.data.defaultExercises || [])
       .sort((a, b) => a.exerciseNumber - b.exerciseNumber)
       .map(defEx => {
         const exercise = exerciseLookup.value.get(defEx.exerciseId)
@@ -276,10 +352,13 @@ async function startSession() {
         } as SessionExerciseData
       })
 
+    // write into session store (store persists draft)
+    sessionStore.setActiveSession(newSession, workoutRes.data, mapped)
+
     viewState.value = 'session'
 
     // update URL from /session/new --> /session/{id}
-    router.replace(`/session/${currentSession.value!.id}`)
+    router.replace(`/session/${newSession.id}`)
   } catch (e) {
     error.value = 'Failed to start session. Please try again.'
     console.error('startSession error:', e)
@@ -304,11 +383,11 @@ function closeExerciseModal() {
     return
   }
 
-  const ex = sessionExercises.value[idx]
+  const ex = sessionStore.sessionExercises[idx]
   // warn if there are unsaved sets
   if (ex.sets.length > 0 && !ex.isSaved) {
     if (!confirm('You have unsaved changes for this exercise. Discard and close?')) return
-    ex.sets = []
+    sessionStore.discardUnsavedSets(idx)
   }
 
   selectedExerciseIndex.value = null
@@ -342,12 +421,7 @@ function handleExerciseSelected(exerciseId: string) {
   if (!exercise) return
 
   if (exerciseSelectorMode.value === 'add') {
-    sessionExercises.value.push({
-      exercise,
-      exerciseNumber: sessionExercises.value.length,
-      sets: [],
-      isSaved: false
-    })
+    sessionStore.addExercise(exercise)
   }
 
   if (exerciseSelectorMode.value === 'replace' && replaceTargetIndex.value !== null) {
@@ -358,8 +432,8 @@ function handleExerciseSelected(exerciseId: string) {
 }
 
 async function replaceExercise(index: number, newExercise: Exercise) {
-  const exData = sessionExercises.value[index]
-  exData.exercise = newExercise
+  sessionStore.replaceExercise(index, newExercise)
+  const exData = sessionStore.sessionExercises[index]
   if (exData.isSaved) await saveExercise(index)
 }
 
@@ -367,7 +441,7 @@ async function deleteExercise(index: number) {
   // close any open menu immediately
   openMenuIndex.value = null
 
-  const exData = sessionExercises.value[index]
+  const exData = sessionStore.sessionExercises[index]
 
   const confirmed = confirm(
     exData.sets.length > 0
@@ -380,7 +454,7 @@ async function deleteExercise(index: number) {
   if (
     exData.isSaved &&
     exData.sessionExerciseId &&
-    currentSession.value
+    sessionStore.activeSession
   ) {
     try {
       await api.sessions.deleteSessionExercise(exData.sessionExerciseId)
@@ -392,10 +466,7 @@ async function deleteExercise(index: number) {
   }
 
   // ALWAYS delete locally after API (or immediately if unsaved)
-  sessionExercises.value.splice(index, 1)
-  sessionExercises.value.forEach((e, i) => {
-    e.exerciseNumber = i
-  })
+  sessionStore.deleteExercise(index)
 }
 
 // Overflow (floating) menu controls
@@ -498,16 +569,14 @@ async function loadSession(sessionId: string) {
   try {
     const sessionRes = await api.sessions.getSessionById(sessionId)
     if (!sessionRes.isSuccess || !sessionRes.data) throw new Error('Failed to load session')
-    currentSession.value = sessionRes.data
 
-    const workoutRes = await api.workouts.getWorkoutById(currentSession.value!.workoutId)
+    const workoutRes = await api.workouts.getWorkoutById(sessionRes.data.workoutId)
     if (!workoutRes.isSuccess || !workoutRes.data) throw new Error('Failed to load workout details')
-    currentWorkout.value = workoutRes.data
 
     const sessExRes = await api.sessions.getSessionExercises(sessionId)
     if (!sessExRes.isSuccess || !sessExRes.data) throw new Error('Failed to load session exercises')
 
-    sessionExercises.value = sessExRes.data
+    const mapped = sessExRes.data
       .sort((a, b) => a.exerciseNumber - b.exerciseNumber)
       .map(se => ({
         exercise: exerciseLookup.value.get(se.exerciseId) || { id: se.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
@@ -517,12 +586,15 @@ async function loadSession(sessionId: string) {
         sessionExerciseId: se.id
       } as SessionExerciseData))
 
-    // fetch sets for each saved exercise in parallel
-    await Promise.all(sessionExercises.value.map(async (exData) => {
+    // populate store first (sets fetched below)
+    sessionStore.setActiveSession(sessionRes.data, workoutRes.data, mapped)
+
+    // fetch sets for each saved exercise in parallel and update store
+    await Promise.all(sessionStore.sessionExercises.map(async (exData, i) => {
       const seId = exData.sessionExerciseId!
       const setsRes = await api.sessions.getSets(seId)
       if (setsRes.isSuccess && setsRes.data) {
-        exData.sets = setsRes.data.map(s => ({
+        const mappedSets = setsRes.data.map(s => ({
           id: s.id,
           tempId: s.id,
           setNumber: s.setNumber,
@@ -531,6 +603,7 @@ async function loadSession(sessionId: string) {
           warmUp: s.warmUp,
           completed: true
         }))
+        sessionStore.markExerciseSaved(i, seId, mappedSets)
       }
     }))
 
@@ -545,28 +618,16 @@ async function loadSession(sessionId: string) {
 }
 
 function addSet(exerciseIndex: number) {
-  const exercise = sessionExercises.value[exerciseIndex]
-  const newSet: SetData = {
-    tempId: `temp-${Date.now()}-${Math.random()}`,
-    // use 0-indexed setNumber
-    setNumber: exercise.sets.length,
-    weight: 0,
-    reps: 0,
-    warmUp: false,
-    completed: false
-  }
-  exercise.sets.push(newSet)
+  sessionStore.addSet(exerciseIndex)
 }
 
 function removeSet(exerciseIndex: number, setIndex: number) {
-  const exercise = sessionExercises.value[exerciseIndex]
-  exercise.sets.splice(setIndex, 1)
-  exercise.sets.forEach((s, i) => (s.setNumber = i))
+  sessionStore.removeSet(exerciseIndex, setIndex)
 }
 
 async function saveExercise(exerciseIndex: number) {
-  const exData = sessionExercises.value[exerciseIndex]
-  if (!currentSession.value) {
+  const exData = sessionStore.sessionExercises[exerciseIndex]
+  if (!sessionStore.activeSession) {
     error.value = 'No active session'
     return
   }
@@ -582,17 +643,20 @@ async function saveExercise(exerciseIndex: number) {
     if (exData.isSaved && exData.sessionExerciseId) {
       const res = await api.sessions.updateSessionExercise(exData.sessionExerciseId, payload)      
       if (res.isSuccess) {
+        // fetch sets and update store
         await updateExerciseData(exerciseIndex, res.data!)
         console.log('Exercise updated')
       }
     } else {
-      const res = await api.sessions.createSessionExercise(currentSession.value.id, payload)
+      const res = await api.sessions.createSessionExercise(sessionStore.activeSession.id, payload)
       if (!res.isSuccess || !res.data) throw new Error('Failed to save exercise')
       await updateExerciseData(exerciseIndex, res.data)
       console.log('Exercise created')
     }
 
-    exData.isSaved = true
+    // mark saved through store API
+    const updated = sessionStore.sessionExercises[exerciseIndex]
+    sessionStore.markExerciseSaved(exerciseIndex, updated.sessionExerciseId, updated.sets)
   } catch (e) {
     error.value = 'Failed to save exercise. Please try again.'
     console.error('saveExercise error:', e)
@@ -602,14 +666,7 @@ async function saveExercise(exerciseIndex: number) {
 }
 
 async function updateExerciseData(exerciseIndex: number,data: SessionExercise) {
-  const exData = sessionExercises.value[exerciseIndex]
-  exData.exercise = exerciseLookup.value.get(data.exerciseId) || exData.exercise
-  exData.exerciseNumber = data.exerciseNumber
-  exData.sessionExerciseId = data.id
-
-  const sets = await api.sessions.getSets(data.id)
-
-  exData.sets = sets.data!.map(s => ({
+  const mappedSets = (await api.sessions.getSets(data.id)).data!.map(s => ({
     id: s.id,
     tempId: s.id,
     setNumber: s.setNumber,
@@ -618,10 +675,25 @@ async function updateExerciseData(exerciseIndex: number,data: SessionExercise) {
     warmUp: s.warmUp,
     completed: true
   }))
+
+  // update exercise info via store so it persists
+  const lookupExercise = exerciseLookup.value.get(data.exerciseId)
+  const updatedEx: SessionExerciseData = {
+    exercise: lookupExercise || { id: data.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
+    exerciseNumber: data.exerciseNumber,
+    sets: mappedSets,
+    isSaved: true,
+    sessionExerciseId: data.id
+  }
+
+  // replace the exercise entry in the store
+  sessionStore.setExercises(
+    sessionStore.sessionExercises.map((e, i) => (i === exerciseIndex ? updatedEx : e))
+  )
 }
 
 async function saveExerciseWithSetsRequired(exerciseIndex: number) {
-  const exData = sessionExercises.value[exerciseIndex]
+  const exData = sessionStore.sessionExercises[exerciseIndex]
   if (exData.sets.length === 0) {
     alert('Please add at least one set before saving.')
     return
@@ -635,14 +707,16 @@ function finishSession() {
     alert('Please save all exercises before finishing the session.')
     return
   }
+
+  // clear persisted draft for the active session only
+  const activeId = sessionStore.activeSessionId
+  if (activeId) sessionStore.clearDraft(activeId)
+
   router.push('/stats')
 }
 
-const hasUnsavedData = computed(() => sessionExercises.value.some(ex => ex.sets.length > 0 && !ex.isSaved))
-const allExercisesSaved = computed(() => {
-  const exercisesWithSets = sessionExercises.value.filter(ex => ex.sets.length > 0)
-  return exercisesWithSets.length > 0 && exercisesWithSets.every(ex => ex.isSaved)
-})
+const hasUnsavedData = computed(() => sessionStore.hasUnsavedData)
+const allExercisesSaved = computed(() => sessionStore.allExercisesSaved)
 </script>
 
 <style>
@@ -768,4 +842,9 @@ const allExercisesSaved = computed(() => {
 @keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .save-exercise-btn { width: 100%; margin-top: var(--trk-space-3); } .add-exercise-action .btn-secondary { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
 .session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; }
 .btn-finish { width: 100%; max-width: 400px; margin: 0 auto; display: flex; }
+
+.item-sub {
+  font-size: 0.85rem;
+  color: var(--trk-text-muted);
+}
 </style>

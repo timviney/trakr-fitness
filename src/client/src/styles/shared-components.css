@@ -19,7 +19,7 @@
 .item-badge { font-size: 0.75rem; padding: 2px 8px; background: var(--trk-accent-muted); color: var(--trk-bg); border-radius: 999px; font-weight: 500; }
 
 /* Clickable Item Cards */
-.item-card-clickable { cursor: pointer; transition: background 150ms ease, border-color 150ms ease; }
+.item-card-clickable { cursor: pointer; transition: background 150ms ease, border-color 150ms ease; -webkit-tap-highlight-color: transparent; }
 .item-card-clickable:hover { background: var(--trk-surface-hover); border-color: var(--trk-accent-muted); }
 .item-card-clickable:active { transform: scale(0.98); }
 .item-card-clickable.selected { transform: scale(0.98); background: var(--trk-accent); color: var(--trk-text-dark); }
