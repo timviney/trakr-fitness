@@ -33,21 +33,15 @@
     <table v-else class="trkr-table">
       <thead>
         <tr>
+          <th>Sets</th>
+          <th>Exercise</th>
+          <th>Muscle Group</th>
           <th>Date</th>
           <th>Workout</th>
-          <th>Muscle Group</th>
-          <th>Category</th>
-          <th>Exercise</th>
-          <th>Sets</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(row, ridx) in table.getRowModel().rows" :key="ridx">
-          <td>{{ row.original.date.toLocaleDateString() }}</td>
-          <td>{{ row.original.workoutName }}</td>
-          <td>{{ row.original.muscleGroupName }}</td>
-          <td>{{ row.original.muscleCategoryName }}</td>
-          <td>{{ row.original.exerciseName }}</td>
           <td>
             <div class="sets-row">
               <div v-for="(s, i) in row.original.sets" :key="i" class="set-pill">
@@ -60,6 +54,10 @@
               </div>
             </div>
           </td>
+          <td>{{ row.original.exerciseName }}</td>
+          <td>{{ row.original.muscleGroupName }}</td>
+          <td>{{ row.original.date.toLocaleDateString() }}</td>
+          <td>{{ row.original.workoutName }}</td>
         </tr>
       </tbody>
     </table>
