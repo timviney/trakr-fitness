@@ -15,12 +15,13 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { User, BarChart2, Dumbbell, Play } from 'lucide-vue-next'
+import { User, BarChart2, Dumbbell, Play, Clock } from 'lucide-vue-next'
 
 const route = useRoute()
 
 const navItems = [
   { to: '/stats', label: 'Stats', icon: BarChart2 },
+  { to: '/history', label: 'History', icon: Clock },
   { to: '/exercises', label: 'Exercises', icon: Dumbbell },
   { to: '/session/new', label: 'Record', icon: Play },
   { to: '/profile', label: 'Profile', icon: User },

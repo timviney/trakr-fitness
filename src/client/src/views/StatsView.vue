@@ -5,25 +5,34 @@
         <h1 class="view-title">Your Stats</h1>
       </header>
 
-      <div class="empty-state">
-        <BarChart2 class="empty-icon" />
-        <h2 class="empty-title">No workout data yet</h2>
-        <p class="empty-description">
-          Start by adding exercises in the
-          <router-link to="/exercises" class="link">Exercises</router-link>
-          tab, or record your first workout session.
-        </p>
-        <router-link to="/session/new" class="btn btn-primary">
-          Record a Session
-        </router-link>
+      <div class="stats-landing">
+        <Loader :loading="historyLoading" />
+
+        <div v-if="!historyLoading">
+          <p class="muted">Session history is fetched each time you enter this view. Charts will be added later.</p>
+
+          <div class="charts-placeholder">
+            <div class="stat-card">Total sessions: <strong>{{ sessionHistory.length }}</strong></div>
+          </div>
+        </div>
       </div>
     </div>
   </AppShell>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { BarChart2 } from 'lucide-vue-next'
 import AppShell from '../components/general/AppShell.vue'
+import Loader from '../components/general/Loader.vue'
+import { useStatsStore } from '../stores/stats'
+
+const statsStore = useStatsStore()
+const { fetchSessionHistory, sessionHistory, historyLoading } = statsStore
+
+onMounted(() => {
+  fetchSessionHistory()
+})
 </script>
 
 <style scoped>
@@ -84,4 +93,10 @@ import AppShell from '../components/general/AppShell.vue'
 .link:hover {
   text-decoration: underline;
 }
+
+.muted { color: var(--trk-text-muted); margin-bottom: var(--trk-space-4); }
+.charts-placeholder { display: flex; gap: var(--trk-space-4); }
+.stat-card { padding: var(--trk-space-3); background: var(--trk-surface); border-radius: var(--trk-radius-md); border: 1px solid var(--trk-surface-border); }
+.stats-landing { padding: var(--trk-space-4); }
+
 </style>

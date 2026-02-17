@@ -23,7 +23,35 @@ export type Set = {
   reps: number
   warmUp: boolean
 }
+// History response types
+export type SessionSetResponse = {
+  id: string
+  setNumber: number
+  weight: number
+  reps: number
+  warmUp: boolean
+}
 
+export type SessionExerciseResponse = {
+  id: string
+  exerciseNumber: number
+  exerciseId: string
+  exerciseName: string
+  sets: SessionSetResponse[]
+}
+
+export type SessionWorkoutSummary = {
+  id: string
+  name: string
+}
+
+export type SessionHistoryItemResponse = {
+  id: string
+  workoutId: string
+  createdAt: string
+  workout?: SessionWorkoutSummary | null
+  sessionExercises: SessionExerciseResponse[]
+}
 // Request types
 export type SessionExerciseRequest = {
   exerciseId: string
@@ -51,6 +79,11 @@ export class SessionsApi {
   // Session endpoints
   async getSessions(workoutId: string): Promise<ApiResponse<Session[]>> {
     return await this.client.get<Session[]>(`/workouts/${workoutId}/sessions/`)
+  }
+
+  // history endpoint (backend: GET /sessions/history). Returns global history; server accepts optional ?workoutId= for filtering.
+  async getSessionsHistory(): Promise<ApiResponse<SessionHistoryItemResponse[]>> {
+    return await this.client.get<SessionHistoryItemResponse[]>(`/sessions/history`)
   }
 
   async createSession(workoutId: string): Promise<ApiResponse<Session>> {
