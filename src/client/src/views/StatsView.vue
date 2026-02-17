@@ -22,13 +22,14 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { BarChart2 } from 'lucide-vue-next'
 import AppShell from '../components/general/AppShell.vue'
 import Loader from '../components/general/Loader.vue'
 import { useStatsStore } from '../stores/stats'
+import { storeToRefs } from 'pinia'
 
 const statsStore = useStatsStore()
-const { fetchSessionHistory, sessionHistory, historyLoading } = statsStore
+const { fetchSessionHistory } = statsStore
+const { sessionHistory, historyLoading } = storeToRefs(statsStore)
 
 onMounted(() => {
   fetchSessionHistory()

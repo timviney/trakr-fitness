@@ -5,7 +5,7 @@ import type { SessionHistoryItemResponse } from '../api/modules/sessions'
 
 export const useStatsStore = defineStore('stats', () => {
   const sessionHistory = ref<SessionHistoryItemResponse[]>([])
-  const historyLoading = ref(false)
+  const historyLoading = ref<boolean>(false)
   const historyError = ref<string | null>(null)
 
   async function fetchSessionHistory() {
