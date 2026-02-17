@@ -18,7 +18,7 @@
                   </button>
                 </div>
 
-                <SegmentToggle v-model="selectedMetric" :optionsLabels="metricOptions" />
+                <SegmentToggle class="segment-toggle--full" v-model="selectedMetric" :optionsLabels="metricOptions" />
               </div>
 
               <div class="chart-container full-bleed">
@@ -166,9 +166,11 @@ onMounted(() => {
 .stats-landing { padding: var(--trk-space-3); }
 
 /* controls stacked on mobile, row on wider screens */
-.stats-controls { display: flex; flex-direction: column; align-items: stretch; gap: var(--trk-space-3); }
+.stats-controls { display: flex; flex-direction: column; align-items: stretch; gap: var(--trk-space-3); flex-wrap: wrap; }
 @media (min-width: 720px) {
-  .stats-controls { flex-direction: row; align-items: center; justify-content: space-between; }
+  .stats-controls { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .stats-controls .segment-toggle--full { flex: 1 1 100%; min-width: 0; order: 2; }
+  .stats-controls .exercise-select { order: 1; }
 }
 
 .exercise-select { display: flex; gap: var(--trk-space-2); align-items: center; }

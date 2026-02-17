@@ -16,6 +16,8 @@ export function transformToFlatRows(
   const muscleCategoriesById = new Map(collection.muscleCategories.map(c => [c.id, c]))
   const workoutsById = new Map(collection.workouts.map(w => [w.id, w]))
 
+  const excludeWarmups = true
+
   const flatRows: FlatExerciseRow[] = []
 
   sessions.forEach(session => {
@@ -34,7 +36,7 @@ export function transformToFlatRows(
         exerciseName: se.exerciseName ?? exerciseMeta?.name ?? 'Unknown Exercise',
         muscleGroupName: muscleGroup?.name ?? 'Other',
         muscleCategoryName: muscleCategory?.name ?? 'Other',
-        sets: se.sets.map(s => ({ weight: s.weight, reps: s.reps }))
+        sets: (excludeWarmups? se.sets.filter(s => !s.warmUp) : se.sets).map(s => ({ weight: s.weight, reps: s.reps }))
       })
     })
   })
