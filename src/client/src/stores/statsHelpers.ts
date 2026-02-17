@@ -39,5 +39,7 @@ export function transformToFlatRows(
     })
   })
 
+  flatRows.sort((a, b) => b.date.getTime() - a.date.getTime())
+
   return flatRows
 }
