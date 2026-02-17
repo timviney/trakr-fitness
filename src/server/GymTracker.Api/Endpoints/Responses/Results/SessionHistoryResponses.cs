@@ -32,4 +32,3 @@ public record SessionHistoryItemResponse
     public SessionWorkoutSummary? Workout { get; init; }
     public IEnumerable<SessionExerciseResponse> SessionExercises { get; init; } = [];
 }
-

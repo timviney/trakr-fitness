@@ -31,4 +31,15 @@ export const getStatus = (s: SessionExerciseData): SessionStatus =>
       ? SessionStatus.InProgress
       : SessionStatus.NotStarted
 
-
+export type FlatExerciseRow = {
+  sessionId: string;
+  date: Date;
+  workoutName: string;
+  muscleGroupName: string;
+  muscleCategoryName: string;
+  exerciseName: string;
+  sets: {
+    weight: number;
+    reps: number;
+  }[];
+}
