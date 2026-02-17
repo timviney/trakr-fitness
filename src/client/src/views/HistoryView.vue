@@ -63,7 +63,7 @@
       </div>
 
       <div v-else>
-        <SetsTable :history="flatRows" />
+        <SetsTable :history="flatRows" :exercise-collection="exerciseCollection"/>
       </div>
     </div>
   </AppShell>

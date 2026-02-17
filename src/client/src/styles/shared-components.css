@@ -63,4 +63,4 @@
 .modal-title { font-family: var(--trk-font-heading); font-size: 1.5rem; color: var(--trk-text); margin: 0 0 var(--trk-space-4); }
 .modal-actions { display: flex; gap: var(--trk-space-3); margin-top: var(--trk-space-4); }
 .modal-actions .btn { flex: 1; }
-.btn-icon { width: 18px; height: 18px; margin-right: 6px; }
+.btn-icon { width: 18px; height: 18px; }

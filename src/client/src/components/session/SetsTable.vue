@@ -11,16 +11,20 @@
           />
         </div>
 
-        <div class="pill-scroller">
-          <button
-            v-for="group in availableMuscleGroups"
-            :key="group"
-            @click="selectedMuscleGroup = selectedMuscleGroup === group ? null : group"
-            :class="['filter-pill', { active: selectedMuscleGroup === group }]"
-          >
-            {{ group }}
+        <div class="filter-actions">
+          <button type="button" class="btn" @click="showFilterOverlay = !showFilterOverlay" :aria-pressed="showFilterOverlay" aria-label="Open filters">
+            <FunnelPlus class="btn-icon" />
           </button>
         </div>
+
+        <ExerciseSelector
+          v-if="showFilterOverlay && exerciseCollection"
+          v-model="exerciseSelection"
+          :exerciseCollection="exerciseCollection"
+          :allow-subcategory-selection="true"
+          :keep-history="true"
+          @cancel="showFilterOverlay = false"
+        />
       </div>
     </header>
 
@@ -33,8 +37,8 @@
     <table v-else class="trkr-table">
       <thead>
         <tr>
-          <th>Sets</th>
           <th>Exercise</th>
+          <th>Sets</th>
           <th>Muscle Group</th>
           <th>Date</th>
           <th>Workout</th>
@@ -42,10 +46,10 @@
       </thead>
       <tbody>
         <tr v-for="(row, ridx) in table.getRowModel().rows" :key="ridx">
+          <td>{{ row.original.exerciseName }}</td>
           <td>
             <div class="sets-row">
               <div v-for="(s, i) in row.original.sets" :key="i" class="set-pill">
-                <span class="set-count">{{ i + 1 }}</span>
                 <div class="set-data">
                   <span class="val">{{ s.weight }}</span>
                   <span class="sep">×</span>
@@ -54,7 +58,6 @@
               </div>
             </div>
           </td>
-          <td>{{ row.original.exerciseName }}</td>
           <td>{{ row.original.muscleGroupName }}</td>
           <td>{{ row.original.date.toLocaleDateString() }}</td>
           <td>{{ row.original.workoutName }}</td>
@@ -65,8 +68,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { FlatExerciseRow } from '../../types/Session'
+import ExerciseSelector from '../exercises/ExerciseSelector.vue'
+import { FunnelPlus } from 'lucide-vue-next'
+import type { ExerciseCollection } from '../../types/ExerciseCollection' 
 
 // TanStack Table imports
 import { createColumnHelper, getCoreRowModel } from '@tanstack/table-core'
@@ -74,27 +80,50 @@ import { useVueTable } from '@tanstack/vue-table'
 
 const props = defineProps<{
   history: FlatExerciseRow[]
+  exerciseCollection: ExerciseCollection
 }>()
 
 const searchQuery = ref('')
 const selectedMuscleGroup = ref<string | null>(null)
+const exerciseSelection = ref<{ categoryId?: string; groupId?: string; exerciseId?: string } | null>(null)
+const showFilterOverlay = ref(false)
 
-const availableMuscleGroups = computed(() => {
-  const groups = new Set(props.history.map(x => x.muscleGroupName))
-  return Array.from(groups).sort()
+watch(exerciseSelection, (val) => {
+  if (val?.groupId && props.exerciseCollection) {
+    const g = props.exerciseCollection.muscleGroups.find(x => x.id === val.groupId)
+    selectedMuscleGroup.value = g ? g.name : null
+  } else {
+    selectedMuscleGroup.value = null
+  }
 })
 
 const filteredHistory = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
   return props.history.filter(item => {
-    const matchesSearch = !searchQuery.value ||
-      item.exerciseName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      item.workoutName.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesGroup = !selectedMuscleGroup.value || item.muscleGroupName === selectedMuscleGroup.value
-    return matchesSearch && matchesGroup
+    const matchesSearch = !q ||
+      item.exerciseName.toLowerCase().includes(q) ||
+      item.workoutName.toLowerCase().includes(q)
+
+    let matchesFilter = true
+
+    if (exerciseSelection.value?.exerciseId) {
+      const ex = props.exerciseCollection?.exercises.find(e => e.id === exerciseSelection.value!.exerciseId)
+      matchesFilter = ex ? item.exerciseName === ex.name : false
+    } else if (exerciseSelection.value?.groupId) {
+      const group = props.exerciseCollection?.muscleGroups.find(g => g.id === exerciseSelection.value!.groupId)
+      matchesFilter = group ? item.muscleGroupName === group.name : false
+    } else if (exerciseSelection.value?.categoryId) {
+      const cat = props.exerciseCollection?.muscleCategories.find(c => c.id === exerciseSelection.value!.categoryId)
+      matchesFilter = cat ? item.muscleCategoryName === cat.name : false
+    } else {
+      matchesFilter = !selectedMuscleGroup.value || item.muscleGroupName === selectedMuscleGroup.value
+    }
+
+    return matchesSearch && matchesFilter
   })
 })
 
-// Define minimal columns (we'll render rows using row.original for simplicity)
+// Define minimal columns 
 const columnHelper = createColumnHelper<FlatExerciseRow>()
 const columns = [
   columnHelper.accessor('date', { header: 'Date' }),
@@ -113,23 +142,24 @@ const table = useVueTable({
 </script>
 
 <style scoped>
-/* Reuse existing list/table styles */
 .trkr-table { width: 100%; border-collapse: collapse; background: var(--trk-surface); border-radius: var(--trk-radius-md); overflow: hidden; }
-.trkr-table thead th { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--trk-surface-border); font-weight: 700; font-size: 0.85rem; }
-.trkr-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px dashed var(--trk-surface-border); vertical-align: top; }
+.trkr-table thead th { text-align: left; padding: var(--trk-space-2) var(--trk-space-3); border-bottom: 1px solid var(--trk-surface-border); font-weight: 700; font-size: var(--trk-font-sm); }
+.trkr-table tbody td { padding: calc(var(--trk-space-2) + 0.1rem) var(--trk-space-3); border-bottom: 1px dashed var(--trk-surface-border); vertical-align: top; }
 
 .history-header { padding-bottom: var(--trk-space-4); }
 .filter-section { display: flex; flex-direction: column; gap: var(--trk-space-2); }
-.search-container { margin-bottom: 0; }
+.search-container { margin-bottom: 0; } 
+.filter-actions { display: flex; gap: var(--trk-space-2); }
+.filter-actions .btn { background: var(--trk-accent); padding: 0.3rem 0.45rem; }
+.btn-icon {  color: var(--trk-text-dark);  width: 18px; height: 18px; }
 .pill-scroller { display: flex; gap: var(--trk-space-2); overflow-x: auto; padding: var(--trk-space-2) 0; }
-.filter-pill { white-space: nowrap; padding: 0.35rem 0.65rem; border-radius: 999px; background: var(--trk-surface-inner); border: 1px solid var(--trk-surface-border); color: var(--trk-text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.filter-pill { white-space: nowrap; padding: 0.35rem 0.65rem; border-radius: 999px; background: var(--trk-surface-inner); border: 1px solid var(--trk-surface-border); color: var(--trk-text-muted); font-size: var(--trk-font-sm); font-weight: 600; cursor: pointer; }
 .filter-pill.active { background: var(--trk-accent-ring); border-color: var(--trk-accent); color: var(--trk-accent); }
 
-/* reuse Set pill styles from history view */
 .sets-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .set-pill { display: flex; align-items: center; background: var(--trk-surface-inner); border: 1px solid var(--trk-surface-border); border-radius: var(--trk-radius-md); overflow: hidden; }
-.set-count { background: var(--trk-surface-border); color: var(--trk-text-muted); font-size: 0.65rem; font-weight: 800; padding: 0.35rem 0.4rem; min-width: 20px; text-align: center; }
+.set-count { background: var(--trk-surface-border); color: var(--trk-text-muted); font-size: var(--trk-font-xxs); font-weight: 800; padding: 0.35rem 0.4rem; min-width: 20px; text-align: center; }
 .set-data { padding: 0.25rem 0.5rem; display: flex; align-items: baseline; gap: 4px; }
-.val { font-weight: 700; font-size: 0.95rem; color: var(--trk-text); }
-.sep { color: var(--trk-accent-muted); font-size: 0.8rem; margin: 0 4px; }
+.val { font-weight: 700; font-size: var(--trk-font-compact); color: var(--trk-text); }
+.sep { color: var(--trk-accent-muted); font-size: var(--trk-font-xs); margin: 0 4px; }
 </style>

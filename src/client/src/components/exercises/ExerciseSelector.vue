@@ -1,5 +1,5 @@
 <template>
-  <div class="add-candidates-overlay">
+  <div :class="['add-candidates-overlay']">
       <div class="add-candidates-panel" @click.stop>
           <div class="add-candidates-header">
               <strong>Select exercise</strong>
@@ -19,11 +19,15 @@
                   </ul>
               </div>
           </div>
-          <div class="add-candidates-footer">
+          <div v-if="!props.allowSubcategorySelection" class="add-candidates-footer">
               <button type="button" class="btn btn-secondary"
                   @click="cancelAdd">Cancel</button>
               <button type="button" class="btn btn-primary" @click="addExercise"
-                  :disabled="!canAdd">Add</button>
+                  :disabled="!canAdd">Select</button>
+          </div>
+          <div v-else class="add-candidates-footer">
+              <button type="button" class="btn btn-secondary"
+                  @click="cancelAdd">Ok</button>
           </div>
       </div>
   </div>
@@ -35,36 +39,79 @@ import { Exercise } from '../../api/modules/exercises'
 import { ExerciseCollection } from '../../types/ExerciseCollection';
 import MuscleGroupSelector from './MuscleGroupSelector.vue'
 
-const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
+const props = defineProps<{
+    exerciseCollection: ExerciseCollection; 
+    modelValue?: { categoryId?: string; groupId?: string; exerciseId?: string } | null;
+    allowSubcategorySelection?: boolean;
+    keepHistory?: boolean;
+}>()
 const emit = defineEmits<{
     (e: 'add', exerciseId: string): void
     (e: 'cancel'): void
+    (e: 'update:modelValue', value: { categoryId?: string; groupId?: string; exerciseId?: string } | null): void
 }>()
 
 // Add- UI state
-const muscleSelection = ref({ categoryId: '', groupId: '' })
-const selectedNewExerciseId = ref('')
+const muscleSelection = ref({ categoryId: props.modelValue?.categoryId ?? '', groupId: props.modelValue?.groupId ?? '' })
+const selectedNewExerciseId = ref(props.modelValue?.exerciseId ?? '')
 
 const addCandidates = computed(() => {
     if (!muscleSelection.value.groupId) return [] as Exercise[]
     return props.exerciseCollection.exercises.filter((e) => e.muscleGroupId === muscleSelection.value.groupId)
 })
 
-watch(muscleSelection, () => {
+// keep internal state in sync with external v-model and emit changes when used as a filter (modelValue bound)
+watch(() => props.modelValue, (v) => {
+    // prefer explicit category/group from modelValue; if missing, derive from exerciseId using the collection
+    let newCategory = v?.categoryId ?? ''
+    let newGroup = v?.groupId ?? ''
+
+    const newMuscle = { categoryId: newCategory, groupId: newGroup }
+    // avoid recreating the same object (prevents retriggering the other watcher)
+    if (newMuscle.categoryId !== muscleSelection.value.categoryId || newMuscle.groupId !== muscleSelection.value.groupId) {
+        muscleSelection.value = newMuscle
+    }
+
+    const newSelectedId = v?.exerciseId ?? ''
+    if (newSelectedId !== selectedNewExerciseId.value) {
+        selectedNewExerciseId.value = newSelectedId
+    }
+})
+
+watch(muscleSelection, (val) => {
+    // if parent already has the same values, do nothing (prevents echo loop)
+    const parentModel = props.modelValue ?? null
+    const parentCategory = parentModel?.categoryId ?? ''
+    const parentGroup = parentModel?.groupId ?? ''
+    if (val.categoryId === parentCategory && val.groupId === parentGroup) return
+
     selectedNewExerciseId.value = ''
+    if (props.modelValue !== undefined) {
+        // if nothing selected, emit null so parent clears filter
+        if (!val.categoryId && !val.groupId) {
+            emit('update:modelValue', null)
+        } else {
+            emit('update:modelValue', { categoryId: val.categoryId || undefined, groupId: val.groupId || undefined, exerciseId: undefined })
+        }
+    }
 })
 
 const canAdd = computed(() => {
-    return !!selectedNewExerciseId.value
+    return props.allowSubcategorySelection || !!selectedNewExerciseId.value
 })
 
 function selectCandidate(id: string) {
     selectedNewExerciseId.value = id
-}
+    if (props.modelValue !== undefined) {
+        emit('update:modelValue', { categoryId: muscleSelection.value.categoryId || undefined, groupId: muscleSelection.value.groupId || undefined, exerciseId: id })
+    }
+} 
 
 function cancelAdd() {
-    selectedNewExerciseId.value = ''
-    muscleSelection.value = { categoryId: '', groupId: '' }
+    if (!props.keepHistory) {
+        selectedNewExerciseId.value = ''
+        muscleSelection.value = { categoryId: '', groupId: '' }
+    }
 
     emit('cancel')
 }
@@ -74,8 +121,10 @@ async function addExercise() {
 
     emit('add', selectedNewExerciseId.value)
 
-    selectedNewExerciseId.value = ''
-    muscleSelection.value = { categoryId: '', groupId: '' }
+    if (!props.keepHistory) {
+        selectedNewExerciseId.value = ''
+        muscleSelection.value = { categoryId: '', groupId: '' }
+    }
 }
 
 </script>

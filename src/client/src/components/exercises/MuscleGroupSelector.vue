@@ -72,12 +72,22 @@ const filteredGroupsForSelected = computed(() => {
 
 function selectCategory(c: MuscleCategory) {
   if (disabled) return
-  vModel.value = { categoryId: c.id, groupId: '' }
+  // toggle off if already selected
+  if (vModel.value.categoryId === c.id) {
+    vModel.value = { categoryId: '', groupId: '' }
+  } else {
+    vModel.value = { categoryId: c.id, groupId: '' }
+  }
 }
 function selectGroup(g: MuscleGroup) {
   if (disabled) return
-  vModel.value = { categoryId: vModel.value.categoryId, groupId: g.id }
-}
+  // toggle off if already selected
+  if (vModel.value.groupId === g.id) {
+    vModel.value = { categoryId: vModel.value.categoryId, groupId: '' }
+  } else {
+    vModel.value = { categoryId: vModel.value.categoryId, groupId: g.id }
+  }
+} 
 
 </script>
 

@@ -31,6 +31,10 @@
   --trk-space-8: 2rem;
   --trk-logo-size: clamp(48px, 8vw, 60px);
   --trk-gap-fluid: clamp(0.625rem, 0.8vw, 0.875rem);
+  --trk-font-compact: 0.90rem;     /* slightly reduced for denser UI */
+  --trk-font-sm: 0.82rem;          /* small UI text */
+  --trk-font-xs: 0.75rem;          /* extra-small */
+  --trk-font-xxs: 0.65rem;         /* micro text (badges, counts) */
   --trk-margin-fluid: clamp(1.25rem, 2.5vw, 1.75rem);
 }
 
