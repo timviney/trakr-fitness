@@ -24,17 +24,36 @@ let chart: Highcharts.Chart | null = null
 function createChart() {
   if (!chartEl.value) return
 
+  // read theme colours from CSS variables so chart matches the app theme
+  const rootStyles = getComputedStyle(document.documentElement)
+  const axisColor = (rootStyles.getPropertyValue('--trk-text-muted') || '#e5e7eb').trim()
+  const gridColor = (rootStyles.getPropertyValue('--trk-surface-border') || '#9ca3af').trim()
+  const accentColor = (rootStyles.getPropertyValue('--trk-accent') || '#facc15').trim()
+
   chart = Highcharts.chart(chartEl.value, {
     chart: { type: 'line', backgroundColor: 'transparent' },
     title: { text: '' },
-    xAxis: { type: 'datetime' },
-    yAxis: { title: { text: props.metricLabel } },
+    xAxis: {
+      type: 'datetime',
+      labels: { style: { color: axisColor } },
+      lineColor: axisColor,
+      tickColor: axisColor,
+      gridLineColor: gridColor
+    },
+    yAxis: {
+    //   title: { text: props.metricLabel, style: { color: axisColor } },
+      title: { text: '', style: { color: axisColor } },
+      labels: { style: { color: axisColor } },
+      gridLineColor: gridColor,
+      lineColor: axisColor,
+      tickColor: axisColor
+    },
     legend: { enabled: false },
     credits: { enabled: false },
     tooltip: { xDateFormat: '%b %e, %Y', pointFormat: '<b>{point.y}</b>' },
     plotOptions: { line: { marker: { enabled: true, radius: 3 }, turboThreshold: 0 } },
     series: [
-      { name: props.metricLabel, data: props.seriesData ?? [], color: '#facc15' }
+      { name: props.metricLabel, data: props.seriesData ?? [], color: accentColor }
     ]
   })
 }
@@ -50,7 +69,10 @@ watch(() => props.seriesData, (next) => {
 watch(() => props.metricLabel, (label) => {
   if (!chart) return
   chart.yAxis[0].setTitle({ text: label })
-  if (chart.series && chart.series[0]) (chart.series[0] as Highcharts.Series).update({ name: label }, false)
+  if (chart.series && chart.series[0]) {
+    // bypass strict typings for series update (some TS defs require `type` in union options)
+    (chart.series[0] as any).update({ name: label } as any, false)
+  }
   chart.redraw()
 })
 
