@@ -43,3 +43,55 @@ export function transformToFlatRows(
 
   return flatRows
 }
+
+/**
+ * Compute a time-series for a single exercise from session history.
+ * - groups sessions by local calendar date
+ * - excludes warm-up sets by default
+ * - returns Highcharts-ready points: [timestampMs, value]
+ */
+export function computeExerciseTimeSeries(
+  sessions: SessionHistoryItemResponse[],
+  exerciseId: string | undefined | null,
+  metric: 'maxWeight' | 'maxReps' | 'totalReps' | 'totalVolume',
+  excludeWarmups = true
+): Array<[number, number]> {
+  if (!exerciseId) return []
+
+  const byDate = new Map<number, { maxWeight: number; maxReps: number; totalReps: number; totalVolume: number }>()
+
+  sessions.forEach(sess => {
+    const dt = new Date(sess.createdAt)
+    const dayStart = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime()
+
+    sess.sessionExercises.forEach(se => {
+      if (se.exerciseId !== exerciseId) return
+
+      se.sets.forEach(s => {
+        if (excludeWarmups && s.warmUp) return
+
+        const cur = byDate.get(dayStart) ?? { maxWeight: 0, maxReps: 0, totalReps: 0, totalVolume: 0 }
+        if (s.weight > cur.maxWeight) cur.maxWeight = s.weight
+        if (s.reps > cur.maxReps) cur.maxReps = s.reps
+        cur.totalReps += s.reps
+        cur.totalVolume += (s.weight * s.reps)
+        byDate.set(dayStart, cur)
+      })
+    })
+  })
+
+  const points: Array<[number, number]> = Array.from(byDate.entries())
+    .map(([ts, vals]) => {
+      switch (metric) {
+        case 'maxWeight': return [ts, vals.maxWeight]
+        case 'maxReps': return [ts, vals.maxReps]
+        case 'totalReps': return [ts, vals.totalReps]
+        case 'totalVolume': return [ts, vals.totalVolume]
+      }
+    })
+    .filter(Boolean) as Array<[number, number]>
+
+  points.sort((a, b) => a[0] - b[0])
+  return points
+}
+

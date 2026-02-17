@@ -12,6 +12,7 @@
   "dependencies": {
     "@tanstack/table-core": "^8.21.3",
     "@tanstack/vue-table": "^8.21.3",
+    "highcharts": "^12.5.0",
     "lucide-vue-next": "^0.563.0",
     "pinia": "^3.0.4",
     "vue": "^3.3.0",
