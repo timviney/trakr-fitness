@@ -39,6 +39,50 @@ namespace GymTracker.Infrastructure.Repositories
             return DbResult<IEnumerable<Session>>.Ok(sessions);
         }
 
+        public async Task<DbResult<IEnumerable<Session>>> GetSessionHistoryAsync(Guid userId, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 1;
+
+            var query = db.Sessions
+                .Include(s => s.Workout)
+                .Include(s => s.SessionExercises)
+                    .ThenInclude(se => se.Exercise)
+                .Include(s => s.SessionExercises)
+                    .ThenInclude(se => se.Sets)
+                .Where(s => s.Workout.UserId == userId)
+                .OrderByDescending(s => s.CreatedAt);
+
+            var sessions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return DbResult<IEnumerable<Session>>.Ok(sessions);
+        }
+
+        public async Task<DbResult<IEnumerable<Session>>> GetSessionHistoryByWorkoutIdAsync(Guid userId, Guid workoutId, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 1;
+
+            var query = db.Sessions
+                .Include(s => s.Workout)
+                .Include(s => s.SessionExercises)
+                    .ThenInclude(se => se.Exercise)
+                .Include(s => s.SessionExercises)
+                    .ThenInclude(se => se.Sets)
+                .Where(s => s.Workout.UserId == userId && s.WorkoutId == workoutId)
+                .OrderByDescending(s => s.CreatedAt);
+
+            var sessions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return DbResult<IEnumerable<Session>>.Ok(sessions);
+        }
+
         public async Task<DbResult<Session>> AddSessionAsync(Session session)
         {
             await db.Sessions.AddAsync(session);

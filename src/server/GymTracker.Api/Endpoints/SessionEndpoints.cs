@@ -1,5 +1,8 @@
 ﻿using GymTracker.Api.Auth;
+using GymTracker.Api.Constants;
 using GymTracker.Api.Endpoints.Requests;
+using GymTracker.Api.Endpoints.Responses;
+using GymTracker.Api.Endpoints.Responses.Results;
 using GymTracker.Api.Endpoints.Responses.Structure;
 using GymTracker.Core.Entities;
 using GymTracker.Core.Interfaces;
@@ -23,6 +26,9 @@ public static class SessionEndpoints
         var sessions = app.MapGroup("/sessions")
             .WithTags("Sessions")
             .RequireAuthorization();
+
+        // Session history
+        sessions.MapGet("/history", GetSessionHistory);
 
         sessions.MapGet("/{id}", GetSessionById);
         sessions.MapDelete("/{id}", DeleteSession);
@@ -60,6 +66,92 @@ public static class SessionEndpoints
         setsDirect.MapGet("/{id}", GetSetById);
         setsDirect.MapPut("/{id}", UpdateSet);
         setsDirect.MapDelete("/{id}", DeleteSet);
+    }
+
+    private static async Task<IResult> GetSessionHistory(
+        Guid? workoutId,
+        int? page,
+        int? pageSize,
+        [FromServices] IAuthContext authContext,
+        [FromServices] IExerciseLibraryRepository exerciseLibraryRepository,
+        [FromServices] ISessionRepository sessionRepository)
+    {
+        // Default paging: first page, max 100
+        var p = page ?? 1;
+        var ps = pageSize ?? 100;
+        if (p < 1 || ps < 1)
+            return Results.BadRequest();
+
+        ps = Math.Min(ps, SessionHistoryPaging.MaxPageSize);
+
+        if (workoutId.HasValue)
+        {
+            // Verify workout ownership
+            var workoutResult = await exerciseLibraryRepository.GetWorkoutByIdAsync(workoutId.Value);
+            if (!workoutResult.IsSuccess)
+                return Results.NotFound();
+
+            if (workoutResult.Data!.UserId != authContext.UserId)
+                return Results.NotFound();
+
+            var result = await sessionRepository.GetSessionHistoryByWorkoutIdAsync(authContext.UserId, workoutId.Value, p, ps);
+            if (!result.IsSuccess)
+                return result.ToApiResponse().ToOkResult();
+
+            var dto = result.Data!.Select(s => new SessionHistoryItemResponse
+            {
+                Id = s.Id,
+                WorkoutId = s.WorkoutId,
+                CreatedAt = s.CreatedAt,
+                Workout = new SessionWorkoutSummary { Id = s.WorkoutId, Name = s.Workout.Name },
+                SessionExercises = s.SessionExercises.Select(se => new SessionExerciseResponse
+                {
+                    Id = se.Id,
+                    ExerciseNumber = se.ExerciseNumber,
+                    ExerciseId = se.ExerciseId,
+                    ExerciseName = se.Exercise?.Name ?? string.Empty,
+                    Sets = se.Sets.Select(set => new SessionSetResponse
+                    {
+                        Id = set.Id,
+                        SetNumber = set.SetNumber,
+                        Weight = set.Weight,
+                        Reps = set.Reps,
+                        WarmUp = set.WarmUp
+                    })
+                })
+            });
+
+            return ApiResponse<IEnumerable<SessionHistoryItemResponse>>.Success(dto).ToOkResult();
+        }
+
+        var historyResult = await sessionRepository.GetSessionHistoryAsync(authContext.UserId, p, ps);
+        if (!historyResult.IsSuccess)
+            return historyResult.ToApiResponse().ToOkResult();
+
+        var dtos = historyResult.Data!.Select(s => new SessionHistoryItemResponse
+        {
+            Id = s.Id,
+            WorkoutId = s.WorkoutId,
+            CreatedAt = s.CreatedAt,
+            Workout = new SessionWorkoutSummary { Id = s.WorkoutId, Name = s.Workout.Name },
+            SessionExercises = s.SessionExercises.Select(se => new SessionExerciseResponse
+            {
+                Id = se.Id,
+                ExerciseNumber = se.ExerciseNumber,
+                ExerciseId = se.ExerciseId,
+                ExerciseName = se.Exercise.Name,
+                Sets = se.Sets.Select(set => new SessionSetResponse
+                {
+                    Id = set.Id,
+                    SetNumber = set.SetNumber,
+                    Weight = set.Weight,
+                    Reps = set.Reps,
+                    WarmUp = set.WarmUp
+                })
+            })
+        });
+
+        return ApiResponse<IEnumerable<SessionHistoryItemResponse>>.Success(dtos).ToOkResult();
     }
 
     // ===== Sessions =====

@@ -8,6 +8,8 @@ namespace GymTracker.Core.Interfaces
         // Sessions
         Task<DbResult<Session>> GetSessionByIdAsync(Guid id);
         Task<DbResult<IEnumerable<Session>>> GetSessionsByWorkoutIdAsync(Guid workoutId);
+        Task<DbResult<IEnumerable<Session>>> GetSessionHistoryAsync(Guid userId, int page, int pageSize);
+        Task<DbResult<IEnumerable<Session>>> GetSessionHistoryByWorkoutIdAsync(Guid userId, Guid workoutId, int page, int pageSize);
         Task<DbResult<Session>> AddSessionAsync(Session session);
         Task<DbResult<Session>> UpdateSessionAsync(Session session);
         Task<DbResult<Session>> DeleteSessionAsync(Guid id);
