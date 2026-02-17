@@ -68,7 +68,6 @@ watch(() => props.seriesData, (next) => {
 
 watch(() => props.metricLabel, (label) => {
   if (!chart) return
-  chart.yAxis[0].setTitle({ text: label })
   if (chart.series && chart.series[0]) {
     // bypass strict typings for series update (some TS defs require `type` in union options)
     (chart.series[0] as any).update({ name: label } as any, false)

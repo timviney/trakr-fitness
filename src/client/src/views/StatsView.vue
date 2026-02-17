@@ -63,8 +63,8 @@ const exerciseCollection = ref<ExerciseCollection>({ workouts: [], exercises: []
 const exerciseSelection = ref<{ categoryId?: string; groupId?: string; exerciseId?: string } | null>(null)
 const showExerciseSelector = ref(false)
 
-const selectedMetric = ref<'maxWeight' | 'maxReps' | 'totalReps' | 'totalVolume'>('maxWeight')
-const metricOptions = { maxWeight: 'Max Weight', maxReps: 'Max Reps', totalReps: 'Total Reps', totalVolume: 'Total Volume' }
+const selectedMetric = ref<'maxWeight' | 'maxReps' | 'totalReps' | 'totalVolume' | 'oneRepMax'>('maxWeight')
+const metricOptions = { maxWeight: 'Max Weight', maxReps: 'Max Reps', totalReps: 'Total Reps', totalVolume: 'Total Volume', oneRepMax: 'Est. 1RM' }
 
 const selectedExerciseId = computed(() => exerciseSelection.value?.exerciseId ?? null)
 const selectedExerciseName = computed(() => {
@@ -79,6 +79,7 @@ const metricLabel = computed(() => {
     case 'maxReps': return 'Reps'
     case 'totalReps': return 'Reps'
     case 'totalVolume': return 'Volume'
+    case 'oneRepMax': return 'Est. 1RM'
   }
 })
 
