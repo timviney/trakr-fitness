@@ -25,29 +25,21 @@ public static class DbSetup
 
     private static string BuildConnectionString(IConfiguration configuration)
     {
-        // First check for full connection string in environment or config
-        var connectionString = Environment.GetEnvironmentVariable("TRACKR_DB_CONNECTION_STRING");
-
-        if (!string.IsNullOrWhiteSpace(connectionString))
-            return connectionString;
-
-        // Build connection string from PostgresSettings
-        var host = configuration["PostgresSettings:Host"];
-        var port = configuration["PostgresSettings:Port"];
-        var database = configuration["PostgresSettings:Database"];
-        var username = configuration["PostgresSettings:Username"];
-        var password = Environment.GetEnvironmentVariable("TRAKR_POSTGRES_PASSWORD");
-
-        // If any required setting is missing, return null to fall back to in-memory
-        if (string.IsNullOrWhiteSpace(host) ||
-            string.IsNullOrWhiteSpace(database) ||
-            string.IsNullOrWhiteSpace(username) ||
-            string.IsNullOrWhiteSpace(password))
+        switch (configuration["PostgresSettings:Env"])
         {
-            throw new Exception("Missing postgres configuration");
+            case "Production":
+                var connectionString = Environment.GetEnvironmentVariable("TRAKR_DB_CONNECTION_STRING_PROD");
+                return !string.IsNullOrWhiteSpace(connectionString) 
+                    ? connectionString 
+                    : throw new Exception("Environment variable 'TRAKR_DB_CONNECTION_STRING_PROD' is not set.");
+            case "Development":
+                var connectionStringDev = Environment.GetEnvironmentVariable("TRAKR_DB_CONNECTION_STRING_DEV");
+                return !string.IsNullOrWhiteSpace(connectionStringDev) 
+                    ? connectionStringDev 
+                    : throw new Exception("Environment variable 'TRAKR_DB_CONNECTION_STRING_DEV' is not set.");
+            default:
+                throw new Exception("configuration[\"PostgresSettings:Env\"]"+$" must be set to either 'Production' or 'Development'. Current value: '{configuration["PostgresSettings:Env"]}'");
         }
-
-        return $"Host={host};Port={port ?? "5432"};Database={database};Username={username};Password={password}";
     }
 
     public static async Task SeedDataAsync(WebApplication app)

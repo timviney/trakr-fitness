@@ -3,21 +3,15 @@
     Starts a local PostgreSQL Docker container for GymTracker development.
 
 .DESCRIPTION
-    This script starts a PostgreSQL container using Docker. The database password
-    is read from the TRAKR_POSTGRES_PASSWORD environment variable. Optionally, you can
-    provide a password parameter which will update the environment variable.
+    This script starts a PostgreSQL container using Docker. It will set a single environment
+    variable `TRAKR_DB_CONNECTION_STRING_DEV` (User scope) containing the JDBC
+    connection string for development. An optional -Password parameter can be
+    provided to override the database password used for the container (default: "password").
 
 .PARAMETER Password
-    Optional. If provided, sets/updates the TRAKR_POSTGRES_PASSWORD environment variable
-    (User scope) and uses it for the container.
-
-.EXAMPLE
-    .\start-postgres.ps1
-    # Uses existing TRAKR_POSTGRES_PASSWORD environment variable
-
-.EXAMPLE
-    .\start-postgres.ps1 -Password "mySecurePassword123"
-    # Sets TRAKR_POSTGRES_PASSWORD env var and starts container with that password
+    Optional. If provided, uses this as the PostgreSQL password for the container
+    and places it into the generated connection string. The password will NOT be
+    persisted as a separate TRAKR_POSTGRES_PASSWORD environment variable.
 #>
 
 param(
@@ -48,33 +42,14 @@ if (-not $DatabaseName -or -not $Username) {
     exit 1
 }
 
-# Handle password
-if ($Password) {
-    # Set the environment variable for future sessions (User scope)
-    [Environment]::SetEnvironmentVariable("TRAKR_POSTGRES_PASSWORD", $Password, "User")
-    # Also set it for the current session
-    $env:TRAKR_POSTGRES_PASSWORD = $Password
-    Write-Host "TRAKR_POSTGRES_PASSWORD environment variable has been set." -ForegroundColor Green
-}
+# Determine DB password to use for the container (default: 'password')
+$DbPassword = if ($Password) { $Password } else { 'password' }
 
-$DbPassword = $env:TRAKR_POSTGRES_PASSWORD
-
-if (-not $DbPassword) {
-    Write-Error @"
-TRAKR_POSTGRES_PASSWORD environment variable is not set.
-
-To set it, either:
-  1. Run this script with the -Password parameter:
-     .\start-postgres.ps1 -Password "yourSecurePassword"
-
-  2. Or set the environment variable manually:
-     `$env:TRAKR_POSTGRES_PASSWORD = "yourSecurePassword"
-     [Environment]::SetEnvironmentVariable("TRAKR_POSTGRES_PASSWORD", "yourSecurePassword", "User")
-
-The password will be persisted in your user environment variables for future sessions.
-"@
-    exit 1
-}
+# Build the JDBC connection string and set it as a user-scoped environment variable
+$ConnectionString = "jdbc:postgresql://localhost:$PostgresPort/$DatabaseName?user=$Username&password=$DbPassword"
+[Environment]::SetEnvironmentVariable("TRAKR_DB_CONNECTION_STRING_DEV", $ConnectionString, "User")
+$env:TRAKR_DB_CONNECTION_STRING_DEV = $ConnectionString
+Write-Host "TRAKR_DB_CONNECTION_STRING_DEV environment variable has been set to:`n$ConnectionString" -ForegroundColor Green
 
 # Check if Docker is running
 try {
