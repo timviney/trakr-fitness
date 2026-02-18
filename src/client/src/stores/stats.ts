@@ -7,8 +7,15 @@ export const useStatsStore = defineStore('stats', () => {
   const sessionHistory = ref<SessionHistoryItemResponse[]>([])
   const historyLoading = ref<boolean>(false)
   const historyError = ref<string | null>(null)
+  const lastFetchMs = ref<number | null>(null) // cache timestamp (ms)
 
-  async function fetchSessionHistory() {
+  // fetchSessionHistory accepts an optional `force` flag; cached results are returned for 10s
+  async function fetchSessionHistory(force = false) {
+    // return cached data if fresh
+    if (!force && lastFetchMs.value && (Date.now() - lastFetchMs.value) < 10_000 && sessionHistory.value.length > 0) {
+      return { isSuccess: true, data: sessionHistory.value }
+    }
+
     historyLoading.value = true
     historyError.value = null
 
@@ -19,6 +26,7 @@ export const useStatsStore = defineStore('stats', () => {
         sessionHistory.value = []
       } else {
         sessionHistory.value = resp.data ?? []
+        lastFetchMs.value = Date.now()
       }
       return resp
     } catch (err) {

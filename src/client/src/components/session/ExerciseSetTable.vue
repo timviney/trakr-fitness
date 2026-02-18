@@ -5,6 +5,7 @@
       <div class="col-kg">kg</div>
       <div class="col-reps">reps</div>
       <div class="col-done">Done</div>
+      <div class="col-del"></div>
     </div>
 
     <div class="sets-body">
@@ -52,17 +53,19 @@
           >
             <Check v-if="set.completed" :size="20" stroke-width="3" />
           </button>
-          
-          <button class="del-btn" @click="emit('remove-set', idx)">
-            <X :size="14" />
+        </div>
+
+        <div class="col-del">
+          <button class="del-col-btn" @click="confirmRemove(idx)" aria-label="Delete set">
+            <Trash2 :size="20" />
           </button>
         </div>
       </div>
 
       <button class="sets-grid add-set-row" @click="emit('add-set')">
         <div class="col-warmup"><Plus :size="18" /></div>
-        <div class="col-kg col-reps" style="grid-column: span 2;">Add New Set</div>
-        <div class="col-done"></div>
+        <div class="col-kg col-reps col-done" style="grid-column: span 3;">Add New Set</div>
+        <div class="col-del"></div>
       </button>
     </div>
 
@@ -78,7 +81,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import WeightRepPicker from './WeightRepPicker.vue'
-import { Plus, X, Check } from 'lucide-vue-next' 
+import { Plus, Trash2, Check } from 'lucide-vue-next' 
 import type { SetData } from '../../types/Session'
 
 const props = defineProps<{
@@ -138,13 +141,18 @@ function onPickerClose() {
   // reset selection when picker closes
   selectedIndex.value = -1
 }
+
+function confirmRemove(index: number) {
+  if (!confirm('Delete this set?')) return
+  emit('remove-set', index)
+} 
 </script>
 
 <style scoped>
 /* Grid Layout shared by Header, Row, and Add Button */
 .sets-grid {
   display: grid;
-  grid-template-columns: 70px 1fr 1fr 70px; /* Fixed side columns, fluid center */
+   grid-template-columns: 50px 0.9fr 0.3fr 1fr 32px; /* warmup / kg / reps / done / delete */
   align-items: center;
 }
 
@@ -176,13 +184,13 @@ function onPickerClose() {
   background: rgba(26, 58, 46, 0.1);
 }
 
-.col-kg { text-align: center; align-items: center; }
-.col-reps { text-align: center; align-items: center; }
+.col-kg { text-align: center; align-items: center; justify-content: center;}
+.col-reps { text-align: center; align-items: center; justify-content: center; }
 
 /* 1. Ghost Warmup Styles */
 .warmup-btn {
-  width: 40px;
-  height: 40px;
+  width: 26px;
+  height: 26px;
   background: transparent;
   border: none;
   font-family: 'Inter', sans-serif;
@@ -250,13 +258,13 @@ function onPickerClose() {
 }
 
 .done-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: var(--trk-surface-inner);
   border: 2px solid var(--trk-surface-border);
   color: transparent;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .done-btn.is-active {
@@ -265,20 +273,21 @@ function onPickerClose() {
   color: var(--trk-success-text);
 }
 
-.del-btn {
-  position: absolute;
-  top: 0;
-  right: -8px;
-  background: transparent;
+.col-del { display: flex; align-items: center; justify-content: center; }
+.del-col-btn {
+  width: 58px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent; /* boxless */
   border: none;
   color: var(--trk-danger);
-  opacity: 0;
-  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: right;
+  opacity: 0.9;
+  padding-right: 0%;
 }
 
-.set-row:hover .del-btn {
-  opacity: 0.4;
-}
 
 /* 4. Inline Add Set Row */
 .add-set-row {

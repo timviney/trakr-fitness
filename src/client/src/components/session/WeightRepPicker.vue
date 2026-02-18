@@ -9,7 +9,7 @@
 
         <div class="picker-wheels">
           <div class="wheel-col">
-            <div class="wheel-scroll" ref="integerScroll">
+            <div class="wheel-scroll" ref="integerScroll" @scroll="onIntegerScroll">
               <div class="wheel-spacer"></div>
               <button
                 v-for="i in integers"
@@ -25,7 +25,7 @@
           </div>
 
           <div class="wheel-col" v-if="mode === 'weight'">
-            <div class="wheel-scroll">
+            <div class="wheel-scroll" ref="decimalScroll" @scroll="onDecimalScroll">
               <div class="wheel-spacer"></div>
               <button
                 class="wheel-item"
@@ -68,6 +68,9 @@ const integers = ref<number[]>([])
 const tempInt = ref<number>(0)
 const tempDec = ref<number>(0)
 const integerScroll = ref<HTMLElement | null>(null)
+const decimalScroll = ref<HTMLElement | null>(null)
+let intScrollTimeout: number | null = null
+let decScrollTimeout: number | null = null
 
 function syncFromValue(v: number) {
   tempInt.value = Math.floor(v || 0)
@@ -92,27 +95,88 @@ function open(m: 'weight' | 'reps', initial = 0) {
 
 function handleClose() {
   isOpen.value = false
+  // clear any pending timeouts
+  if (intScrollTimeout) window.clearTimeout(intScrollTimeout)
+  if (decScrollTimeout) window.clearTimeout(decScrollTimeout)
   emit('close')
 }
 
 function selectInt(i: number) {
+  // scroll the clicked item into the center and select it
+  const items = integerScroll.value?.querySelectorAll('.wheel-item') ?? []
+  for (const el of Array.from(items) as HTMLElement[]) {
+    const txt = el.textContent?.trim() ?? ''
+    if (Number(txt) === i) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      break
+    }
+  }
   tempInt.value = i
   emitChange()
 }
 
 function selectDec(d: number) {
+  // scroll the clicked decimal item into view (text shows ".0" or ".5")
+  const items = decimalScroll.value?.querySelectorAll('.wheel-item') ?? []
+  for (const el of Array.from(items) as HTMLElement[]) {
+    const txt = (el.textContent?.trim() ?? '')
+    const parsed = Number(txt.replace(/^\./, '0.'))
+    if (parsed === d) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      break
+    }
+  }
   tempDec.value = d
   emitChange()
 }
 
 function emitChange() {
   const finalVal = tempInt.value + (mode.value === 'weight' ? tempDec.value : 0)
-  // emit explicit event for the active field
-  if (mode.value === 'weight') {
-    emit('weight', finalVal)
-  } else {
-    emit('reps', finalVal)
+  if (mode.value === 'weight') emit('weight', finalVal)
+  else emit('reps', finalVal)
+}
+
+function findCenteredValue(container: HTMLElement | null): number | null {
+  if (!container) return null
+  const rect = container.getBoundingClientRect()
+  const centerY = rect.top + rect.height / 2
+  const items = Array.from(container.querySelectorAll('.wheel-item')) as HTMLElement[]
+  if (!items.length) return null
+  let closest: { el: HTMLElement; d: number } | null = null
+  for (const el of items) {
+    const r = el.getBoundingClientRect()
+    const itemCenter = r.top + r.height / 2
+    const d = Math.abs(itemCenter - centerY)
+    if (!closest || d < closest.d) closest = { el, d }
   }
+  if (!closest) return null
+  const txt = closest.el.textContent?.trim() ?? ''
+  if (!txt) return null
+  // parse numeric (handles ".0" and ".5" too)
+  const num = Number(txt.replace(/^\./, '0.'))
+  return Number.isFinite(num) ? num : null
+}
+
+function onIntegerScroll() {
+  if (intScrollTimeout) window.clearTimeout(intScrollTimeout)
+  intScrollTimeout = window.setTimeout(() => {
+    const val = findCenteredValue(integerScroll.value)
+    if (val !== null && tempInt.value !== val) {
+      tempInt.value = val
+      emitChange()
+    }
+  }, 100)
+}
+
+function onDecimalScroll() {
+  if (decScrollTimeout) window.clearTimeout(decScrollTimeout)
+  decScrollTimeout = window.setTimeout(() => {
+    const val = findCenteredValue(decimalScroll.value)
+    if (val !== null && tempDec.value !== val) {
+      tempDec.value = val
+      emitChange()
+    }
+  }, 100)
 }
 
 // expose the open method for parent to call via ref
@@ -213,6 +277,6 @@ defineExpose({ open })
 }
 
 /* Transitions */
-.slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease; }
+.slide-up-enter-active, .slide-up-leave-active { transition: transform 0.1s ease; }
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
 </style>

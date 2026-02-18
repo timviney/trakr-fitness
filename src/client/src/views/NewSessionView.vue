@@ -183,6 +183,7 @@
         <ExerciseSelector
           v-if="showExerciseSelector && exerciseCollection"
           :exercise-collection="exerciseCollection"
+          :modelValue="exerciseSelectorModel"
           @add="handleExerciseSelected"
           @cancel="closeExerciseSelector"
         />
@@ -209,10 +210,12 @@ import type { Exercise } from '../api/modules/exercises'
 import { getStatus, SessionStatus, type SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
 import { useSessionStore } from '../stores/session'
+import { useStatsStore } from '../stores/stats' 
 
 const router = useRouter()
 const route = useRoute()
 const sessionStore = useSessionStore()
+const statsStore = useStatsStore()
 
 const viewState = ref<'selection' | 'session'>('selection')
 const loading = ref(false)
@@ -237,6 +240,17 @@ const exerciseCollection = ref<ExerciseCollection | null>(null)
 const showExerciseSelector = ref(false)
 const exerciseSelectorMode = ref<'add' | 'replace'>('add')
 const replaceTargetIndex = ref<number | null>(null)
+
+const exerciseSelectorModel = computed(() => {
+  if (exerciseSelectorMode.value === 'replace' && replaceTargetIndex.value !== null) {
+    const ex = sessionStore.sessionExercises[replaceTargetIndex.value]?.exercise
+    if (!ex) return null
+    const groupId = ex.muscleGroupId || undefined
+    const categoryId = exerciseCollection.value?.muscleGroups?.find(g => g.id === groupId)?.categoryId || undefined
+    return { categoryId, groupId, exerciseId: ex.id }
+  }
+  return null
+})
 
 // contextual menu state (overflow)
 const openMenuIndex = ref<number | null>(null)
@@ -340,6 +354,9 @@ async function startSession() {
     // write into session store (store persists draft)
     sessionStore.setActiveSession(newSession, workoutRes.data, mapped)
 
+    // prime session history (cached for 10s)
+    await statsStore.fetchSessionHistory().catch(() => {})
+
     viewState.value = 'session'
 
     // update URL from /session/new --> /session/{id}
@@ -354,11 +371,42 @@ async function startSession() {
 }
 
 // --- Exercise modal handlers
-function openExercise(index: number) {
+async function openExercise(index: number) {
   // close any open overflow menu when opening modal
   openMenuIndex.value = null
   selectedExerciseIndex.value = index
   sessionStore.sessionExercises[index].isCompleted = false
+
+  // prefill sets from most recent history (use stats store). only if there are no sets yet.
+  try {
+    await statsStore.fetchSessionHistory().catch(() => {})
+    const exId = sessionStore.sessionExercises[index].exercise.id
+    const sessions = (statsStore.sessionHistory || [])
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+    const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
+    if (recentSession) {
+      const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
+      if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
+        // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
+        const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
+        const mappedSets = sortedSets.map((s, i) => ({
+          tempId: `hist-${Date.now()}-${i}`,
+          setNumber: i,
+          weight: s.weight,
+          reps: s.reps,
+          warmUp: s.warmUp,
+          completed: false
+        }))
+        sessionStore.sessionExercises[index].sets = mappedSets
+        sessionStore.persistActiveDraft()
+      }
+    }
+  } catch (err) {
+    console.warn('prefill history failed', err)
+  }
+
   showExerciseModal.value = true
 }
 
@@ -606,8 +654,19 @@ async function loadSession(sessionId: string) {
 }
 
 function addSet(exerciseIndex: number) {
-  sessionStore.addSet(exerciseIndex)
-}
+  const ex = sessionStore.sessionExercises[exerciseIndex]
+  if (!ex) {
+    sessionStore.addSet(exerciseIndex)
+    return
+  }
+
+  const last = ex.sets && ex.sets.length > 0 ? ex.sets[ex.sets.length - 1] : null
+  if (last) {
+    sessionStore.addSet(exerciseIndex, { weight: last.weight ?? 0, reps: last.reps ?? 0, warmUp: last.warmUp ?? false })
+  } else {
+    sessionStore.addSet(exerciseIndex)
+  }
+} 
 
 function removeSet(exerciseIndex: number, setIndex: number) {
   sessionStore.removeSet(exerciseIndex, setIndex)
