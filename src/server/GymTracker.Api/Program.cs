@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 // Configure JSON options to serialize enums as strings
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -13,15 +13,15 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// DbSetup.SetupDb(builder);
-//
-// AuthSetup.ConfigureAuth(builder);
+DbSetup.SetupDb(builder);
+
+AuthSetup.ConfigureAuth(builder);
 
 ApplicationSetup.ConfigureApplication(builder);
 
-// var runSwagger = builder.Configuration.GetValue<bool>("RunSwagger");
-//
-// if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);
+var runSwagger = builder.Configuration.GetValue<bool>("RunSwagger");
+
+if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
@@ -47,28 +47,25 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-//
-// // Seed default data if enabled
-// await DbSetup.SeedDataAsync(app);
-//
-// app.UseMiddleware<ApiExceptionMiddleware>();
-//
-// if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
-//
-// if (runSwagger) SwaggerSetup.UseSwagger(app);
+
+// Seed default data if enabled
+await DbSetup.SeedDataAsync(app);
+
+app.UseMiddleware<ApiExceptionMiddleware>();
+
+if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+
+if (runSwagger) SwaggerSetup.UseSwagger(app);
 
 app.UseCors("DefaultCors");
-//
-// app.UseAuthentication();
-// app.UseAuthorization();
-//
-// app.MapAuthEndpoints();
-// app.MapExerciseEndpoints();
-// app.MapWorkoutEndpoints();
-// app.MapMuscleEndpoints();
-// app.MapSessionEndpoints();
 
-app.MapGet("/", () => "Hello World I'm alive!");
-app.MapGet("/test", () => "Hello World I'm alive! TEST ENDPOINT");
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapAuthEndpoints();
+app.MapExerciseEndpoints();
+app.MapWorkoutEndpoints();
+app.MapMuscleEndpoints();
+app.MapSessionEndpoints();
 
 app.Run();
