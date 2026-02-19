@@ -68,7 +68,4 @@ app.MapWorkoutEndpoints();
 app.MapMuscleEndpoints();
 app.MapSessionEndpoints();
 
-app.MapGet("/", () => "Hello World!");
-app.MapGet("/test", () => "Hello World! This is a test endpoint.");
-
 app.Run();
