@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/server/**'
 
 jobs:
   deploy:
@@ -26,9 +28,7 @@ jobs:
         run: dotnet restore src/server/GymTracker.Api
 
       - name: Publish
-        run: dotnet publish src/server/GymTracker.Api \
-              -c Release \
-              -o publish
+        run: dotnet publish src/server/GymTracker.Api -c Release -o publish
 
       - name: Zip package
         run: |
