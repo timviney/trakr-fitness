@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'src/server/**'
+      - '.github/workflows/deploy-aws-backend.yml'
 
 jobs:
   deploy:
