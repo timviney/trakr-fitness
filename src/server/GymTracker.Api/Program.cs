@@ -47,26 +47,26 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-//
-// // Seed default data if enabled
-// await DbSetup.SeedDataAsync(app);
-//
-// app.UseMiddleware<ApiExceptionMiddleware>();
-//
-// if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
-//
-// if (runSwagger) SwaggerSetup.UseSwagger(app);
-//
-// app.UseCors("DefaultCors");
-//
-// app.UseAuthentication();
-// app.UseAuthorization();
-//
-// app.MapAuthEndpoints();
-// app.MapExerciseEndpoints();
-// app.MapWorkoutEndpoints();
-// app.MapMuscleEndpoints();
-// app.MapSessionEndpoints();
+
+// Seed default data if enabled
+await DbSetup.SeedDataAsync(app);
+
+app.UseMiddleware<ApiExceptionMiddleware>();
+
+if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+
+if (runSwagger) SwaggerSetup.UseSwagger(app);
+
+app.UseCors("DefaultCors");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapAuthEndpoints();
+app.MapExerciseEndpoints();
+app.MapWorkoutEndpoints();
+app.MapMuscleEndpoints();
+app.MapSessionEndpoints();
 
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/test", () => "Hello World! This is a test endpoint.");
