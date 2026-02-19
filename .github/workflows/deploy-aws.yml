@@ -1,8 +1,10 @@
-name: Build and Deploy to AWS
+name: Build and Deploy FE to AWS
 
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'src/client/**'
   workflow_dispatch:
 
 permissions:
