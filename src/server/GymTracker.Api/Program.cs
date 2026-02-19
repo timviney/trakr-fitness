@@ -13,15 +13,15 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// DbSetup.SetupDb(builder);
-//
-// AuthSetup.ConfigureAuth(builder);
-//
-// ApplicationSetup.ConfigureApplication(builder);
-//
-// var runSwagger = builder.Configuration.GetValue<bool>("RunSwagger");
-//
-// if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);
+DbSetup.SetupDb(builder);
+
+AuthSetup.ConfigureAuth(builder);
+
+ApplicationSetup.ConfigureApplication(builder);
+
+var runSwagger = builder.Configuration.GetValue<bool>("RunSwagger");
+
+if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
