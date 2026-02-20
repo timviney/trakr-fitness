@@ -89,25 +89,25 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:sets', sets: SetData[]): void
+  (e: 'update:set', set: SetData): void
   (e: 'add-set'): void
   (e: 'remove-set', index: number): void
 }>()
 
 // --- State Management ---
 
-function updateSets() {
-  emit('update:sets', [...props.sets])
+function updateSet(index: number) {
+  emit('update:set', props.sets[index])
 }
 
 function toggleWarmup(index: number) {
   props.sets[index].warmUp = !props.sets[index].warmUp
-  updateSets()
+  updateSet(index)
 }
 
 function toggleCompleted(index: number) {
   props.sets[index].completed = !props.sets[index].completed
-  updateSets()
+  updateSet(index)
 }
 
 // --- Picker ---
@@ -128,13 +128,13 @@ function openPicker(index: number, mode: 'weight' | 'reps') {
 function onWeightChange(val: number) {
   if (selectedIndex.value === -1) return
   props.sets[selectedIndex.value].weight = val
-  updateSets()
+  updateSet(selectedIndex.value)
 }
 
 function onRepsChange(val: number) {
   if (selectedIndex.value === -1) return
   props.sets[selectedIndex.value].reps = val
-  updateSets()
+  updateSet(selectedIndex.value)
 }
 
 function onPickerClose() {

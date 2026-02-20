@@ -166,6 +166,7 @@
                 v-model:sets="sessionStore.sessionExercises[selectedExerciseIndex].sets"
                 @add-set="() => addSet(selectedExerciseIndex!)"
                 @remove-set="(setIdx) => removeSet(selectedExerciseIndex!, setIdx)"
+                @update:set="(set) => updateSet(set)"
               />
             </div>
 
@@ -207,7 +208,7 @@ import ExerciseSelector from '../components/exercises/ExerciseSelector.vue'
 import { api } from '../api/api'
 import type { Workout } from '../api/modules/workouts'
 import type { Exercise } from '../api/modules/exercises'
-import { getStatus, SessionStatus, type SessionExerciseData } from '../types/Session'
+import { getStatus, SessionStatus, SetData, type SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
 import { useSessionStore } from '../stores/session'
 import { useStatsStore } from '../stores/stats' 
@@ -377,34 +378,36 @@ async function openExercise(index: number) {
   selectedExerciseIndex.value = index
   sessionStore.sessionExercises[index].isCompleted = false
 
-  // prefill sets from most recent history (use stats store). only if there are no sets yet.
-  try {
-    await statsStore.fetchSessionHistory().catch(() => {})
-    const exId = sessionStore.sessionExercises[index].exercise.id
-    const sessions = (statsStore.sessionHistory || [])
-      .slice()
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
+    // prefill sets from most recent history (use stats store). only if there are no sets yet.
+    try {
+      await statsStore.fetchSessionHistory().catch(() => {})
+      const exId = sessionStore.sessionExercises[index].exercise.id
+      const sessions = (statsStore.sessionHistory || [])
+        .slice()
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-    const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
-    if (recentSession) {
-      const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
-      if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
-        // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
-        const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
-        const mappedSets = sortedSets.map((s, i) => ({
-          tempId: `hist-${Date.now()}-${i}`,
-          setNumber: i,
-          weight: s.weight,
-          reps: s.reps,
-          warmUp: s.warmUp,
-          completed: false
-        }))
-        sessionStore.sessionExercises[index].sets = mappedSets
-        sessionStore.persistActiveDraft()
+      const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
+      if (recentSession) {
+        const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
+        if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
+          // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
+          const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
+          const mappedSets = sortedSets.map((s, i) => ({
+            tempId: `hist-${Date.now()}-${i}`,
+            setNumber: i,
+            weight: s.weight,
+            reps: s.reps,
+            warmUp: s.warmUp,
+            completed: false
+          }))
+          sessionStore.sessionExercises[index].sets = mappedSets
+          sessionStore.persistActiveDraft()
+        }
       }
+    } catch (err) {
+      console.warn('prefill history failed', err)
     }
-  } catch (err) {
-    console.warn('prefill history failed', err)
   }
 
   showExerciseModal.value = true
@@ -670,6 +673,11 @@ function addSet(exerciseIndex: number) {
 
 function removeSet(exerciseIndex: number, setIndex: number) {
   sessionStore.removeSet(exerciseIndex, setIndex)
+}
+
+function updateSet(set: SetData){
+  if (selectedExerciseIndex.value === null) return
+  sessionStore.updateSet(selectedExerciseIndex.value, set.setNumber, set)
 }
 
 async function finishSession() {
