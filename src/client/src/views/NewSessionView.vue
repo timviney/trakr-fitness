@@ -195,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router' 
 import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next' 
 
@@ -269,6 +269,19 @@ function setOverflowButtonRef(el: HTMLElement | null, idx: number) {
 // exercise modal
 const selectedExerciseIndex = ref<number | null>(null)
 const showExerciseModal = ref(false)
+
+// disable scrolling on the <body> whenever any full‑screen overlay is visible
+const anyOverlayOpen = computed(() =>
+  showExerciseModal.value || showStartModal.value || showDraftModal.value || showExerciseSelector.value
+)
+
+watch(anyOverlayOpen, (open) => {
+  if (open) {
+    document.body.classList.add('no-scroll')
+  } else {
+    document.body.classList.remove('no-scroll')
+  }
+})
 
 onMounted(async () => {
   await loadWorkouts()

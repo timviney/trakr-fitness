@@ -44,6 +44,13 @@
 @media (max-width: 520px) {
   .modal-overlay.fullscreen { padding-top: calc(var(--trk-space-4) + env(safe-area-inset-top,0)); padding-bottom: calc(var(--trk-space-4) + env(safe-area-inset-bottom,0)); }
 }
+
+/* When shown on <body>, prevent the page from scrolling. Used by various views when
+   a full-screen overlay/modal is active. */
+.no-scroll {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
 .modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
 .modal.modal-fullscreen {
   /* full-screen / large modal variant used for exercise details */

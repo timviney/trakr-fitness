@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Dumbbell, Plus } from 'lucide-vue-next'
 import DefaultExercisesList from './DefaultExercisesList.vue'
 import { api } from '../../api/api'
@@ -86,6 +86,12 @@ const emit = defineEmits<{
 const showEditingWorkout = ref<boolean>(false)
 const updatingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
+
+// prevent body scroll when the edit/create workout modal is visible
+watch(showEditingWorkout, (open) => {
+    if (open) document.body.classList.add('no-scroll')
+    else document.body.classList.remove('no-scroll')
+})
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
 const editWorkoutDefaultExercises = ref<DefaultExercise[]>([])

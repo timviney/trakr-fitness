@@ -158,6 +158,22 @@ const creating = ref(false)
 const showCreateExercise = ref(false)
 const newExerciseName = ref('')
 
+// Editing state (moved early so overlayOpen can reference it safely)
+const editingExercise = ref<Exercise | null>(null)
+const editName = ref('')
+const editCategoryId = ref('')
+const editGroupId = ref('')
+const editProcessing = ref(false)
+
+const editSelection = ref({ categoryId: '', groupId: '' })
+
+// disable background scroll when either create or edit modal is open
+const overlayOpen = computed(() => showCreateExercise.value || !!editingExercise.value)
+watch(overlayOpen, (open) => {
+    if (open) document.body.classList.add('no-scroll')
+    else document.body.classList.remove('no-scroll')
+})
+
 // Drill-down navigation state
 const selectedCategory = ref<MuscleCategory | null>(null)
 const selectedGroup = ref<MuscleGroup | null>(null)
@@ -194,15 +210,6 @@ function closeExerciseModal() {
     showCreateExercise.value = false
     newExerciseName.value = ''
 }
-
-// Editing state
-const editingExercise = ref<Exercise | null>(null)
-const editName = ref('')
-const editCategoryId = ref('')
-const editGroupId = ref('')
-const editProcessing = ref(false)
-
-const editSelection = ref({ categoryId: '', groupId: '' })
 
 watch(editSelection, (val) => {
     editCategoryId.value = val.categoryId ?? ''
