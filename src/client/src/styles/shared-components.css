@@ -38,14 +38,20 @@
 
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 200; padding: var(--trk-space-4); }
+/* variant used by fullscreen modals (exercise details) where the modal already handles safe-area
+   padding and viewport width; remove horizontal overlay padding so content can span edge-to-edge */
+.modal-overlay.fullscreen { padding: var(--trk-space-4) 0; }
+@media (max-width: 520px) {
+  .modal-overlay.fullscreen { padding-top: calc(var(--trk-space-4) + env(safe-area-inset-top,0)); padding-bottom: calc(var(--trk-space-4) + env(safe-area-inset-bottom,0)); }
+}
 .modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
 .modal.modal-fullscreen {
   /* full-screen / large modal variant used for exercise details */
   max-width: 920px;
-  width: calc(100% - 48px);
-  height: calc(100vh - 48px);
+  width: calc(100vw - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0));
+  height: calc(100svh - 48px);
   border-radius: 12px;
-  padding: var(--trk-space-6);
+  padding: calc(var(--trk-space-6) + env(safe-area-inset-top, 0)) var(--trk-space-6) calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0));
   align-self: center; /* override bottom-sheet placement */
   display: flex;
   flex-direction: column;

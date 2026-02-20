@@ -156,7 +156,7 @@
         </Teleport>
 
         <!-- Exercise detail modal -->
-        <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay">
+        <div v-if="showExerciseModal && selectedExerciseIndex !== null" class="modal-overlay fullscreen">
           <!-- use the fullscreen modal variant so the sets table can expand -->
           <div class="modal modal-fullscreen">
             <h2 class="modal-title">{{ sessionStore.sessionExercises[selectedExerciseIndex].exercise.name }}</h2>

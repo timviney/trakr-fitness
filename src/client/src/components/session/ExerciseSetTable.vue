@@ -160,6 +160,9 @@ function confirmRemove(index: number) {
   width: 100%;
   background: var(--trk-bg);
   -webkit-tap-highlight-color: transparent;
+  /* ensure table content respects mobile safe areas */
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .sets-header {
