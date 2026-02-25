@@ -170,8 +170,11 @@ const editSelection = ref({ categoryId: '', groupId: '' })
 // disable background scroll when either create or edit modal is open
 const overlayOpen = computed(() => showCreateExercise.value || !!editingExercise.value)
 watch(overlayOpen, (open) => {
-    if (open) document.body.classList.add('no-scroll')
-    else document.body.classList.remove('no-scroll')
+    const elems = [document.body, document.documentElement]
+    elems.forEach(el => {
+      if (open) el.classList.add('no-scroll')
+      else el.classList.remove('no-scroll')
+    })
 })
 
 // Drill-down navigation state

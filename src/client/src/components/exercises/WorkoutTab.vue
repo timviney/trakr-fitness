@@ -87,10 +87,13 @@ const showEditingWorkout = ref<boolean>(false)
 const updatingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
 
-// prevent body scroll when the edit/create workout modal is visible
+// prevent background scroll when edit/create workout modal is visible
 watch(showEditingWorkout, (open) => {
-    if (open) document.body.classList.add('no-scroll')
-    else document.body.classList.remove('no-scroll')
+    const elems = [document.body, document.documentElement]
+    elems.forEach(el => {
+      if (open) el.classList.add('no-scroll')
+      else el.classList.remove('no-scroll')
+    })
 })
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)

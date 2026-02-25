@@ -275,12 +275,16 @@ const anyOverlayOpen = computed(() =>
   showExerciseModal.value || showStartModal.value || showDraftModal.value || showExerciseSelector.value
 )
 
+function setScrollLocked(lock: boolean) {
+  const elems = [document.body, document.documentElement]
+  elems.forEach(el => {
+    if (lock) el.classList.add('no-scroll')
+    else el.classList.remove('no-scroll')
+  })
+}
+
 watch(anyOverlayOpen, (open) => {
-  if (open) {
-    document.body.classList.add('no-scroll')
-  } else {
-    document.body.classList.remove('no-scroll')
-  }
+  setScrollLocked(open)
 })
 
 onMounted(async () => {

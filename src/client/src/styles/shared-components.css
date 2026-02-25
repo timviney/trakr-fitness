@@ -45,11 +45,17 @@
   .modal-overlay.fullscreen { padding-top: calc(var(--trk-space-4) + env(safe-area-inset-top,0)); padding-bottom: calc(var(--trk-space-4) + env(safe-area-inset-bottom,0)); }
 }
 
-/* When shown on <body>, prevent the page from scrolling. Used by various views when
-   a full-screen overlay/modal is active. */
-.no-scroll {
+/* When shown on <html> or <body>, prevent the page from scrolling. Used by various views
+   when a full-screen overlay/modal is active. iOS Safari requires the rule on the root
+   element and often needs fixed positioning to stop the rubber-band bounce. */
+html.no-scroll,
+body.no-scroll {
   overflow: hidden !important;
   touch-action: none !important;
+  /* prevent height changes and ensure viewport stays fixed */
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 .modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
 .modal.modal-fullscreen {
