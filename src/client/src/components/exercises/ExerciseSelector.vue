@@ -1,5 +1,7 @@
 <template>
-  <div :class="['add-candidates-overlay']">
+  <!-- render overlay at top-level to avoid stacking issues (especially iOS Safari with sticky elements) -->
+  <teleport to="body">
+    <div :class="['add-candidates-overlay']">
       <div class="add-candidates-panel" @click.stop>
           <div class="add-candidates-header">
               <strong>Select exercise</strong>
@@ -30,7 +32,8 @@
                   @click="cancelAdd">Ok</button>
           </div>
       </div>
-  </div>
+    </div>
+  </teleport>
 </template>
 
 <script setup lang="ts">
@@ -135,14 +138,15 @@ async function addExercise() {
 .add-candidate { padding: 8px 10px; border-radius: 6px; }
 .add-candidate.selected { background: var(--trk-accent); color: var(--trk-bg); border-color: var(--trk-accent); }
 
-.add-candidates-overlay { position: absolute; right: var(--trk-space-4); top: calc(52px); z-index: 300; width: calc(100% - var(--trk-space-8)); max-width: 420px; display: flex; justify-content: center; }
+.add-candidates-overlay { position: absolute; right: var(--trk-space-4); top: calc(52px); z-index: 1000; width: calc(100% - var(--trk-space-8)); max-width: 420px; display: flex; justify-content: center; /* ensure overlay sits above parent modal */ }
 .add-candidates-panel { width: 100%; background: var(--trk-surface); border: 1px solid var(--trk-surface-border); border-radius: var(--trk-radius-md); box-shadow: var(--trk-shadow); padding: var(--trk-space-3); }
 .add-candidates-header { display: flex; justify-content: space-between; align-items: center; gap: var(--trk-space-2); margin-bottom: var(--trk-space-2); }
 .add-candidates-body { display: flex; flex-direction: column; gap: var(--trk-space-2); }
 .add-candidates-footer { display: flex; gap: var(--trk-space-2); margin-top: var(--trk-space-2); }
 
 @media (max-width: 520px) {
-    .add-candidates-overlay { position: fixed; inset: 0; padding: calc(var(--trk-space-4) + env(safe-area-inset-top, 0)) var(--trk-space-4) var(--trk-space-4); background: rgba(0, 0, 0, 0.35); display: flex; align-items: flex-end; justify-content: center; }
+    /* Teleported overlay should sit above everything (including sticky modal actions) */
+    .add-candidates-overlay { position: fixed; inset: 0; padding: calc(var(--trk-space-4) + env(safe-area-inset-top, 0)) var(--trk-space-4) var(--trk-space-4); background: rgba(0, 0, 0, 0.35); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; transform: translateZ(0); }
     .add-candidates-panel { max-width: 100%; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
     .add-candidates .item-list { max-height: 220px; }
 }
