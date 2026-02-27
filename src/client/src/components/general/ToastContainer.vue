@@ -70,6 +70,8 @@ const toasts = computed(() => store.toasts)
   font-size: var(--trk-font-sm);
   cursor: pointer;
   color: inherit;
+  -webkit-tap-highlight-color: transparent; /* disable mobile highlight */
+  touch-action: manipulation;
 }
 .toast-action {
   color: var(--trk-accent);

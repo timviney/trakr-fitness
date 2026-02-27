@@ -172,7 +172,7 @@
 
             <div class="modal-actions">
               <button type="button" class="btn btn-secondary" @click="closeExerciseModal()">Close</button>
-              <button type="button" class="btn btn-primary" @click="(async () => { sessionStore.sessionExercises[selectedExerciseIndex!].isCompleted = true; closeExerciseModal() })()">Complete Exercise</button>
+              <button type="button" class="btn btn-primary" @click="completeExercise()">Complete Exercise</button>
             </div>
           </div>
         </div>
@@ -426,6 +426,20 @@ function closeExerciseModal() {
   selectedExerciseIndex.value = null
   showExerciseModal.value = false
 }
+
+async function completeExercise() {
+  if (sessionStore.sessionExercises[selectedExerciseIndex.value!].sets.length == 0){
+    useToast().warning('Add at least one set before completing the exercise')
+    return
+  }
+  if (!sessionStore.sessionExercises[selectedExerciseIndex.value!].sets.every(s=>s.completed)){
+    useToast().warning('All sets must be completed before completing the exercise')
+    return
+  }
+  sessionStore.sessionExercises[selectedExerciseIndex.value!].isCompleted = true; 
+  closeExerciseModal() 
+}
+
 
 // --- Exercise selector (add / replace)
 function openAddExerciseSelector() {
