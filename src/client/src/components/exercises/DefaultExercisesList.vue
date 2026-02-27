@@ -39,6 +39,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { lockScroll, unlockScroll } from '../../composables/useScrollLock'
 import Draggable from 'vuedraggable'
 import type { DefaultExercise } from '../../api/modules/workouts'
 import { PropType } from 'vue'
@@ -74,6 +75,9 @@ function onDragStart(evt: any) {
   isDragging.value = true
   draggedExercise = localExercises.value[evt.oldIndex]
 
+  // lock body scrolling while dragging on mobile
+  lockScroll()
+
   document.addEventListener('dragover', onPointerMove)
   document.addEventListener('touchmove', onPointerMove, { passive: false })
 }
@@ -81,6 +85,9 @@ function onDragStart(evt: any) {
 function onDragEnd(evt: any) {
   document.removeEventListener('dragover', onPointerMove)
   document.removeEventListener('touchmove', onPointerMove)
+
+  // restore scrolling
+  unlockScroll()
 
   isDragging.value = false
 
@@ -138,6 +145,10 @@ function isInDeleteZone(evt: any) {
 }
 
 function onPointerMove(e: MouseEvent | TouchEvent) {
+  // prevent the page from scrolling while we drag on touch devices
+  if (e.cancelable) {
+    e.preventDefault()
+  }
   isOverDeleteZone.value = isInDeleteZone({ originalEvent: e })
 }
 
@@ -187,6 +198,12 @@ function muscleName(id: string | undefined) {
 }
 .drag-ghost { opacity: 0.45; }
 .drag-chosen { background: var(--trk-accent-muted); }
+
+/* prevent native touch scrolling while interacting with draggable items */
+.default-exercise-item,
+.drag-handle {
+  touch-action: none;
+}
 
 .delete-zone {
   margin-top: 0.75rem;

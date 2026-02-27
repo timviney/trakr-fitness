@@ -196,6 +196,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { useScrollLock } from '../composables/useScrollLock'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router' 
 import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next' 
 
@@ -272,20 +273,10 @@ const showExerciseModal = ref(false)
 
 // disable scrolling on the <body> whenever any full‑screen overlay is visible
 const anyOverlayOpen = computed(() =>
-  showExerciseModal.value || showStartModal.value || showDraftModal.value || showExerciseSelector.value
+  showExerciseModal.value || showStartModal.value || showDraftModal.value || showExerciseSelector.value || openMenuIndex.value !== null
 )
 
-function setScrollLocked(lock: boolean) {
-  const elems = [document.body, document.documentElement]
-  elems.forEach(el => {
-    if (lock) el.classList.add('no-scroll')
-    else el.classList.remove('no-scroll')
-  })
-}
-
-watch(anyOverlayOpen, (open) => {
-  setScrollLocked(open)
-})
+useScrollLock(anyOverlayOpen)
 
 onMounted(async () => {
   await loadWorkouts()

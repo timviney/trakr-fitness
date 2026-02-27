@@ -82,6 +82,7 @@ import { api } from '../api/api'
 import { storeToRefs } from 'pinia'
 import { transformToFlatRows } from '../stores/statsHelpers'
 import type { ExerciseCollection } from '../types/ExerciseCollection'
+import { useScrollLock } from '../composables/useScrollLock'
 
 const router = useRouter()
 const statsStore = useStatsStore()
@@ -117,6 +118,10 @@ function openSessionMenu(idx: number) {
 function closeOverflowMenu() {
   openMenuIndex.value = null
 }
+
+// scroll lock for the overflow menu
+const overflowOpen = computed(() => openMenuIndex.value !== null)
+useScrollLock(overflowOpen)
 
 function editSession() {
   if (openMenuIndex.value === null) return

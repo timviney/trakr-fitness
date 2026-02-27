@@ -139,6 +139,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useScrollLock } from '../../composables/useScrollLock'
 import { Dumbbell, Plus, ChevronRight } from 'lucide-vue-next'
 import MuscleGroupSelector from './MuscleGroupSelector.vue'
 import { api } from '../../api/api'
@@ -169,13 +170,7 @@ const editSelection = ref({ categoryId: '', groupId: '' })
 
 // disable background scroll when either create or edit modal is open
 const overlayOpen = computed(() => showCreateExercise.value || !!editingExercise.value)
-watch(overlayOpen, (open) => {
-    const elems = [document.body, document.documentElement]
-    elems.forEach(el => {
-      if (open) el.classList.add('no-scroll')
-      else el.classList.remove('no-scroll')
-    })
-})
+useScrollLock(overlayOpen)
 
 // Drill-down navigation state
 const selectedCategory = ref<MuscleCategory | null>(null)

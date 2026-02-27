@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useScrollLock } from '../../composables/useScrollLock'
 import { Dumbbell, Plus } from 'lucide-vue-next'
 import DefaultExercisesList from './DefaultExercisesList.vue'
 import { api } from '../../api/api'
@@ -88,13 +89,7 @@ const updatingWorkout = ref<Workout | null>(null)
 const editWorkoutName = ref('')
 
 // prevent background scroll when edit/create workout modal is visible
-watch(showEditingWorkout, (open) => {
-    const elems = [document.body, document.documentElement]
-    elems.forEach(el => {
-      if (open) el.classList.add('no-scroll')
-      else el.classList.remove('no-scroll')
-    })
-})
+useScrollLock(computed(() => showEditingWorkout.value))
 const editWorkoutProcessing = ref(false)
 const showDefaultExercises = ref(false)
 const editWorkoutDefaultExercises = ref<DefaultExercise[]>([])
