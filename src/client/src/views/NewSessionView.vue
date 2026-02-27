@@ -391,39 +391,44 @@ async function openExercise(index: number) {
   selectedExerciseIndex.value = index
   sessionStore.sessionExercises[index].isCompleted = false
 
-  if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
-    // prefill sets from most recent history (use stats store). only if there are no sets yet.
-    try {
-      await statsStore.fetchSessionHistory().catch(() => {})
-      const exId = sessionStore.sessionExercises[index].exercise.id
-      const sessions = (statsStore.sessionHistory || [])
-        .slice()
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-      const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
-      if (recentSession) {
-        const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
-        if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
-          // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
-          const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
-          const mappedSets = sortedSets.map((s, i) => ({
-            tempId: `hist-${Date.now()}-${i}`,
-            setNumber: i,
-            weight: s.weight,
-            reps: s.reps,
-            warmUp: s.warmUp,
-            completed: false
-          }))
-          sessionStore.sessionExercises[index].sets = mappedSets
-          sessionStore.persistActiveDraft()
-        }
-      }
-    } catch (err) {
-      console.warn('prefill history failed', err)
-    }
-  }
-
+  // show the modal *immediately* so slow network doesn't block the UI
   showExerciseModal.value = true
+
+  // prefill sets from most recent history (use stats store) if no sets yet
+  if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
+    // perform the potentially slow fetch in the background; errors are logged but don't prevent the modal
+    statsStore.fetchSessionHistory()
+      .catch(() => {})
+      .then(() => {
+        try {
+          const exId = sessionStore.sessionExercises[index].exercise.id
+          const sessions = (statsStore.sessionHistory || [])
+            .slice()
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+          const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
+          if (recentSession) {
+            const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
+            if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
+              // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
+              const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
+              const mappedSets = sortedSets.map((s, i) => ({
+                tempId: `hist-${Date.now()}-${i}`,
+                setNumber: i,
+                weight: s.weight,
+                reps: s.reps,
+                warmUp: s.warmUp,
+                completed: false
+              }))
+              sessionStore.sessionExercises[index].sets = mappedSets
+              sessionStore.persistActiveDraft()
+            }
+          }
+        } catch (err) {
+          console.warn('prefill history failed', err)
+        }
+      })
+  }
 }
 
 function closeExerciseModal() {
@@ -548,11 +553,18 @@ function handleDelete() {
   }
 }
 
-function handleOpenExercise() {
-  if (openMenuIndex.value !== null) {
-    openExercise(openMenuIndex.value)
+async function handleOpenExercise() {
+  if (openMenuIndex.value === null) return
 
-    closeOverflowMenu()
+  // capture the index before we clear the menu state
+  const idx = openMenuIndex.value
+  closeOverflowMenu()
+
+  try {
+    await openExercise(idx)
+  } catch (e) {
+    // if the open logic throws for some reason we can at least log it
+    console.error('handleOpenExercise error:', e)
   }
 }
 
