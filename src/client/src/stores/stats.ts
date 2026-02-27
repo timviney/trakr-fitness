@@ -9,10 +9,10 @@ export const useStatsStore = defineStore('stats', () => {
   const historyError = ref<string | null>(null)
   const lastFetchMs = ref<number | null>(null) // cache timestamp (ms)
 
-  // fetchSessionHistory accepts an optional `force` flag; cached results are returned for 10s
+  // fetchSessionHistory accepts an optional `force` flag; cached results are returned for 30s
   async function fetchSessionHistory(force = false) {
     // return cached data if fresh
-    if (!force && lastFetchMs.value && (Date.now() - lastFetchMs.value) < 10_000 && sessionHistory.value.length > 0) {
+    if (!force && lastFetchMs.value && (Date.now() - lastFetchMs.value) < 30_000 && sessionHistory.value.length > 0) {
       return { isSuccess: true, data: sessionHistory.value }
     }
 
