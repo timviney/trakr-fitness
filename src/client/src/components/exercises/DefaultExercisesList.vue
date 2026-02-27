@@ -74,9 +74,6 @@ function onDragStart(evt: any) {
   isDragging.value = true
   draggedExercise = localExercises.value[evt.oldIndex]
 
-  // lock body scrolling while dragging on mobile
-  lockScroll()
-
   document.addEventListener('dragover', onPointerMove)
   document.addEventListener('touchmove', onPointerMove, { passive: false })
 }
@@ -84,9 +81,6 @@ function onDragStart(evt: any) {
 function onDragEnd(evt: any) {
   document.removeEventListener('dragover', onPointerMove)
   document.removeEventListener('touchmove', onPointerMove)
-
-  // restore scrolling
-  unlockScroll()
 
   isDragging.value = false
 
