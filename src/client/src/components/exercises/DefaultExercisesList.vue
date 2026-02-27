@@ -10,7 +10,6 @@
   <Draggable
     :list="localExercises"
     item-key="id"
-    handle=".drag-handle"
     ghost-class="drag-ghost"
     chosen-class="drag-chosen"
     :animation="150"
@@ -19,7 +18,7 @@
     @end="onDragEnd"
   >
     <template #item="{ element }">
-      <li class="item-card default-exercise-item" :data-id="element[0].id">
+      <li class="item-card default-exercise-item" :data-id="element[0].id" @touchstart.prevent>
         <span class="drag-handle" role="button" aria-label="Reorder exercise" tabindex="0">⋮⋮</span>
         <span class="item-name">{{ element[1].name }}</span>
         <span v-if="muscleName(element[1].muscleGroupId)" class="item-count">{{ muscleName(element[1].muscleGroupId) }}</span>
@@ -184,6 +183,10 @@ function muscleName(id: string | undefined) {
   border-radius: var(--trk-radius-md);
   background: var(--trk-surface);
   margin-bottom: 0.1rem;
+  cursor: grab;
+  user-select: none;              /* avoid text highlighting during drag */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;    /* disable callout on iOS */
 }
 .default-exercise-item .item-count {
   font-size: 0.85rem;
@@ -191,7 +194,6 @@ function muscleName(id: string | undefined) {
   margin-left: auto;
 }
 .drag-handle {
-  cursor: grab;
   color: var(--trk-text-muted);
   user-select: none;
   font-weight: 700;
