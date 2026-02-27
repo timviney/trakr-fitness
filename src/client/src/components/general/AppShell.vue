@@ -3,12 +3,19 @@
     <main class="app-content">
       <slot />
     </main>
+
+    <!-- global UI overlays -->
+    <ToastContainer />
+    <ConfirmDialog />
+
     <BottomNav />
   </div>
 </template>
 
 <script setup lang="ts">
 import BottomNav from './BottomNav.vue'
+import ToastContainer from './ToastContainer.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 </script>
 
 <style scoped>

@@ -178,7 +178,7 @@
         </div>
 
         <div class="session-footer">
-          <button class="btn btn-primary btn-finish" @click="finishSession()" :disabled="sessionStore.hasUncompletedExercises">Finish Session</button>
+          <button class="btn btn-primary btn-finish" @click="finishSession()">Finish Session</button>
         </div>
 
         <ExerciseSelector
@@ -195,9 +195,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useScrollLock } from '../composables/useScrollLock'
-import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router' 
+import { useRouter, useRoute } from 'vue-router' 
 import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next' 
 
 import AppShell from '../components/general/AppShell.vue'
@@ -213,6 +213,7 @@ import { getStatus, SessionStatus, SetData, type SessionExerciseData } from '../
 import { ExerciseCollection } from '../types/ExerciseCollection'
 import { useSessionStore } from '../stores/session'
 import { useStatsStore } from '../stores/stats' 
+import { useToast } from '../stores/toastStore' 
 
 const router = useRouter()
 const route = useRoute()
@@ -689,6 +690,11 @@ function updateSet(set: SetData){
 }
 
 async function finishSession() {
+  if (sessionStore.hasUncompletedExercises){
+    useToast().warning('Cannot finish session with uncompleted exercises')
+    return
+  }
+
   loading.value = true
   error.value = null
 
