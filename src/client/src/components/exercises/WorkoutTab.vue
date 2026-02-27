@@ -75,6 +75,7 @@ import type { DefaultExercise, UpdateWorkoutRequest, Workout } from '../../api/m
 import { ExerciseCollection } from '../../types/ExerciseCollection'
 import { emptyGuid } from '../../types/Guid'
 import SectionToggle from './SectionToggle.vue'
+import { useConfirm } from '../../stores/confirmStore'
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{
@@ -82,6 +83,9 @@ const emit = defineEmits<{
     (e: 'updated', workout: Workout): void
     (e: 'deleted', workoutId: string): void
 }>()
+
+// confirmation helper (modal is rendered globally via AppShell)
+const { confirm } = useConfirm()
 
 // Editing state
 const showEditingWorkout = ref<boolean>(false)
@@ -124,11 +128,10 @@ function onDefaultExercisesReordered(reordered: DefaultExercise[]) {
     editWorkoutDefaultExercises.value = reordered
 }
 
-function closeEditWorkoutModal(saved = false) {
+async function closeEditWorkoutModal(saved = false) {
     if (!saved && changesMade.value) {
-        if (!confirm('You have unsaved changes. Discard them and close?')) {
-            return
-        }
+        const ok = await confirm('You have unsaved changes. Discard them and close?')
+        if (!ok) return
     }
 
     updatingWorkout.value = null
@@ -167,7 +170,8 @@ async function saveWorkout() {
 
 async function deleteWorkout() {
     if (!updatingWorkout.value) return
-    if (!confirm('Delete this workout?')) return
+    const ok = await confirm('Delete this workout?')
+    if (!ok) return
 
     editWorkoutProcessing.value = true
     try {

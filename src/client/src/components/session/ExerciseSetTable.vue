@@ -82,6 +82,7 @@
 import { ref } from 'vue'
 import WeightRepPicker from './WeightRepPicker.vue'
 import { Plus, Trash2, Check } from 'lucide-vue-next' 
+import { useConfirm } from '../../stores/confirmStore' 
 import type { SetData } from '../../types/Session'
 
 const props = defineProps<{
@@ -113,6 +114,8 @@ function toggleCompleted(index: number) {
 // --- Picker ---
 
 const pickerRef = ref<any>(null)
+// confirmation helper
+const { confirm } = useConfirm()
 const selectedIndex = ref(-1)
 
 function openPicker(index: number, mode: 'weight' | 'reps') {
@@ -142,8 +145,9 @@ function onPickerClose() {
   selectedIndex.value = -1
 }
 
-function confirmRemove(index: number) {
-  if (!confirm('Delete this set?')) return
+async function confirmRemove(index: number) {
+  const ok = await confirm('Delete this set?')
+  if (!ok) return
   emit('remove-set', index)
 } 
 </script>

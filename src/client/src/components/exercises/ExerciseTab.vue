@@ -146,6 +146,7 @@ import { api } from '../../api/api'
 import type { Exercise } from '../../api/modules/exercises'
 import type { MuscleCategory, MuscleGroup } from '../../api/modules/muscles'
 import { ExerciseCollection } from '../../types/ExerciseCollection'
+import { useConfirm } from '../../stores/confirmStore' 
 
 const props = defineProps<{ exerciseCollection: ExerciseCollection }>()
 const emit = defineEmits<{
@@ -218,6 +219,10 @@ const isEditingDefault = computed(() => {
     return !editingExercise.value?.userId
 })
 
+// confirmation helper
+const { confirm } = useConfirm()
+
+
 function openEditExercise(ex: Exercise) {
     editingExercise.value = ex
     editName.value = ex.name
@@ -268,7 +273,8 @@ async function updateExercise() {
 async function deleteExercise() {
     if (!editingExercise.value) return
     if (isEditingDefault.value) return
-    if (!confirm('Delete this exercise?')) return
+    const ok = await confirm('Delete this exercise?')
+    if (!ok) return
 
     editProcessing.value = true
     try {

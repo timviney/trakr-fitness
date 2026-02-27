@@ -83,11 +83,14 @@ import { storeToRefs } from 'pinia'
 import { transformToFlatRows } from '../stores/statsHelpers'
 import type { ExerciseCollection } from '../types/ExerciseCollection'
 import { useScrollLock } from '../composables/useScrollLock'
+import { useConfirm } from '../stores/confirmStore'  
 
 const router = useRouter()
 const statsStore = useStatsStore()
 const { fetchSessionHistory } = statsStore
 const { sessionHistory, historyLoading } = storeToRefs(statsStore)
+
+const { confirm } = useConfirm()
 
 const openMenuIndex = ref<number | null>(null)
 const selectedSegment = ref<'sessions' | 'sets'>('sessions')
@@ -133,7 +136,8 @@ function editSession() {
 async function deleteSession() {
   if (openMenuIndex.value === null) return
   const id = sessionHistory.value[openMenuIndex.value].id
-  if (!confirm('Delete this session?')) return
+  const ok = await confirm('Delete this session?')
+  if (!ok) return
 
   try {
     const resp = await api.sessions.deleteSession(id)

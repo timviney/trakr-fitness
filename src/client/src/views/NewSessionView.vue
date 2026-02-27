@@ -214,11 +214,14 @@ import { ExerciseCollection } from '../types/ExerciseCollection'
 import { useSessionStore } from '../stores/session'
 import { useStatsStore } from '../stores/stats' 
 import { useToast } from '../stores/toastStore' 
+import { useConfirm } from '../stores/confirmStore' 
 
 const router = useRouter()
 const route = useRoute()
 const sessionStore = useSessionStore()
 const statsStore = useStatsStore()
+
+const { confirm } = useConfirm()
 
 const viewState = ref<'selection' | 'session'>('selection')
 const loading = ref(false)
@@ -325,8 +328,9 @@ function resumeDraft(sessionId: string) {
   router.replace(`/session/${sessionId}`)
 }
 
-function deleteDraft(sessionId: string) {
-  if (!confirm('Delete this unfinished session draft?')) return
+async function deleteDraft(sessionId: string) {
+  const ok = await confirm('Delete this unfinished session draft?')
+  if (!ok) return
   sessionStore.clearDraft(sessionId)
   // if the draft modal was open for this id, close it
   if (selectedDraftId.value === sessionId) closeDraftModal()
@@ -488,7 +492,7 @@ async function deleteExercise(index: number) {
 
   const exData = sessionStore.sessionExercises[index]
 
-  const confirmed = confirm(
+  const confirmed = await confirm(
     exData.sets.length > 0
       ? 'This exercise has sets attached. Delete it?'
       : 'Delete this exercise?'
