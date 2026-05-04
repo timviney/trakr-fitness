@@ -15,7 +15,8 @@
         <div v-if="!loading && !error && sessionStore.draftList.length > 0" class="drafts-section">
           <h3 class="section-subtitle">Unfinished sessions</h3>
           <ul class="item-list">
-            <li v-for="d in sessionStore.draftList" :key="d.session.id" class="item-card item-card-clickable" @click="openDraftModal(d.session.id)">
+            <li v-for="d in sessionStore.draftList" :key="d.session.id" class="item-card item-card-clickable"
+              @click="openDraftModal(d.session.id)">
               <div class="item-left">
                 <span class="item-name">{{ d.workout?.name ?? d.session.workoutId }}</span>
                 <div class="item-sub">{{ new Date(d.persistedAt).toLocaleString() }}</div>
@@ -30,9 +31,10 @@
           <p class="empty-description">Create a workout first in the Exercises tab.</p>
         </div>
 
-<h3 class="section-subtitle">New session:</h3>
+        <h3 class="section-subtitle">New session:</h3>
         <ul v-if="!loading && !error && workouts.length > 0" class="item-list">
-          <li v-for="workout in workouts" :key="workout.id" class="item-card item-card-clickable" @click="promptStartWorkout(workout)">
+          <li v-for="workout in workouts" :key="workout.id" class="item-card item-card-clickable"
+            @click="promptStartWorkout(workout)">
             <span class="item-name">{{ workout.name }}</span>
             <ChevronRight class="item-chevron" />
           </li>
@@ -58,15 +60,18 @@
             <div class="overflow-menu" @click.stop>
               <div class="overflow-panel">
                 <header class="overflow-header">
-                  <h3 class="overflow-title">{{ selectedDraft?.workout?.name ?? (selectedDraft?.session?.workoutId ?? 'Unfinished session') }}</h3>
+                  <h3 class="overflow-title">{{ selectedDraft?.workout?.name ?? (selectedDraft?.session?.workoutId ??
+                    'Unfinished session') }}</h3>
                 </header>
 
                 <div class="overflow-actions">
-                  <button class="btn btn-primary overflow-action" @click="() => { if (selectedDraftId) resumeDraft(selectedDraftId); }">
+                  <button class="btn btn-primary overflow-action"
+                    @click="() => { if (selectedDraftId) resumeDraft(selectedDraftId); }">
                     Continue Editing
                   </button>
 
-                  <button class="btn btn-danger overflow-action" @click="() => { if (selectedDraftId) deleteDraft(selectedDraftId); }">
+                  <button class="btn btn-danger overflow-action"
+                    @click="() => { if (selectedDraftId) deleteDraft(selectedDraftId); }">
                     Delete Changes
                   </button>
 
@@ -85,15 +90,13 @@
         </header>
 
         <Loader :loading="loading" />
-        <AppError :message="error" @retry="() => {}" />
+        <AppError :message="error" @retry="() => { }" />
 
         <div v-if="!loading && !error" class="exercise-list">
-          <div v-for="(exData, idx) in sessionStore.sessionExercises" 
-               :key="exData.sessionExerciseId ?? `local-${exData.exerciseNumber}`" 
-               class="exercise-card"
-               :class="{ 'exercise-completed': exData.isCompleted }"
-               :ref="el => setOverflowButtonRef(el as HTMLElement | null, idx)"
-               @click="openCardMenu(idx)">
+          <div v-for="(exData, idx) in sessionStore.sessionExercises"
+            :key="exData.sessionExerciseId ?? `local-${exData.exerciseNumber}`" class="exercise-card"
+            :class="{ 'exercise-completed': exData.isCompleted }"
+            :ref="el => setOverflowButtonRef(el as HTMLElement | null, idx)" @click="openCardMenu(idx)">
 
             <div class="exercise-header">
               <div class="exercise-title-group">
@@ -109,7 +112,8 @@
               </div>
 
               <div class="sets-area">
-                <div class="exercise-meta">{{ exData.sets.filter(s => s.completed).length }} {{ exData.sets.filter(s => s.completed).length === 1 ? 'set' : 'sets' }}</div>
+                <div class="exercise-meta">{{exData.sets.filter(s => s.completed).length}} {{exData.sets.filter(s =>
+                  s.completed).length === 1 ? 'set' : 'sets'}}</div>
               </div>
             </div>
 
@@ -117,10 +121,7 @@
         </div>
 
         <div class="add-exercise-action" style="padding: 0;">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            @click="openAddExerciseSelector">
+          <button type="button" class="btn btn-secondary" @click="openAddExerciseSelector">
             + Add
           </button>
         </div>
@@ -136,17 +137,17 @@
 
                 <div class="overflow-actions">
                   <button class="btn btn-primary overflow-action" @click="handleOpenExercise">
-                    <Play class="icon"/>
+                    <Play class="icon" />
                     <span>{{ getOpenExerciseSetsText(sessionStore.sessionExercises[openMenuIndex!]) }}</span>
                   </button>
 
                   <button class="btn btn-secondary overflow-action" @click="handleSwap">
-                    <Repeat class="icon"/>
+                    <Repeat class="icon" />
                     <span>Swap exercise</span>
                   </button>
 
                   <button class="btn btn-danger overflow-action" @click="handleDelete">
-                    <Trash2 class="icon"/>
+                    <Trash2 class="icon" />
                     <span>Delete exercise</span>
                   </button>
                 </div>
@@ -162,12 +163,10 @@
             <h2 class="modal-title">{{ sessionStore.sessionExercises[selectedExerciseIndex].exercise.name }}</h2>
 
             <div class="modal-content">
-              <ExerciseSetTable
-                v-model:sets="sessionStore.sessionExercises[selectedExerciseIndex].sets"
+              <ExerciseSetTable v-model:sets="sessionStore.sessionExercises[selectedExerciseIndex].sets"
                 @add-set="() => addSet(selectedExerciseIndex!)"
                 @remove-set="(setIdx) => removeSet(selectedExerciseIndex!, setIdx)"
-                @update:set="(set) => updateSet(set)"
-              />
+                @update:set="(set) => updateSet(set)" />
             </div>
 
             <div class="modal-actions">
@@ -181,13 +180,8 @@
           <button class="btn btn-primary btn-finish" @click="finishSession()">Finish Session</button>
         </div>
 
-        <ExerciseSelector
-          v-if="showExerciseSelector && exerciseCollection"
-          :exercise-collection="exerciseCollection"
-          :modelValue="exerciseSelectorModel"
-          @add="handleExerciseSelected"
-          @cancel="closeExerciseSelector"
-        />
+        <ExerciseSelector v-if="showExerciseSelector && exerciseCollection" :exercise-collection="exerciseCollection"
+          :modelValue="exerciseSelectorModel" @add="handleExerciseSelected" @cancel="closeExerciseSelector" />
       </div>
 
     </div>
@@ -197,8 +191,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useScrollLock } from '../composables/useScrollLock'
-import { useRouter, useRoute } from 'vue-router' 
-import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next' 
+import { useRouter, useRoute } from 'vue-router'
+import { Dumbbell, ChevronRight, Repeat, Trash2, Play } from 'lucide-vue-next'
 
 import AppShell from '../components/general/AppShell.vue'
 import Loader from '../components/general/Loader.vue'
@@ -212,9 +206,9 @@ import type { Exercise } from '../api/modules/exercises'
 import { getStatus, SessionStatus, SetData, type SessionExerciseData } from '../types/Session'
 import { ExerciseCollection } from '../types/ExerciseCollection'
 import { useSessionStore } from '../stores/session'
-import { useStatsStore } from '../stores/stats' 
-import { useToast } from '../stores/toastStore' 
-import { useConfirm } from '../stores/confirmStore' 
+import { useStatsStore } from '../stores/stats'
+import { useToast } from '../stores/toastStore'
+import { useConfirm } from '../stores/confirmStore'
 
 const router = useRouter()
 const route = useRoute()
@@ -369,7 +363,7 @@ async function startSession() {
     sessionStore.setActiveSession(newSession, workoutRes.data, mapped)
 
     // prime session history (cached for 10s)
-    await statsStore.fetchSessionHistory().catch(() => {})
+    await statsStore.fetchSessionHistory().catch(() => { })
 
     viewState.value = 'session'
 
@@ -391,43 +385,50 @@ async function openExercise(index: number) {
   selectedExerciseIndex.value = index
   sessionStore.sessionExercises[index].isCompleted = false
 
-  // show the modal *immediately* so slow network doesn't block the UI
-  showExerciseModal.value = true
+  loading.value = true
 
-  // prefill sets from most recent history (use stats store) if no sets yet
-  if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
-    // perform the potentially slow fetch in the background; errors are logged but don't prevent the modal
-    statsStore.fetchSessionHistory()
-      .catch(() => {})
-      .then(() => {
-        try {
-          const exId = sessionStore.sessionExercises[index].exercise.id
-          const sessions = (statsStore.sessionHistory || [])
-            .slice()
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  try {
+    // prefill sets from most recent history (use stats store) if no sets yet
+    if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
+      // perform the potentially slow fetch in the background; errors are logged but don't prevent the modal
+      statsStore.fetchSessionHistory()
+        .catch(() => { })
+        .then(() => {
+          try {
+            const exId = sessionStore.sessionExercises[index].exercise.id
+            const sessions = (statsStore.sessionHistory || [])
+              .slice()
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-          const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
-          if (recentSession) {
-            const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
-            if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
-              // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
-              const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
-              const mappedSets = sortedSets.map((s, i) => ({
-                tempId: `hist-${Date.now()}-${i}`,
-                setNumber: i,
-                weight: s.weight,
-                reps: s.reps,
-                warmUp: s.warmUp,
-                completed: false
-              }))
-              sessionStore.sessionExercises[index].sets = mappedSets
-              sessionStore.persistActiveDraft()
+            const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
+            if (recentSession) {
+              const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
+              if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
+                // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
+                const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
+                const mappedSets = sortedSets.map((s, i) => ({
+                  tempId: `hist-${Date.now()}-${i}`,
+                  setNumber: i,
+                  weight: s.weight,
+                  reps: s.reps,
+                  warmUp: s.warmUp,
+                  completed: false
+                }))
+                sessionStore.sessionExercises[index].sets = mappedSets
+                sessionStore.persistActiveDraft()
+              }
             }
+          } catch (err) {
+            console.warn('prefill history failed', err)
           }
-        } catch (err) {
-          console.warn('prefill history failed', err)
-        }
-      })
+        })
+    }
+  } catch (e) {
+    useToast().error('Failed to open exercise. Please try again.')
+    console.error('openExercise error:', e)
+  } finally {
+    showExerciseModal.value = true
+    loading.value = false
   }
 }
 
@@ -437,16 +438,16 @@ function closeExerciseModal() {
 }
 
 async function completeExercise() {
-  if (sessionStore.sessionExercises[selectedExerciseIndex.value!].sets.length == 0){
+  if (sessionStore.sessionExercises[selectedExerciseIndex.value!].sets.length == 0) {
     useToast().warning('Add at least one set before completing the exercise')
     return
   }
-  if (!sessionStore.sessionExercises[selectedExerciseIndex.value!].sets.every(s=>s.completed)){
+  if (!sessionStore.sessionExercises[selectedExerciseIndex.value!].sets.every(s => s.completed)) {
     useToast().warning('All sets must be completed before completing the exercise')
     return
   }
-  sessionStore.sessionExercises[selectedExerciseIndex.value!].isCompleted = true; 
-  closeExerciseModal() 
+  sessionStore.sessionExercises[selectedExerciseIndex.value!].isCompleted = true;
+  closeExerciseModal()
 }
 
 
@@ -708,19 +709,19 @@ function addSet(exerciseIndex: number) {
   } else {
     sessionStore.addSet(exerciseIndex)
   }
-} 
+}
 
 function removeSet(exerciseIndex: number, setIndex: number) {
   sessionStore.removeSet(exerciseIndex, setIndex)
 }
 
-function updateSet(set: SetData){
+function updateSet(set: SetData) {
   if (selectedExerciseIndex.value === null) return
   sessionStore.updateSet(selectedExerciseIndex.value, set.setNumber, set)
 }
 
 async function finishSession() {
-  if (sessionStore.hasUncompletedExercises){
+  if (sessionStore.hasUncompletedExercises) {
     useToast().warning('Cannot finish session with uncompleted exercises')
     return
   }
@@ -777,33 +778,70 @@ async function finishSession() {
 </script>
 
 <style>
-.session-view { display: flex; flex-direction: column; gap: var(--trk-space-4); padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); }
-.view-header, .session-header { text-align: center; margin-bottom: var(--trk-space-4); }
- .view-title, .session-title { font-family: var(--trk-font-heading); font-size: clamp(1.75rem, 1.5rem + 1.25vw, 2.25rem); color: var(--trk-text); margin: 0; }
-.exercise-list { display: flex; flex-direction: column; gap: var(--trk-space-3); }
+.session-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--trk-space-4);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0));
+}
+
+.view-header,
+.session-header {
+  text-align: center;
+  margin-bottom: var(--trk-space-4);
+}
+
+.view-title,
+.session-title {
+  font-family: var(--trk-font-heading);
+  font-size: clamp(1.75rem, 1.5rem + 1.25vw, 2.25rem);
+  color: var(--trk-text);
+  margin: 0;
+}
+
+.exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--trk-space-3);
+}
 
 /* Mobile-first card */
 .exercise-card {
   background: var(--trk-surface);
   border-radius: var(--trk-radius-md);
-  padding: 8px; /* reduced for slimmer cards */
+  padding: 8px;
+  /* reduced for slimmer cards */
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--trk-surface-border);
   cursor: pointer;
   transition: transform 0.1s ease, background 0.1s ease;
-  -webkit-tap-highlight-color: transparent; 
-} 
+  -webkit-tap-highlight-color: transparent;
+}
 
-.exercise-meta { font-size: 0.9rem; font-weight: 600; color: var(--trk-text-muted); opacity: 0.95; }
-.sets-area .exercise-meta { color: var(--trk-accent); font-weight: 700; }
+.exercise-meta {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--trk-text-muted);
+  opacity: 0.95;
+}
+
+.sets-area .exercise-meta {
+  color: var(--trk-accent);
+  font-weight: 700;
+}
+
 .exercise-card:hover {
   transform: scale(0.99);
-  background: var(--trk-accent-muted); 
+  background: var(--trk-accent-muted);
 }
-.exercise-card.exercise-completed { border-left: 4px solid var(--trk-success-bg); background: var(--trk-surface); }
+
+.exercise-card.exercise-completed {
+  border-left: 4px solid var(--trk-success-bg);
+  background: var(--trk-surface);
+}
 
 .exercise-header {
   display: flex;
@@ -830,8 +868,19 @@ async function finishSession() {
   margin-top: 6px;
 }
 
-.status-area { flex: 1; display:flex; align-items:center; justify-content:flex-start; }
-.sets-area { flex: 0 0 auto; display:flex; align-items:center; justify-content:flex-end; }
+.status-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.sets-area {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
 
 .exercise-title-group {
   display: flex;
@@ -841,30 +890,56 @@ async function finishSession() {
   min-width: 0;
 }
 
-.exercise-title { font-size: 1.12rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--trk-text); }
+.exercise-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--trk-text);
+}
 
-.exercise-actions { display: flex; gap: 12px; }
+.exercise-actions {
+  display: flex;
+  gap: 12px;
+}
 
 /* Status pill styles */
-.status-pill { font-size: 0.9rem; padding: 0px 0px;  font-weight: 500;  display: inline-flex;  align-items: center;  justify-content: center; margin: 0; }
-.status-completed { 
+.status-pill {
+  font-size: 0.9rem;
+  padding: 0px 0px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.status-completed {
   background-color: var(--trk-success-bg);
   border: 1px solid var(--trk-success-border);
   color: var(--trk-success-text);
   padding: 0.1rem 0.4rem;
   border-radius: var(--trk-radius-md);
- }
-.status-in-progress { color: var(--trk-accent); }
-.status-not-started { color: var(--trk-text-muted); }
+}
+
+.status-in-progress {
+  color: var(--trk-accent);
+}
+
+.status-not-started {
+  color: var(--trk-text-muted);
+}
 
 /* Teleported overflow menu (full-screen popup, app-themed) */
 .overflow-backdrop {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0,0,0,0.36); /* subtle dim */
+  background: rgba(0, 0, 0, 0.36);
+  /* subtle dim */
   display: flex;
-  align-items: flex-end; /* slide-up feel on mobile */
+  align-items: flex-end;
+  /* slide-up feel on mobile */
   justify-content: center;
   padding: 20px;
   backdrop-filter: blur(6px);
@@ -878,7 +953,7 @@ async function finishSession() {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  animation: menuFadeIn 160ms cubic-bezier(.2,.9,.2,1);
+  animation: menuFadeIn 160ms cubic-bezier(.2, .9, .2, 1);
 }
 
 .overflow-panel {
@@ -887,25 +962,106 @@ async function finishSession() {
   background: var(--trk-surface);
   border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 28px 60px rgba(2,6,23,0.45);
+  box-shadow: 0 28px 60px rgba(2, 6, 23, 0.45);
   border: 1px solid var(--trk-surface-border);
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.overflow-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.overflow-title { margin:0; font-size:1.1rem; font-weight:800; color:var(--trk-text); }
+.overflow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-.overflow-actions { display:flex; flex-direction:column; gap:12px; margin-top:6px;}
-.overflow-action { display:flex; text-align:right; align-items: center; gap:12px; padding:12px 14px; font-weight:800; font-size:1rem; border-radius:12px; justify-content:flex-start; }
-.overflow-action svg { flex-shrink:0; }
-.overflow-action span { flex:1; text-align:center; margin-right:18px; }
-.overflow-action.icon { justify-content:center; padding:12px; }
+.overflow-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--trk-text);
+}
 
-@keyframes menuFadeIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } } .item-chevron { display: none; } .add-exercise-action .btn-secondary { margin-top: 20px; width: 100%; padding: 0.8rem 0; font-weight: 800; }
-.session-footer { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom, 0)); left: 0; right: 0; padding: var(--trk-space-4); background: var(--trk-bg); border-top: 1px solid var(--trk-surface-border); z-index: 10; align-items: center; justify-content: center; display: flex; }
-.btn-finish { width: 100%; max-width: 400px; margin: 0 auto; display: flex; align-items: center; justify-content: center;}
+.overflow-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.overflow-action {
+  display: flex;
+  text-align: right;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  font-weight: 800;
+  font-size: 1rem;
+  border-radius: 12px;
+  justify-content: flex-start;
+}
+
+.overflow-action svg {
+  flex-shrink: 0;
+}
+
+.overflow-action span {
+  flex: 1;
+  text-align: center;
+  margin-right: 18px;
+}
+
+.overflow-action.icon {
+  justify-content: center;
+  padding: 12px;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.item-chevron {
+  display: none;
+}
+
+.add-exercise-action .btn-secondary {
+  margin-top: 20px;
+  width: 100%;
+  padding: 0.8rem 0;
+  font-weight: 800;
+}
+
+.session-footer {
+  position: fixed;
+  bottom: calc(56px + env(safe-area-inset-bottom, 0));
+  left: 0;
+  right: 0;
+  padding: var(--trk-space-4);
+  background: var(--trk-bg);
+  border-top: 1px solid var(--trk-surface-border);
+  z-index: 10;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.btn-finish {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .item-sub {
   font-size: 0.85rem;
