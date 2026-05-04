@@ -24,5 +24,12 @@ public static class AuthEndpoints
 
             return resp.ToOkResult();
         });
+        
+        group.MapPost("/reset", async (PasswordResetRequest req, IAuthService authService) =>
+        {
+            var resp = await authService.ResetPassword(req.Email, req.OldPassword, req.NewPassword);
+
+            return resp.ToOkResult();
+        });
     }
 }

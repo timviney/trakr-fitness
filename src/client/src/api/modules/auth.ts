@@ -22,6 +22,12 @@ export type RegisterResult = {
   userId: string
 }
 
+export type ResetPasswordRequest = {
+  email: string
+  oldPassword: string
+  newPassword: string
+}
+
 export class AuthApi {
   constructor(private client: ApiClient) { }
 
@@ -31,5 +37,9 @@ export class AuthApi {
 
   async register(payload: RegisterRequest): Promise<ApiResponse<RegisterResult>> {
     return await this.client.post<RegisterResult>('/auth/register', payload)
+  }
+
+  async resetPassword(payload: ResetPasswordRequest): Promise<ApiResponse<void>> {
+    return await this.client.post<void>('/auth/reset', payload)
   }
 }

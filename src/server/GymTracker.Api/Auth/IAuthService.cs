@@ -7,12 +7,15 @@ namespace GymTracker.Api.Auth;
 public interface IAuthService
 {
     /// <summary>
-    /// Generates a JWT for the given email. Returns an AuthResponse containing the token and expiry.
+    /// Generates a JWT for the given Email. Returns an AuthResponse containing the token and expiry.
     /// </summary>
     Task<ApiResponse<LoginResult>> Login(string email, string password);
     
     /// <summary>
-    /// Registers a user with the given email and password. Returns a RegisterResult indicating success or failure.
+    /// Registers a user with the given Email and password. Returns a RegisterResult indicating success or failure.
     /// </summary>
     Task<ApiResponse<RegisterResult>> Register(string email, string password);
+
+    Task<ApiResponse<ResetPasswordResult>> ResetPassword(string email, string oldPassword,
+        string newPassword);
 }

@@ -73,7 +73,8 @@ public class AuthService : IAuthService
             var newUser = new User
             {
                 Email = email,
-                PasswordHashed = ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
+                PasswordHashed =
+                    ph.HashPassword(null!, password) // null! because it doesn't actually use the user object
             };
 
             var result = await _userRegistrationService.RegisterUserAsync(newUser);
@@ -147,12 +148,12 @@ public class AuthService : IAuthService
 
         email = email.ToLower().Trim();
 
-        // Validate email format using a standard regex pattern
+        // Validate Email format using a standard regex pattern
         if (!System.Text.RegularExpressions.Regex.IsMatch(email,
                 @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase))
         {
-            throw new ArgumentException("Invalid email format.", nameof(email));
+            throw new ArgumentException("Invalid Email format.", nameof(email));
         }
 
         // Check for potentially dangerous characters that shouldn't be in valid emails
@@ -163,5 +164,41 @@ public class AuthService : IAuthService
 
         // Defense-in-depth: escape apostrophes (even though EF Core parameterizes queries)
         email = email.Replace("'", "''");
+    }
+
+    public async Task<ApiResponse<ResetPasswordResult>> ResetPassword(string email, string oldPassword,
+        string newPassword)
+    {
+        try
+        {
+            Tidy(ref email);
+
+            var result = await _userRepository.FindByEmailAsync(email);
+
+            if (!result.IsSuccess) return ApiResponse<ResetPasswordResult>.Failure(ApiError.UserNotFound);
+
+            var user = result.Data!;
+            var ph = new PasswordHasher<User>();
+            if (ph.VerifyHashedPassword(user, user.PasswordHashed, oldPassword) == PasswordVerificationResult.Failed)
+            {
+                return ApiResponse<ResetPasswordResult>.Failure(ApiError.InvalidCredentials);
+            }
+
+            user.PasswordHashed = ph.HashPassword(user, newPassword);
+            var updateResult = await _userRepository.UpdateAsync(user);
+            return !updateResult.IsSuccess
+                ? ApiResponse<ResetPasswordResult>.Failure(ApiError.UnknownError)
+                : ApiResponse<ResetPasswordResult>.Success(new ResetPasswordResult(result.Data.Id));
+        }
+        catch (ArgumentException)
+        {
+            // Invalid input validation
+            return ApiResponse<ResetPasswordResult>.Failure(ApiError.InvalidEmail);
+        }
+        catch (Exception)
+        {
+            // Unknown error
+            return ApiResponse<ResetPasswordResult>.Failure(ApiError.UnknownError);
+        }
     }
 }
