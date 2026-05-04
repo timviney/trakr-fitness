@@ -136,6 +136,9 @@ function editSession() {
 async function deleteSession() {
   if (openMenuIndex.value === null) return
   const id = sessionHistory.value[openMenuIndex.value].id
+
+  closeOverflowMenu()
+
   const ok = await confirm('Delete this session?')
   if (!ok) return
 
@@ -146,11 +149,7 @@ async function deleteSession() {
       return
     }
 
-    // remove deleted session from local history
-    if (openMenuIndex.value !== null) {
-      sessionHistory.value.splice(openMenuIndex.value, 1)
-    }
-    closeOverflowMenu()
+    sessionHistory.value = sessionHistory.value.filter(s => s.id !== id)
   } catch (err) {
     console.error('deleteSession error', err)
     alert('Failed to delete session')

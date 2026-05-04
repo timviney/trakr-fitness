@@ -323,11 +323,11 @@ function resumeDraft(sessionId: string) {
 }
 
 async function deleteDraft(sessionId: string) {
+  closeDraftModal()
+
   const ok = await confirm('Delete this unfinished session draft?')
   if (!ok) return
   sessionStore.clearDraft(sessionId)
-  // if the draft modal was open for this id, close it
-  if (selectedDraftId.value === sessionId) closeDraftModal()
 }
 
 // move previous selectWorkout logic here (starts session and builds exercises)
