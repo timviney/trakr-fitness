@@ -1,6 +1,7 @@
 <template>
     <div class="auth-shell">
-        <div class="auth-card">
+        <Loader :loading="loading" :text="'warming up'" />
+        <div class="auth-card" v-if="!loading">
             <div class="auth-brand">
                 <div class="auth-logo">
                     <img :src="logoUrl" alt="Trakr.Fitness logo" />
@@ -27,6 +28,11 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { api } from '../../api/api'
+import { useToast } from '../../stores/toastStore'
+import Loader from '../general/Loader.vue'
+
 defineProps<{
     subtitle: string
     errorMessage?: string
@@ -35,6 +41,17 @@ defineProps<{
     loadingText: string
     onSubmit: () => void | Promise<void>
 }>()
+
+const loading = ref(true)
+onMounted(async () => {
+    try {
+        await api.startup.startup({})
+    } catch (error) {
+        useToast().error('Failed to connect to the server. Please try again later.')
+    } finally {
+        loading.value = false
+    }
+})
 
 const logoUrl = new URL('../../assets/logo.svg', import.meta.url).href
 </script>

@@ -5,6 +5,7 @@ import { WorkoutsApi } from './modules/workouts'
 import { MusclesApi } from './modules/muscles'
 import { SessionsApi } from './modules/sessions'
 import { ExerciseCollection } from '../types/ExerciseCollection'
+import { StartupApi } from './modules/startup'
 
 class Api {
   readonly auth: AuthApi
@@ -12,6 +13,7 @@ class Api {
   readonly workouts: WorkoutsApi
   readonly muscles: MusclesApi
   readonly sessions: SessionsApi
+  readonly startup: StartupApi
 
   constructor(client: ApiClient) {
     this.auth = new AuthApi(client)
@@ -19,6 +21,7 @@ class Api {
     this.workouts = new WorkoutsApi(client)
     this.muscles = new MusclesApi(client)
     this.sessions = new SessionsApi(client)
+    this.startup = new StartupApi(client)
   }
 
   getExerciseCollection(): Promise<ExerciseCollection> {

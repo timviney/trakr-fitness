@@ -1,13 +1,16 @@
 <template>
     <div v-if="loading" class="loading-state">
         <Dumbbell class="loading-spinner" />
-        <span class="loading-text">loading</span>
+        <span class="loading-text">{{ props.text || 'loading' }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
 import { Dumbbell } from 'lucide-vue-next'
-const props = defineProps<{loading: boolean}>()
+const props = defineProps<{
+    loading: boolean
+    text?: string
+}>()
 </script>
 
 <style scoped>
