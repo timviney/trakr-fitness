@@ -19,6 +19,8 @@ AuthSetup.ConfigureAuth(builder);
 
 ApplicationSetup.ConfigureApplication(builder);
 
+StartupSetup.ConfigureStartup(builder);
+
 var runSwagger = builder.Configuration.GetValue<bool>("RunSwagger");
 
 if (runSwagger) SwaggerSetup.AddSwaggerServices(builder);
@@ -67,5 +69,6 @@ app.MapExerciseEndpoints();
 app.MapWorkoutEndpoints();
 app.MapMuscleEndpoints();
 app.MapSessionEndpoints();
+app.MapStartupEndpoints();
 
 app.Run();
