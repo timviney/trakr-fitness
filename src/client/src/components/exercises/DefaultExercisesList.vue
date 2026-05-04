@@ -1,12 +1,4 @@
 <template>
-  <div
-    v-if="isDragging"
-    ref="deleteZone"
-    class="delete-zone"
-    :class="{ active: isOverDeleteZone }"
-  >
-    🗑 Drop here to delete
-  </div>
   <Draggable
     :list="localExercises"
     item-key="id"
@@ -25,10 +17,18 @@
       </li>
     </template>
   </Draggable>
-  <button type="button" class="btn btn-secondary"
+  <button v-if="!isDragging" type="button" class="btn btn-secondary"
     @click="openAddExerciseModal = true">
     + Add
   </button>
+  <div
+    v-if="isDragging"
+    ref="deleteZone"
+    class="delete-zone"
+    :class="{ active: isOverDeleteZone }"
+  >
+    🗑 Drop here to delete
+  </div>
   <ExerciseSelector v-if="openAddExerciseModal" 
     :exercise-collection="props.exerciseCollection" 
     @add="exerciseId => addExercise(exerciseId)" 
@@ -202,8 +202,7 @@ function muscleName(id: string | undefined) {
 }
 
 .delete-zone {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
+  padding: 0.6rem;
   border: 2px dashed var(--trk-text-muted);
   border-radius: var(--trk-radius-md);
   text-align: center;
