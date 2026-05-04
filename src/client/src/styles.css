@@ -41,8 +41,11 @@
 html {
   /* Fluid base font: scales from 14px (mobile) to 16px (desktop) */
   font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+  /* font-size: 1rem; */
   max-width: 100vw;
   overflow-x: hidden;
+  /* prevent iOS from auto-inflating small text, which reflows and causes zoom */
+  -webkit-text-size-adjust: 100%;
 }
 
 body, #app {
@@ -185,10 +188,4 @@ a {
   text-align: center;
 }
 
-/* prevent iOS auto-zoom when focusing inputs with font < 16px */
-@media screen and (max-width: 768px) {
-  input, textarea, select {
-    font-size: 16px;
-  }
-}
 
