@@ -69,10 +69,10 @@ html.no-scroll,
 body.no-scroll {
   overflow: hidden !important;
   touch-action: none !important;
-  /* prevent height changes and ensure viewport stays fixed */
   position: fixed !important;
+  top: 0;
   width: 100% !important;
-  height: 100% !important;
+  height: 100dvh !important;
 }
 .modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
 .modal.modal-fullscreen {
