@@ -84,20 +84,20 @@ function onDragEnd(evt: any) {
 
   isDragging.value = false
 
-  if (isOverDeleteZone.value && draggedExercise !== null) {
-    localExercises.value = localExercises.value.filter(([de]) => de.exerciseNumber !== (draggedExercise![0].exerciseNumber))
+  if (draggedExercise === null || !deleteZone.value) {
+    draggedExercise = null
+    return
   }
 
+  if (isOverDeleteZone.value) {
+    localExercises.value = localExercises.value.filter(([de]) => de.exerciseNumber !== (draggedExercise![0].exerciseNumber))
+  }
+  
   localExercises.value = localExercises.value.map(([de, ex], i) => {
     return [{...de, exerciseNumber: i}, ex]
   })
 
-  const origIds = new Set(props.defaultExercises.map(de => de.id))
-  const normalized = localExercises.value.map(([de]) => ({
-    ...de,
-    id: origIds.has(de.id) ? de.id : emptyGuid
-  }))
-  emit('reorder', normalized)
+  emit('reorder', localExercises.value.map(([de]) => de))
 
   draggedExercise = null
   isOverDeleteZone.value = false
@@ -149,23 +149,15 @@ function addExercise(exerciseId: string) {
   const exercise = props.exerciseCollection.exercises.find((ex) => ex.id === exerciseId)
   if (!exercise) return
 
-  const origIds = new Set(props.defaultExercises.map(de => de.id))
-
-  const tempId = crypto.randomUUID()
-  const defaultExercise: DefaultExercise = {
-    id: tempId,
+  let defaultExercise: DefaultExercise = {
+    id: emptyGuid,
     exerciseId: exercise.id,
     exerciseNumber: localExercises.value.length,
     workoutId: props.workoutId
   }
 
   localExercises.value.push([defaultExercise, exercise])
-
-  const normalized = localExercises.value.map(([de]) => ({
-    ...de,
-    id: origIds.has(de.id) ? de.id : emptyGuid
-  }))
-  emit('reorder', normalized)
+  emit('reorder', localExercises.value.map(([de]) => de))
   openAddExerciseModal.value = false
 }
 
