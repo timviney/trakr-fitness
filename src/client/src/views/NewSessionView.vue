@@ -385,43 +385,15 @@ async function openExercise(index: number) {
   selectedExerciseIndex.value = index
   sessionStore.sessionExercises[index].isCompleted = false
 
+  fetchPreviousSets()
+}
+
+function fetchPreviousSets() {
   loading.value = true
 
   try {
-    // prefill sets from most recent history (use stats store) if no sets yet
-    if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
-      // perform the potentially slow fetch in the background; errors are logged but don't prevent the modal
-      statsStore.fetchSessionHistory()
-        .catch(() => { })
-        .then(() => {
-          try {
-            const exId = sessionStore.sessionExercises[index].exercise.id
-            const sessions = (statsStore.sessionHistory || [])
-              .slice()
-              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-            const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
-            if (recentSession) {
-              const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
-              if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
-                // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
-                const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
-                const mappedSets = sortedSets.map((s, i) => ({
-                  tempId: `hist-${Date.now()}-${i}`,
-                  setNumber: i,
-                  weight: s.weight,
-                  reps: s.reps,
-                  warmUp: s.warmUp,
-                  completed: false
-                }))
-                sessionStore.sessionExercises[index].sets = mappedSets
-                sessionStore.persistActiveDraft()
-              }
-            }
-          } catch (err) {
-            console.warn('prefill history failed', err)
-          }
-        })
+    for (let i = 0; i < sessionStore.sessionExercises.length; i++) {
+      fetchPreviousSetsForExercise(i)
     }
   } catch (e) {
     useToast().error('Failed to open exercise. Please try again.')
@@ -429,6 +401,44 @@ async function openExercise(index: number) {
   } finally {
     showExerciseModal.value = true
     loading.value = false
+  }
+}
+
+function fetchPreviousSetsForExercise(index: number) {
+  // prefill sets from most recent history (use stats store) if no sets yet
+  if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
+    // perform the potentially slow fetch in the background; errors are logged but don't prevent the modal
+    statsStore.fetchSessionHistory()
+      .catch(() => { })
+      .then(() => {
+        try {
+          const exId = sessionStore.sessionExercises[index].exercise.id
+          const sessions = (statsStore.sessionHistory || [])
+            .slice()
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+          const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
+          if (recentSession) {
+            const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
+            if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
+              // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
+              const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
+              const mappedSets = sortedSets.map((s, i) => ({
+                tempId: `hist-${Date.now()}-${i}`,
+                setNumber: i,
+                weight: s.weight,
+                reps: s.reps,
+                warmUp: s.warmUp,
+                completed: false
+              }))
+              sessionStore.sessionExercises[index].sets = mappedSets
+              sessionStore.persistActiveDraft()
+            }
+          }
+        } catch (err) {
+          console.warn('prefill history failed', err)
+        }
+      })
   }
 }
 

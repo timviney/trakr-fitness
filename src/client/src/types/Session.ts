@@ -27,7 +27,7 @@ export enum SessionStatus {
 export const getStatus = (s: SessionExerciseData): SessionStatus =>
   s.isCompleted
     ? SessionStatus.Completed
-    : s.sets.length > 0
+    : s.sets.some(set => set.completed)
       ? SessionStatus.InProgress
       : SessionStatus.NotStarted
 
