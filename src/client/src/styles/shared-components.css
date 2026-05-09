@@ -74,7 +74,7 @@ body.no-scroll {
   width: 100% !important;
   height: 100dvh !important;
 }
-.modal { width: 100%; max-width: 400px; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-6); padding-bottom: calc(var(--trk-space-6) + env(safe-area-inset-bottom, 0)); }
+.modal { width: 100%; max-width: 600px; min-width: 42vmin; background: var(--trk-surface); position: relative; border-radius: var(--trk-radius-lg) var(--trk-radius-lg) 0 0; padding: var(--trk-space-4); padding-bottom: calc(var(--trk-space-4) + env(safe-area-inset-bottom, 0)); padding-top: calc(var(--trk-space-4) + env(safe-area-inset-top, 0)); }
 .modal.modal-fullscreen {
   /* full-screen / large modal variant used for exercise details */
   max-width: 920px;
