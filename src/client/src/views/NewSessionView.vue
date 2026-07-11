@@ -487,6 +487,7 @@ function handleExerciseSelected(exerciseId: string) {
 
   if (exerciseSelectorMode.value === 'add') {
     sessionStore.addExercise(exercise)
+    fetchPreviousSetsForExercise(sessionStore.sessionExercises.length - 1)
   }
 
   if (exerciseSelectorMode.value === 'replace' && replaceTargetIndex.value !== null) {
