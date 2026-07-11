@@ -500,6 +500,7 @@ function handleExerciseSelected(exerciseId: string) {
 
 async function replaceExercise(index: number, newExercise: Exercise) {
   sessionStore.replaceExercise(index, newExercise)
+  fetchPreviousSetsForExercise(index)
 }
 
 async function deleteExercise(index: number) {
