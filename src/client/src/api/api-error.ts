@@ -8,6 +8,7 @@ export enum ApiError {
     InvalidEmail = 'InvalidEmail',
     NameAlreadyExists = 'NameAlreadyExists',
     NotFound = 'NotFound',
+    InvalidRefreshToken = 'InvalidRefreshToken',
 }
 
 export const ApiErrorMessages: Record<ApiError, string> = {
@@ -20,4 +21,5 @@ export const ApiErrorMessages: Record<ApiError, string> = {
     [ApiError.InvalidEmail]: 'Invalid email address',
     [ApiError.NameAlreadyExists]: 'Name already exists',
     [ApiError.NotFound]: 'Not found',
+    [ApiError.InvalidRefreshToken]: 'Session expired, please log in again',
 }

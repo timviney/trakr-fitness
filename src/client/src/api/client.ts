@@ -10,30 +10,42 @@ type RequestOptions = {
     headers?: Record<string, string>
 }
 
-// Function to get auth token - will be called at request time
-let getAuthToken: (() => string | null) | null = null
+// Function to get access token - will be called at request time
+let getAccessToken: (() => string | null) | null = null
 
 // Handler called when API returns 401 Unauthorized
 let onAuthFailure: (() => void) | null = null
+
+// Function to handle refresh token logic - will be called at request time
+let refreshHandler: (() => Promise<boolean>) | null = null
+
+let refreshPromise: Promise<boolean> | null = null
 
 export function setAuthFailureHandler(handler: () => void) {
     onAuthFailure = handler
 }
 
-export function setAuthTokenGetter(getter: () => string | null) {
-    getAuthToken = getter
+export function setAccessTokenGetter(getter: () => string | null) {
+    getAccessToken = getter
+}
+
+export function setRefreshHandler(handler: () => Promise<boolean>) {
+    refreshHandler = handler
 }
 
 export class ApiClient {
-    private async request<T>(path: string, options: RequestOptions): Promise<ApiResponse<T>> {
+    private async request<T>(
+        path: string,
+        options: RequestOptions,
+        allowRefresh = true
+    ): Promise<ApiResponse<T>> {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             ...(options.headers ?? {})
         }
 
-        // Auto-inject Authorization header if token exists
-        if (getAuthToken) {
-            const token = getAuthToken()
+        if (getAccessToken) {
+            const token = getAccessToken()
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`
             }
@@ -45,16 +57,30 @@ export class ApiClient {
             body: options.body ? JSON.stringify(options.body) : undefined
         })
 
-        // If unauthorized, notify the app so it can force logout
-        if (response.status === 401) {
+        if (response.status === 401 && allowRefresh) {
+            if (refreshPromise) {
+                const refreshed = await refreshPromise
+                if (refreshed) return await this.request<T>(path, options, false)
+                return { isSuccess: false, error: ApiError.Unauthorized } as ApiResponse<T>
+            }
+
+            if (refreshHandler) {
+                refreshPromise = refreshHandler()
+                try {
+                    const refreshed = await refreshPromise
+                    if (refreshed) return await this.request<T>(path, options, false)
+                } finally {
+                    refreshPromise = null
+                }
+            }
+
             try {
                 onAuthFailure?.()
             } catch (e) {
                 console.error('auth failure handler error', e)
             }
-            finally {
-                return { isSuccess: false, error: ApiError.Unauthorized } as ApiResponse<T>
-            }
+
+            return { isSuccess: false, error: ApiError.Unauthorized } as ApiResponse<T>
         }
 
         try {

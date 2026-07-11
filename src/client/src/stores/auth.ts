@@ -1,13 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../api/api'
+import { buildApiUrl } from '../api/config'
 import type { LoginRequest, LoginResult } from '../api/modules/auth'
-import { ApiResponse } from '../api/api-response'
+import type { ApiResponse } from '../api/api-response'
 
 const TOKEN_KEY = 'auth_token'
 const USER_ID_KEY = 'auth_user_id'
 const EMAIL_KEY = 'auth_email'
 const EXPIRES_AT_KEY = 'auth_expires_at'
+const REFRESH_TOKEN_KEY = 'auth_refresh_token'
+const REFRESH_EXPIRES_AT_KEY = 'auth_refresh_expires_at'
 const LOGOUT_REASON_KEY = 'auth_logout_reason'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -16,6 +19,8 @@ export const useAuthStore = defineStore('auth', () => {
   const userId = ref<string | null>(null)
   const email = ref<string | null>(null)
   const expiresAt = ref<string | null>(null)
+  const refreshToken = ref<string | null>(null)
+  const refreshTokenExpiresAt = ref<string | null>(null)
   const logoutReason = ref<string | null>(null)
 
   // Getters
@@ -29,51 +34,78 @@ export const useAuthStore = defineStore('auth', () => {
     return new Date(expiresAt.value) <= new Date()
   })
 
+  const isRefreshTokenExpired = computed(() => {
+    if (!refreshTokenExpiresAt.value) return true
+    return new Date(refreshTokenExpiresAt.value) <= new Date()
+  })
+  
   // Actions
   const initialize = () => {
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-    const storedUserId = localStorage.getItem(USER_ID_KEY)
-    const storedEmail = localStorage.getItem(EMAIL_KEY)
-    const storedExpiresAt = localStorage.getItem(EXPIRES_AT_KEY)
+    token.value = localStorage.getItem(TOKEN_KEY)
+    userId.value = localStorage.getItem(USER_ID_KEY)
+    email.value = localStorage.getItem(EMAIL_KEY)
+    expiresAt.value = localStorage.getItem(EXPIRES_AT_KEY)
+    refreshToken.value = localStorage.getItem(REFRESH_TOKEN_KEY)
+    refreshTokenExpiresAt.value = localStorage.getItem(REFRESH_EXPIRES_AT_KEY)
 
-    if (storedToken && storedUserId && storedEmail && storedExpiresAt) {
-      token.value = storedToken
-      userId.value = storedUserId
-      email.value = storedEmail
-      expiresAt.value = storedExpiresAt
+    const storedLogoutReason = localStorage.getItem(LOGOUT_REASON_KEY)
+    if (storedLogoutReason) logoutReason.value = storedLogoutReason
 
-      const storedLogoutReason = localStorage.getItem(LOGOUT_REASON_KEY)
-      if (storedLogoutReason) logoutReason.value = storedLogoutReason
-
-      // Clear if expired
-      if (isTokenExpired.value) {
-        logout()
-      }
+    if (isTokenExpired.value && isRefreshTokenExpired.value) {
+      logout()
     }
   }
 
-  const login = async (credentials: LoginRequest) : Promise<ApiResponse<LoginResult>> => {
-    const response = await api.auth.login(credentials)
-
-    if (!response.isSuccess){
-        console.log('Login failed:', response.error)
-        return response
-    }
-
-    const data = response.data!
-    
+  const persistTokens = (data: LoginResult) => {
     token.value = data.token
     userId.value = data.userId
     email.value = data.email
     expiresAt.value = data.expiresAt
+    refreshToken.value = data.refreshToken
+    refreshTokenExpiresAt.value = data.refreshTokenExpiresAt
 
     // Persist to localStorage
     localStorage.setItem(TOKEN_KEY, data.token)
     localStorage.setItem(USER_ID_KEY, data.userId)
     localStorage.setItem(EMAIL_KEY, data.email)
     localStorage.setItem(EXPIRES_AT_KEY, data.expiresAt)
+    localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken)
+    localStorage.setItem(REFRESH_EXPIRES_AT_KEY, data.refreshTokenExpiresAt)
+  }
 
+  const login = async (credentials: LoginRequest): Promise<ApiResponse<LoginResult>> => {
+    const response = await api.auth.login(credentials)
+
+    if (!response.isSuccess) {
+      console.log('Login failed:', response.error)
+      return response
+    }
+
+    persistTokens(response.data!)
     return response
+  }
+
+  const refreshAuth = async (): Promise<boolean> => {
+    const rt = refreshToken.value
+    if (!rt || isRefreshTokenExpired.value) return false
+
+    try {
+      const response = await fetch(buildApiUrl('/auth/refresh'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: rt })
+      })
+
+      if (!response.ok) return false
+
+      const result: ApiResponse<LoginResult> = await response.json()
+      if (!result.isSuccess || !result.data) return false
+
+      persistTokens(result.data)
+      return true
+    } catch {
+      return false
+    }
   }
 
   const logout = () => {
@@ -81,11 +113,15 @@ export const useAuthStore = defineStore('auth', () => {
     userId.value = null
     email.value = null
     expiresAt.value = null
+    refreshToken.value = null
+    refreshTokenExpiresAt.value = null
 
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_ID_KEY)
     localStorage.removeItem(EMAIL_KEY)
     localStorage.removeItem(EXPIRES_AT_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(REFRESH_EXPIRES_AT_KEY)
     localStorage.removeItem(LOGOUT_REASON_KEY)
     logoutReason.value = null
   }
@@ -105,12 +141,16 @@ export const useAuthStore = defineStore('auth', () => {
     userId,
     email,
     expiresAt,
+    refreshToken,
+    refreshTokenExpiresAt,
     // Getters
     isAuthenticated,
     isTokenExpired,
+    isRefreshTokenExpired,
     // Actions
-    initialize,
+    initialise: initialize,
     login,
+    refreshAuth,
     logout,
     forceLogout,
     // Info

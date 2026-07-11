@@ -6,11 +6,17 @@ export type LoginRequest = {
   password: string
 }
 
+export type RefreshRequest = {
+  refreshToken: string
+}
+
 export type LoginResult = {
   token: string
   expiresAt: string
   userId: string
   email: string
+  refreshToken: string
+  refreshTokenExpiresAt: string
 }
 
 export type RegisterRequest = {
@@ -33,6 +39,10 @@ export class AuthApi {
 
   async login(payload: LoginRequest): Promise<ApiResponse<LoginResult>> {
     return await this.client.post<LoginResult>('/auth/login', payload)
+  }
+
+  async refresh(payload: RefreshRequest): Promise<ApiResponse<LoginResult>> {
+    return await this.client.post<LoginResult>('/auth/refresh', payload)
   }
 
   async register(payload: RegisterRequest): Promise<ApiResponse<RegisterResult>> {
