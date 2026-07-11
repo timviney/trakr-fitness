@@ -355,7 +355,8 @@ async function startSession() {
           exercise: exercise || { id: defEx.exerciseId, name: 'Unknown Exercise', muscleGroupId: '', userId: null },
           exerciseNumber: defEx.exerciseNumber,
           sets: [],
-          isCompleted: false
+          isCompleted: false,
+          hasBeenEdited: false
         } as SessionExerciseData
       })
 
@@ -404,7 +405,7 @@ function fetchPreviousSets() {
 
 function fetchPreviousSetsForExercise(index: number) {
   // prefill sets from most recent history (use stats store) if no sets yet
-  if (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0) {
+  if (!sessionStore.sessionExercises[index].hasBeenEdited) {
     // perform the potentially slow fetch in the background; errors are logged but don't prevent the modal
     statsStore.fetchSessionHistory()
       .catch(() => { })
@@ -418,7 +419,7 @@ function fetchPreviousSetsForExercise(index: number) {
           const recentSession = sessions.find(s => s.sessionExercises.some(se => se.exerciseId === exId))
           if (recentSession) {
             const se = recentSession.sessionExercises.find(se => se.exerciseId === exId)
-            if (se && (!sessionStore.sessionExercises[index].sets || sessionStore.sessionExercises[index].sets.length === 0)) {
+            if (se) {
               // include warm-up sets and ensure ascending order by setNumber so set 0 comes first
               const sortedSets = [...(se.sets || [])].sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0))
               const mappedSets = sortedSets.map((s, i) => ({
@@ -672,6 +673,7 @@ async function loadSession(sessionId: string) {
         exerciseNumber: se.exerciseNumber,
         sets: [],
         isCompleted: true,
+        hasBeenEdited: true,
         sessionExerciseId: se.id
       } as SessionExerciseData))
 

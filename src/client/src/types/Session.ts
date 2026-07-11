@@ -16,6 +16,7 @@ export type SessionExerciseData = {
   exerciseNumber: number
   sets: SetData[]
   isCompleted: boolean
+  hasBeenEdited: boolean
 }
 
 export enum SessionStatus {
@@ -27,7 +28,7 @@ export enum SessionStatus {
 export const getStatus = (s: SessionExerciseData): SessionStatus =>
   s.isCompleted
     ? SessionStatus.Completed
-    : s.sets.some(set => set.completed)
+    : s.hasBeenEdited
       ? SessionStatus.InProgress
       : SessionStatus.NotStarted
 

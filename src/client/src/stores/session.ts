@@ -133,7 +133,8 @@ export const useSessionStore = defineStore('session', () => {
       exercise,
       exerciseNumber: sessionExercises.value.length,
       sets: [],
-      isCompleted: false
+      isCompleted: false,
+      hasBeenEdited: false
     }
     sessionExercises.value.push(newEx)
     persistActiveDraft()
@@ -167,8 +168,7 @@ export const useSessionStore = defineStore('session', () => {
       id: set?.id
     }
     ex.sets.push(newSet)
-    uncompleteExerciseIfNeeded(newSet, ex)
-
+    updateExerciseState(newSet, ex)
     persistActiveDraft()
   }
 
@@ -177,6 +177,7 @@ export const useSessionStore = defineStore('session', () => {
     if (!ex) return
     ex.sets.splice(setIndex, 1)
     ex.sets.forEach((s, i) => (s.setNumber = i))
+    updateExerciseState(undefined, ex)
     persistActiveDraft()
   }
 
@@ -186,13 +187,14 @@ export const useSessionStore = defineStore('session', () => {
     const s = ex.sets[setIndex]
     if (!s) return
     Object.assign(s, updates)
-    uncompleteExerciseIfNeeded(updates, ex)
+    updateExerciseState(updates, ex)
     persistActiveDraft()
   }
 
-  function uncompleteExerciseIfNeeded(updates: Partial<SetData> | undefined, ex: { isCompleted: boolean }) {
-    if (updates == undefined || updates.completed === false) {
-      // if marking set as completed, check if all sets are completed to mark exercise as completed
+  function updateExerciseState(updates: Partial<SetData> | undefined, ex: { isCompleted: boolean, hasBeenEdited: boolean }) {
+    ex.hasBeenEdited = true
+    if (updates?.completed === false) {
+      // if any set is marked as not completed, mark exercise as not completed
       ex.isCompleted = false
     }
   }
