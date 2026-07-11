@@ -167,6 +167,8 @@ export const useSessionStore = defineStore('session', () => {
       id: set?.id
     }
     ex.sets.push(newSet)
+    uncompleteExerciseIfNeeded(newSet, ex)
+
     persistActiveDraft()
   }
 
@@ -184,7 +186,15 @@ export const useSessionStore = defineStore('session', () => {
     const s = ex.sets[setIndex]
     if (!s) return
     Object.assign(s, updates)
+    uncompleteExerciseIfNeeded(updates, ex)
     persistActiveDraft()
+  }
+
+  function uncompleteExerciseIfNeeded(updates: Partial<SetData> | undefined, ex: { isCompleted: boolean }) {
+    if (updates == undefined || updates.completed === false) {
+      // if marking set as completed, check if all sets are completed to mark exercise as completed
+      ex.isCompleted = false
+    }
   }
 
   // Mark as completed (server-synced)

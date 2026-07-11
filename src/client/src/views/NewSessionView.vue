@@ -369,6 +369,7 @@ async function startSession() {
 
     // update URL from /session/new --> /session/{id}
     router.replace(`/session/${newSession.id}`)
+    fetchPreviousSets()
   } catch (e) {
     error.value = 'Failed to start session. Please try again.'
     console.error('startSession error:', e)
@@ -383,9 +384,7 @@ async function openExercise(index: number) {
   // close any open overflow menu when opening modal
   openMenuIndex.value = null
   selectedExerciseIndex.value = index
-  sessionStore.sessionExercises[index].isCompleted = false
-
-  fetchPreviousSets()
+  showExerciseModal.value = true
 }
 
 function fetchPreviousSets() {
@@ -396,10 +395,9 @@ function fetchPreviousSets() {
       fetchPreviousSetsForExercise(i)
     }
   } catch (e) {
-    useToast().error('Failed to open exercise. Please try again.')
-    console.error('openExercise error:', e)
+    useToast().error('Failed to load previous sets data.')
+    console.error('fetchPreviousSets error:', e)
   } finally {
-    showExerciseModal.value = true
     loading.value = false
   }
 }
@@ -456,7 +454,7 @@ async function completeExercise() {
     useToast().warning('All sets must be completed before completing the exercise')
     return
   }
-  sessionStore.sessionExercises[selectedExerciseIndex.value!].isCompleted = true;
+  sessionStore.markExerciseCompleted(selectedExerciseIndex.value!)
   closeExerciseModal()
 }
 
