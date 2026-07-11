@@ -18,5 +18,10 @@ public class JwtSettings
     /// <summary>
     /// Token lifetime in minutes.
     /// </summary>
-    public int ExpiresInMinutes { get; set; } = 60;
+    public int ExpiresInMinutes { get; set; } = 15;
+
+    /// <summary>
+    /// Refresh token lifetime in days.
+    /// </summary>
+    public int RefreshTokenExpiryDays { get; set; } = 30;
 }

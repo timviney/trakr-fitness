@@ -25,6 +25,7 @@ public static class ApiResponseExtensions
                 ApiError.WeakPassword => BadRequest(resp),
                 ApiError.InvalidEmail => BadRequest(resp),
                 ApiError.NameAlreadyExists => Conflict(resp),
+                ApiError.InvalidRefreshToken => Json(resp, statusCode: StatusCodes.Status401Unauthorized),
                 ApiError.NotFound => NotFound(resp),
                 _ => InternalServerError(resp)
             };

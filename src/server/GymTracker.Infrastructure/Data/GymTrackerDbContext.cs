@@ -26,6 +26,8 @@ namespace GymTracker.Infrastructure.Data
                 b.Property(u => u.Email).IsRequired();
                 b.HasIndex(u => u.Email).IsUnique();
                 b.Property(u => u.Email).HasMaxLength(50);
+                b.Property(u => u.RefreshTokenHash).HasMaxLength(100);
+                b.Property(u => u.RefreshTokenExpiresAt);
                 b.HasMany(u => u.Workouts)
                     .WithOne(w => w.User)
                     .HasForeignKey(w => w.UserId)

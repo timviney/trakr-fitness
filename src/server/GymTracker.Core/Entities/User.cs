@@ -8,6 +8,8 @@ namespace GymTracker.Core.Entities
         public string? Email { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string PasswordHashed { get; set; } = null!;
+        public string? RefreshTokenHash { get; set; }
+        public DateTime? RefreshTokenExpiresAt { get; set; }
 
         // Navigation properties
         [JsonIgnore]

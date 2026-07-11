@@ -53,7 +53,50 @@ public class AuthService : IAuthService
                 return ApiResponse<LoginResult>.Failure(ApiError.InvalidCredentials);
             }
 
-            var loginResult = GenerateTokenAsync(user.Id, email);
+            var loginResult = await GenerateTokensAsync(user);
+
+            return ApiResponse<LoginResult>.Success(loginResult);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<LoginResult>.Failure(ApiError.UnknownError);
+        }
+    }
+
+    public async Task<ApiResponse<LoginResult>> RefreshToken(string refreshToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidRefreshToken);
+
+            var parts = refreshToken.Split(':', 2);
+            if (parts.Length != 2 || !Guid.TryParse(parts[0], out var userId))
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidRefreshToken);
+
+            var randomPart = parts[1];
+
+            var userResult = await _userRepository.GetByIdAsync(userId);
+            if (!userResult.IsSuccess)
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidRefreshToken);
+
+            var user = userResult.Data!;
+
+            if (string.IsNullOrWhiteSpace(user.RefreshTokenHash) || user.RefreshTokenExpiresAt == null)
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidRefreshToken);
+
+            if (user.RefreshTokenExpiresAt < DateTime.UtcNow)
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidRefreshToken);
+
+            var randomPartHash = HashRandomPart(randomPart);
+            var storedHash = Convert.FromBase64String(user.RefreshTokenHash);
+            if (!CryptographicOperations.FixedTimeEquals(randomPartHash, storedHash))
+                return ApiResponse<LoginResult>.Failure(ApiError.InvalidRefreshToken);
+
+            if (string.IsNullOrWhiteSpace(user.Email))
+                return ApiResponse<LoginResult>.Failure(ApiError.UnknownError);
+
+            var loginResult = await GenerateTokensAsync(user);
 
             return ApiResponse<LoginResult>.Success(loginResult);
         }
@@ -99,15 +142,49 @@ public class AuthService : IAuthService
         }
     }
 
-    private LoginResult GenerateTokenAsync(Guid userId, string email)
+    public async Task<ApiResponse<ResetPasswordResult>> ResetPassword(string email, string oldPassword,
+        string newPassword)
+    {
+        try
+        {
+            Tidy(ref email);
+
+            var result = await _userRepository.FindByEmailAsync(email);
+
+            if (!result.IsSuccess) return ApiResponse<ResetPasswordResult>.Failure(ApiError.UserNotFound);
+
+            var user = result.Data!;
+            var ph = new PasswordHasher<User>();
+            if (ph.VerifyHashedPassword(user, user.PasswordHashed, oldPassword) == PasswordVerificationResult.Failed)
+            {
+                return ApiResponse<ResetPasswordResult>.Failure(ApiError.InvalidCredentials);
+            }
+
+            user.PasswordHashed = ph.HashPassword(user, newPassword);
+            var updateResult = await _userRepository.UpdateAsync(user);
+            return !updateResult.IsSuccess
+                ? ApiResponse<ResetPasswordResult>.Failure(ApiError.UnknownError)
+                : ApiResponse<ResetPasswordResult>.Success(new ResetPasswordResult(result.Data.Id));
+        }
+        catch (ArgumentException)
+        {
+            return ApiResponse<ResetPasswordResult>.Failure(ApiError.InvalidEmail);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<ResetPasswordResult>.Failure(ApiError.UnknownError);
+        }
+    }
+
+    private async Task<LoginResult> GenerateTokensAsync(User user)
     {
         var now = DateTime.UtcNow;
-        var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 60);
+        var expires = now.AddMinutes(_settings.ExpiresInMinutes > 0 ? _settings.ExpiresInMinutes : 15);
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(JwtRegisteredClaimNames.Email, email),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email!),
             new("role", "User")
         };
 
@@ -124,8 +201,31 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwt = tokenHandler.WriteToken(token);
 
-        var resp = new LoginResult(jwt, expires, userId.ToString(), email);
-        return resp;
+        var refreshTokenRandom = GenerateRandomToken();
+        var refreshTokenHash = HashRandomPart(refreshTokenRandom);
+        var refreshTokenExpiresAt = now.AddDays(_settings.RefreshTokenExpiryDays > 0 ? _settings.RefreshTokenExpiryDays : 30);
+
+        user.RefreshTokenHash = Convert.ToBase64String(refreshTokenHash);
+        user.RefreshTokenExpiresAt = refreshTokenExpiresAt;
+        await _userRepository.UpdateAsync(user);
+
+        var refreshToken = $"{user.Id}:{refreshTokenRandom}";
+
+        return new LoginResult(jwt, expires, user.Id.ToString(), user.Email!, refreshToken, refreshTokenExpiresAt);
+    }
+
+    private static string GenerateRandomToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(bytes)
+            .Replace('+', '-')
+            .Replace('/', '_')
+            .TrimEnd('=');
+    }
+
+    private static byte[] HashRandomPart(string randomPart)
+    {
+        return SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(randomPart));
     }
 
     private static void ImportPemPrivateKey(RSA rsa, string pem)
@@ -164,41 +264,5 @@ public class AuthService : IAuthService
 
         // Defense-in-depth: escape apostrophes (even though EF Core parameterizes queries)
         email = email.Replace("'", "''");
-    }
-
-    public async Task<ApiResponse<ResetPasswordResult>> ResetPassword(string email, string oldPassword,
-        string newPassword)
-    {
-        try
-        {
-            Tidy(ref email);
-
-            var result = await _userRepository.FindByEmailAsync(email);
-
-            if (!result.IsSuccess) return ApiResponse<ResetPasswordResult>.Failure(ApiError.UserNotFound);
-
-            var user = result.Data!;
-            var ph = new PasswordHasher<User>();
-            if (ph.VerifyHashedPassword(user, user.PasswordHashed, oldPassword) == PasswordVerificationResult.Failed)
-            {
-                return ApiResponse<ResetPasswordResult>.Failure(ApiError.InvalidCredentials);
-            }
-
-            user.PasswordHashed = ph.HashPassword(user, newPassword);
-            var updateResult = await _userRepository.UpdateAsync(user);
-            return !updateResult.IsSuccess
-                ? ApiResponse<ResetPasswordResult>.Failure(ApiError.UnknownError)
-                : ApiResponse<ResetPasswordResult>.Success(new ResetPasswordResult(result.Data.Id));
-        }
-        catch (ArgumentException)
-        {
-            // Invalid input validation
-            return ApiResponse<ResetPasswordResult>.Failure(ApiError.InvalidEmail);
-        }
-        catch (Exception)
-        {
-            // Unknown error
-            return ApiResponse<ResetPasswordResult>.Failure(ApiError.UnknownError);
-        }
     }
 }

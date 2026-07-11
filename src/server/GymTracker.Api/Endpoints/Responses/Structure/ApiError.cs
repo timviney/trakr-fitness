@@ -10,4 +10,5 @@ public enum ApiError
     InvalidEmail,
     NameAlreadyExists,
     NotFound,
+    InvalidRefreshToken,
 }

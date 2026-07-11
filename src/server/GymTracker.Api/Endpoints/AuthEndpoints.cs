@@ -31,5 +31,12 @@ public static class AuthEndpoints
 
             return resp.ToOkResult();
         });
+
+        group.MapPost("/refresh", async (RefreshTokenRequest req, IAuthService authService) =>
+        {
+            var resp = await authService.RefreshToken(req.RefreshToken);
+
+            return resp.ToOkResult();
+        });
     }
 }

@@ -18,4 +18,9 @@ public interface IAuthService
 
     Task<ApiResponse<ResetPasswordResult>> ResetPassword(string email, string oldPassword,
         string newPassword);
+
+    /// <summary>
+    /// Refreshes the user's refresh token.
+    /// </summary>
+    Task<ApiResponse<LoginResult>> RefreshToken(string refreshToken);
 }
